@@ -9,7 +9,7 @@ import argparse
 import sys
 
 from . import __version__
-from .core import process_stdin
+from .core import process_stdin, check_file_directly, check_content_directly
 from .logging_config import setup_logging
 from .self_test import run_self_test
 from .first_run import (
@@ -25,6 +25,7 @@ from .runtime_config import RuntimeConfig, set_runtime_config
 from .last_error import explain_last_error
 from .demo import run_demo
 from .status import show_status
+from .setup_claude_code import setup_claude_code_integration
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -150,6 +151,12 @@ For more information: https://github.com/yourusername/antimon
         action="store_true",
         help="Run interactive demo to see antimon's detection capabilities in action.",
     )
+    
+    parser.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="When used with --demo, runs a non-interactive automated demonstration.",
+    )
 
     parser.add_argument(
         "--status",
@@ -161,6 +168,24 @@ For more information: https://github.com/yourusername/antimon
         "--dry-run",
         action="store_true",
         help="Preview what would be detected without blocking. Shows all detections that would occur.",
+    )
+    
+    parser.add_argument(
+        "--check-file",
+        type=str,
+        help="Check a specific file directly without JSON input. Example: antimon --check-file config.py",
+    )
+    
+    parser.add_argument(
+        "--check-content",
+        type=str,
+        help="Check content directly without JSON input. Example: antimon --check-content 'api_key = \"sk-123\"'",
+    )
+    
+    parser.add_argument(
+        "--setup-claude-code",
+        action="store_true",
+        help="Interactive setup wizard to configure antimon with Claude Code. Automatically configures the PreToolUse hook.",
     )
 
     args = parser.parse_args(argv)
@@ -214,7 +239,7 @@ For more information: https://github.com/yourusername/antimon
     if args.demo:
         if first_run:
             mark_first_run_complete()
-        run_demo()
+        run_demo(non_interactive=args.non_interactive)
         return 0
     
     # Show status if requested
@@ -250,6 +275,25 @@ For more information: https://github.com/yourusername/antimon
         print("   • Whitelist specific files or patterns", file=sys.stderr)
         print("   • Customize detector sensitivity", file=sys.stderr)
         print("   • Add project-specific rules\n", file=sys.stderr)
+
+    # Handle direct file checking
+    if args.check_file:
+        if first_run:
+            mark_first_run_complete()
+        return check_file_directly(args.check_file, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color)
+    
+    # Handle direct content checking
+    if args.check_content:
+        if first_run:
+            mark_first_run_complete()
+        return check_content_directly(args.check_content, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color)
+    
+    # Handle Claude Code setup
+    if args.setup_claude_code:
+        if first_run:
+            mark_first_run_complete()
+        success = setup_claude_code_integration(no_color=args.no_color)
+        return 0 if success else 1
 
     return process_stdin(verbose=args.verbose, quiet=args.quiet, no_color=args.no_color)
 

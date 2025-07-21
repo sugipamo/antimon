@@ -352,11 +352,85 @@ class InteractiveDemo:
             self._print_success("\n✓ ALLOWED: No security issues detected")
 
 
-def run_demo():
-    """Entry point for the demo command."""
-    demo = InteractiveDemo()
+def run_demo(non_interactive: bool = False):
+    """Entry point for the demo command.
+    
+    Args:
+        non_interactive: Run in non-interactive mode (automatic demo)
+    """
+    if non_interactive:
+        demo = NonInteractiveDemo()
+    else:
+        demo = InteractiveDemo()
+    
     try:
         demo.run()
     except KeyboardInterrupt:
         print("\n\nDemo interrupted. Goodbye!")
         sys.exit(0)
+
+
+class NonInteractiveDemo(InteractiveDemo):
+    """Non-interactive demo mode."""
+    
+    def run(self):
+        """Run non-interactive demo mode (automatic demonstration)."""
+        print("\n" + "=" * 70)
+        print(f"{self.colors.BOLD}antimon Non-Interactive Demo{self.colors.RESET}")
+        print("=" * 70 + "\n")
+        
+        print("This demo shows what antimon can detect and block.\n")
+        
+        # Run through all demo cases
+        for i, (description, hook_data, should_fail, explanation) in enumerate(self.demo_cases):
+            print(f"{self.colors.BOLD}[{i+1}/{len(self.demo_cases)}] {description}{self.colors.RESET}")
+            print("-" * 50)
+            
+            # Show the operation being tested
+            print(f"{self.colors.CYAN}Tool:{self.colors.RESET} {hook_data['tool_name']}")
+            if 'file_path' in hook_data['tool_input']:
+                print(f"{self.colors.CYAN}File:{self.colors.RESET} {hook_data['tool_input']['file_path']}")
+            
+            # Show a snippet of content
+            content = hook_data['tool_input'].get('content', '')
+            if content:
+                snippet = content[:100] + "..." if len(content) > 100 else content
+                print(f"{self.colors.CYAN}Content:{self.colors.RESET} {snippet}")
+            
+            # Run validation
+            print(f"\n{self.colors.CYAN}Running antimon...{self.colors.RESET}")
+            time.sleep(0.5)  # Small delay for visual effect
+            
+            has_issues, messages, _ = validate_hook_data(hook_data)
+            
+            # Show result
+            if has_issues:
+                self._print_error("✗ BLOCKED")
+                if messages:
+                    print(f"{self.colors.YELLOW}Reason:{self.colors.RESET} {messages[0].split('\n')[0]}")
+            else:
+                self._print_success("✓ ALLOWED")
+            
+            # Verify expected result
+            if has_issues == should_fail:
+                self._print_success("✓ Result matches expectation")
+            else:
+                self._print_error("✗ Unexpected result!")
+            
+            print(f"\n{self.colors.CYAN}Explanation:{self.colors.RESET} {explanation}")
+            print()
+            
+            # Pause between demos
+            if i < len(self.demo_cases) - 1:
+                time.sleep(1)
+        
+        print("=" * 70)
+        print(f"{self.colors.BOLD}Demo Complete!{self.colors.RESET}")
+        print("=" * 70)
+        print("\nTo run antimon on your own content:")
+        print("  • JSON input:    echo '{...}' | antimon")
+        print("  • Check file:    antimon --check-file yourfile.py")
+        print("  • Check content: antimon --check-content 'your code here'")
+        print("\nTo integrate with Claude Code:")
+        print("  • Run: antimon --setup-claude-code")
+        print()

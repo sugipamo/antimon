@@ -29,7 +29,24 @@ uv pip install antimon
 
 ## Quick Start
 
-Try these examples immediately after installation:
+### Direct File/Content Checking (NEW in v0.2.8!)
+
+Check files and content directly without JSON:
+
+```bash
+# Check a Python file for security issues
+antimon --check-file config.py
+
+# Check code content directly
+antimon --check-content 'api_key = "sk-1234567890abcdef"'
+
+# Check a file and see verbose output
+antimon --check-file main.py --verbose
+```
+
+### Traditional JSON Input
+
+For AI assistant hooks and CI/CD pipelines:
 
 ```bash
 # Example 1: Detect attempt to write to sensitive file
@@ -45,9 +62,37 @@ echo '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"fi
 # Output: (no output, exit code 0)
 ```
 
+### Interactive Demo
+
+See antimon in action:
+
+```bash
+# Interactive demo (try different scenarios)
+antimon --demo
+
+# Non-interactive demo (automatic demonstration)
+antimon --demo --non-interactive
+```
+
 ## Usage
 
 ### As a command-line tool
+
+#### Direct Checking (Simplest Way!)
+
+```bash
+# Check a file
+antimon --check-file yourfile.py
+
+# Check code snippet
+antimon --check-content 'import os; os.system("rm -rf /")'
+
+# Check with options
+antimon --check-file config.py --verbose
+antimon --check-file test.py --allow-file '*.test.py'
+```
+
+#### JSON Input (For Hooks & Automation)
 
 ```bash
 # Validate JSON input from stdin
@@ -72,6 +117,20 @@ cat suspicious_operation.json | antimon
 ```
 
 ### As a Claude Code hook
+
+#### Automatic Setup (NEW in v0.2.8!)
+
+Use the interactive setup wizard:
+
+```bash
+# Automatically configure antimon with Claude Code
+antimon --setup-claude-code
+
+# Check current status
+antimon --status
+```
+
+#### Manual Setup
 
 Add to your Claude Code settings:
 
@@ -197,6 +256,14 @@ def validate_all(hook_data):
 ```
 
 ## Features
+
+### New in v0.2.8 🎉
+
+1. **Direct File Checking**: `antimon --check-file <path>` - No JSON needed!
+2. **Direct Content Checking**: `antimon --check-content "<code>"` - Check snippets instantly
+3. **Claude Code Auto-Setup**: `antimon --setup-claude-code` - One-command integration
+4. **Non-Interactive Demo**: `antimon --demo --non-interactive` - See capabilities automatically
+5. **Enhanced Status Display**: `antimon --status` - Shows Claude Code integration status
 
 ### Detection Capabilities
 

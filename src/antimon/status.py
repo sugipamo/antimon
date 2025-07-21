@@ -12,6 +12,7 @@ from typing import List, Dict, Any
 
 from .runtime_config import get_runtime_config
 from .color_utils import apply_color, Colors
+from .setup_claude_code import check_claude_code_setup
 
 
 def show_status(no_color: bool = False) -> None:
@@ -106,29 +107,17 @@ def show_status(no_color: bool = False) -> None:
     print(apply_color("🤖 Claude Code Integration", Colors.CYAN, no_color=no_color))
     print()
     
-    # Try to detect Claude Code configuration
-    claude_config_paths = [
-        Path.home() / ".config" / "claude-code" / "settings.json",
-        Path.home() / "Library" / "Application Support" / "claude-code" / "settings.json",
-    ]
+    # Use the new check function
+    is_configured, status_message = check_claude_code_setup()
     
-    claude_configured = False
-    for config_path in claude_config_paths:
-        if config_path.exists():
-            try:
-                import json
-                with open(config_path, 'r') as f:
-                    settings = json.load(f)
-                    if settings.get("hooks", {}).get("PreToolUse") == "antimon":
-                        claude_configured = True
-                        print(apply_color(f"  ✓ Configured in: {config_path}", Colors.GREEN, no_color=no_color))
-                        break
-            except Exception:
-                pass
-    
-    if not claude_configured:
-        print(apply_color("  ✗ Not configured", Colors.YELLOW, no_color=no_color))
-        print(apply_color("  → Run 'antimon --setup' to configure", Colors.WHITE, no_color=no_color))
+    if is_configured:
+        print(apply_color(f"  ✓ {status_message}", Colors.GREEN, no_color=no_color))
+    else:
+        print(apply_color(f"  ✗ {status_message}", Colors.YELLOW, no_color=no_color))
+        if "not installed" in status_message:
+            print(apply_color("  → Install Claude Code: npm install -g @anthropic/claude-code", Colors.WHITE, no_color=no_color))
+        else:
+            print(apply_color("  → Run 'antimon --setup-claude-code' to configure", Colors.WHITE, no_color=no_color))
     
     print()
     

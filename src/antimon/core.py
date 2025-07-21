@@ -479,3 +479,135 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
             print(f"   • Errors: {stats['errors']}", file=sys.stderr)
     # No output in normal mode when no issues are detected (matches README example)
     return 0
+
+
+def check_file_directly(file_path: str, verbose: bool = False, quiet: bool = False, no_color: bool = False) -> int:
+    """
+    Check a file directly without JSON input.
+    
+    Args:
+        file_path: Path to the file to check
+        verbose: Enable verbose output
+        quiet: Suppress all output except errors
+        no_color: Disable colored output
+        
+    Returns:
+        Exit code (0=success, 1=error, 2=security issues)
+    """
+    import os
+    
+    # Initialize color formatter
+    color = ColorFormatter(use_color=not no_color)
+    
+    # Check if file exists
+    if not os.path.exists(file_path):
+        if not quiet:
+            print(f"\n{color.error('❌ Error:')} File not found: {file_path}", file=sys.stderr)
+        return 1
+    
+    # Read file content
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except Exception as e:
+        if not quiet:
+            print(f"\n{color.error('❌ Error reading file:')} {e}", file=sys.stderr)
+        return 1
+    
+    # Create JSON data for validation
+    json_data: HookData = {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Write",
+        "tool_input": {
+            "file_path": os.path.abspath(file_path),
+            "content": content
+        }
+    }
+    
+    # Validate the file
+    has_issues, issues, stats = validate_hook_data(json_data)
+    
+    if has_issues:
+        # Get runtime config to check for dry run mode
+        config = get_runtime_config()
+        
+        # Save the error for later explanation
+        save_last_error(issues, json_data)
+        _display_security_issues(issues, stats, json_data, "Write", color, verbose, quiet, no_color, dry_run=config.dry_run)
+        
+        # In dry run mode, return success (0) instead of error (2)
+        if config.dry_run:
+            return 0
+        else:
+            return 2
+    
+    if verbose and not quiet:
+        print(f"\n✅ File '{file_path}' passed all security checks", file=sys.stderr)
+        print(f"\n📊 Detection Summary:", file=sys.stderr)
+        print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
+        print(f"   • Passed: {stats['passed']}", file=sys.stderr)
+        print(f"   • Failed: {stats['failed']}", file=sys.stderr)
+        if stats['errors'] > 0:
+            print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+    elif not quiet:
+        print(f"✅ No security issues found in '{file_path}'", file=sys.stderr)
+    
+    return 0
+
+
+def check_content_directly(content: str, file_name: str = "stdin", verbose: bool = False, quiet: bool = False, no_color: bool = False) -> int:
+    """
+    Check content directly without JSON input.
+    
+    Args:
+        content: Content to check
+        file_name: Optional file name for context
+        verbose: Enable verbose output
+        quiet: Suppress all output except errors
+        no_color: Disable colored output
+        
+    Returns:
+        Exit code (0=success, 2=security issues)
+    """
+    # Initialize color formatter
+    color = ColorFormatter(use_color=not no_color)
+    
+    # Create JSON data for validation
+    json_data: HookData = {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Write",
+        "tool_input": {
+            "file_path": file_name,
+            "content": content
+        }
+    }
+    
+    # Validate the content
+    has_issues, issues, stats = validate_hook_data(json_data)
+    
+    if has_issues:
+        # Get runtime config to check for dry run mode
+        config = get_runtime_config()
+        
+        # Save the error for later explanation
+        save_last_error(issues, json_data)
+        _display_security_issues(issues, stats, json_data, "Write", color, verbose, quiet, no_color, dry_run=config.dry_run)
+        
+        # In dry run mode, return success (0) instead of error (2)
+        if config.dry_run:
+            return 0
+        else:
+            return 2
+    
+    if verbose and not quiet:
+        print(f"\n✅ Content passed all security checks", file=sys.stderr)
+        print(f"\n📊 Detection Summary:", file=sys.stderr)
+        print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
+        print(f"   • Passed: {stats['passed']}", file=sys.stderr)
+        print(f"   • Failed: {stats['failed']}", file=sys.stderr)
+        if stats['errors'] > 0:
+            print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+    elif not quiet:
+        print("✅ No security issues found in provided content", file=sys.stderr)
+    
+    return 0

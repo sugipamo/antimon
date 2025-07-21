@@ -8,9 +8,9 @@ A Python package that detects potentially dangerous operations and
 prohibited patterns in code modifications.
 """
 
-__version__ = "0.2.6"
+__version__ = "0.2.8"
 
-from .core import validate_hook_data
+from .core import validate_hook_data, check_file_directly, check_content_directly
 from .detectors import (
     DetectionResult,
     detect_api_key,
@@ -39,6 +39,8 @@ __all__ = [
     "detect_localhost",
     "detect_read_sensitive_files",
     "validate_hook_data",
+    "check_file_directly",
+    "check_content_directly",
     "RuntimeConfig",
     "get_runtime_config",
     "set_runtime_config",
