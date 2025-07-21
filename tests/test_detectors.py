@@ -12,6 +12,14 @@ from antimon.detectors import (
 
 
 class TestFilenameDetection:
+    """Test cases for dangerous file path detection.
+    
+    Validates that the filename detector correctly identifies:
+    - System files (/etc/passwd, /etc/shadow)
+    - SSH keys and configuration files
+    - Secret and credential files
+    - Safe file paths that should not trigger alerts
+    """
     def test_detect_etc_passwd(self):
         json_data = {"tool_input": {"file_path": "/etc/passwd"}}
         result = detect_filenames(json_data)
@@ -30,6 +38,14 @@ class TestFilenameDetection:
 
 
 class TestLLMAPIDetection:
+    """Test cases for external LLM API usage detection.
+    
+    Ensures detection of:
+    - OpenAI API imports and endpoints
+    - Google Gemini API references
+    - Other LLM service patterns
+    - Safe code that does not use external LLMs
+    """
     def test_detect_openai_api(self):
         json_data = {"tool_input": {"content": "import openai\napi.openai.com"}}
         result = detect_llm_api(json_data)
@@ -47,6 +63,14 @@ class TestLLMAPIDetection:
 
 
 class TestAPIKeyDetection:
+    """Test cases for hardcoded API key detection.
+    
+    Verifies detection of:
+    - Direct API key assignments
+    - Bearer tokens in headers
+    - Various API key patterns
+    - Code without API keys
+    """
     def test_detect_api_key_assignment(self):
         json_data = {"tool_input": {"content": 'api_key = "sk-1234567890abcdef"'}}
         result = detect_api_key(json_data)
@@ -66,6 +90,14 @@ class TestAPIKeyDetection:
 
 
 class TestDockerDetection:
+    """Test cases for Docker-related operations detection.
+    
+    Tests identification of:
+    - Docker CLI commands (run, build, etc.)
+    - Dockerfile references
+    - Docker Compose operations
+    - Non-Docker code
+    """
     def test_detect_docker_run(self):
         json_data = {"tool_input": {"content": "docker run -it ubuntu bash"}}
         result = detect_docker(json_data)
@@ -83,6 +115,14 @@ class TestDockerDetection:
 
 
 class TestLocalhostDetection:
+    """Test cases for localhost and loopback address detection.
+    
+    Validates detection of:
+    - localhost URLs with various ports
+    - 127.0.0.1 loopback addresses
+    - Local network patterns
+    - External URLs that should not trigger
+    """
     def test_detect_localhost_port(self):
         json_data = {"tool_input": {"content": 'url = "http://localhost:8080"'}}
         result = detect_localhost(json_data)
@@ -97,3 +137,4 @@ class TestLocalhostDetection:
         json_data = {"tool_input": {"content": 'url = "https://example.com"'}}
         result = detect_localhost(json_data)
         assert result.detected is False
+

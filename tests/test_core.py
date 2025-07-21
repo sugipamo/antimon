@@ -6,6 +6,14 @@ from antimon.core import validate_hook_data
 
 
 class TestValidateHookData:
+    """Test cases for the core validation hook functionality.
+    
+    Tests the main validate_hook_data function which:
+    - Orchestrates all detectors
+    - Handles different tool types (Write, Edit, MultiEdit, etc.)
+    - Returns aggregated results and statistics
+    - Properly ignores non-code-editing tools
+    """
     def test_non_code_editing_tool(self):
         json_data = {"tool_name": "Read", "tool_input": {"file_path": "/etc/passwd"}}
         has_issues, issues, stats = validate_hook_data(json_data)

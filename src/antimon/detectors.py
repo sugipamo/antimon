@@ -49,12 +49,15 @@ def detect_filenames(json_data: dict[str, Any]) -> DetectionResult:
 
     for pattern in dangerous_patterns:
         if re.search(pattern, file_path, re.IGNORECASE):
+            message_parts = [
+                f"Dangerous file path detected: {file_path}",
+                f"      Pattern matched: {pattern}",
+                f"      Why: This appears to be a sensitive system or credential file",
+                f"      Suggestion: Use environment variables or secure key management services instead"
+            ]
             return DetectionResult(
                 detected=True,
-                message=f"Dangerous file path detected: {file_path}\n" +
-                        f"      Pattern matched: {pattern}\n" +
-                        f"      Why: This appears to be a sensitive system or credential file\n" +
-                        f"      Suggestion: Use environment variables or secure key management services instead",
+                message="\n".join(message_parts),
                 details={"pattern": pattern, "file_path": file_path},
             )
 
@@ -109,12 +112,15 @@ def detect_llm_api(json_data: dict[str, Any]) -> DetectionResult:
             continue
         for pattern in llm_patterns:
             if re.search(pattern, text, re.IGNORECASE):
+                message_parts = [
+                    f"External LLM API reference detected",
+                    f"      Pattern matched: {pattern}",
+                    f"      Why: Direct API calls to external LLMs may expose sensitive data",
+                    f"      Suggestion: Use Claude Code's built-in capabilities or proxy through a secure backend"
+                ]
                 return DetectionResult(
                     detected=True,
-                    message=f"External LLM API reference detected\n" +
-                            f"      Pattern matched: {pattern}\n" +
-                            f"      Why: Direct API calls to external LLMs may expose sensitive data\n" +
-                            f"      Suggestion: Use Claude Code's built-in capabilities or proxy through a secure backend",
+                    message="\n".join(message_parts),
                     details={"pattern": pattern},
                 )
 
@@ -157,12 +163,15 @@ def detect_api_key(json_data: dict[str, Any]) -> DetectionResult:
             continue
         for pattern in api_key_patterns:
             if re.search(pattern, text, re.IGNORECASE):
+                message_parts = [
+                    f"Hardcoded API key or secret detected",
+                    f"      Pattern matched: {pattern}",
+                    f"      Why: Hardcoded credentials are a security risk",
+                    f"      Suggestion: Use environment variables (e.g., os.getenv('API_KEY')) or secure vaults"
+                ]
                 return DetectionResult(
                     detected=True,
-                    message=f"Hardcoded API key or secret detected\n" +
-                            f"      Pattern matched: {pattern}\n" +
-                            f"      Why: Hardcoded credentials are a security risk\n" +
-                            f"      Suggestion: Use environment variables (e.g., os.getenv('API_KEY')) or secure vaults",
+                    message="\n".join(message_parts),
                     details={"pattern": pattern},
                 )
 
@@ -206,12 +215,15 @@ def detect_docker(json_data: dict[str, Any]) -> DetectionResult:
             continue
         for pattern in docker_patterns:
             if re.search(pattern, text, re.IGNORECASE):
+                message_parts = [
+                    f"Docker operation detected",
+                    f"      Pattern matched: {pattern}",
+                    f"      Why: Docker operations can pose security risks if not properly configured",
+                    f"      Suggestion: Review Docker commands for security best practices"
+                ]
                 return DetectionResult(
                     detected=True,
-                    message=f"Docker operation detected\n" +
-                            f"      Pattern matched: {pattern}\n" +
-                            f"      Why: Docker operations can pose security risks if not properly configured\n" +
-                            f"      Suggestion: Review Docker commands for security best practices",
+                    message="\n".join(message_parts),
                     details={"pattern": pattern},
                 )
 
@@ -251,12 +263,15 @@ def detect_localhost(json_data: dict[str, Any]) -> DetectionResult:
             continue
         for pattern in localhost_patterns:
             if re.search(pattern, text):
+                message_parts = [
+                    f"Localhost/port reference detected",
+                    f"      Pattern matched: {pattern}",
+                    f"      Why: Hardcoded localhost references may not work in production",
+                    f"      Suggestion: Use configuration files or environment variables for host/port settings"
+                ]
                 return DetectionResult(
                     detected=True,
-                    message=f"Localhost/port reference detected\n" +
-                            f"      Pattern matched: {pattern}\n" +
-                            f"      Why: Hardcoded localhost references may not work in production\n" +
-                            f"      Suggestion: Use configuration files or environment variables for host/port settings",
+                    message="\n".join(message_parts),
                     details={"pattern": pattern},
                 )
 

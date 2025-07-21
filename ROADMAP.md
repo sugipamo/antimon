@@ -59,12 +59,22 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 ### Code Quality Improvements from src-check (2025-07-21) 🔍
 - [ ] **Print statements in core.py**: Currently using print() for user-facing output. Consider if this should remain as-is (for CLI output) or be replaced with a more sophisticated output system
 - [ ] **Reduce coupling in core.py and detectors.py**: High external call count (88 and 35 respectively, max recommended: 15)
-- [ ] **Add docstrings to test classes**: All test files missing docstrings (affects documentation score)
-- [ ] **Optimize string concatenation in detectors.py**: Use list.append() and join() instead of += in loops (multiple PERF003 violations)
+- [x] **Add docstrings to test classes**: ✅ Added comprehensive docstrings to all test classes (2025-07-21)
+- [x] **Optimize string concatenation in detectors.py**: ✅ Replaced string concatenation with list.join() pattern (2025-07-21)
 
 
 ### Version 0.2.2 (In Progress) 🚀
 次に実装予定のタスク（2025-07-21 更新）:
+
+#### 完了したタスク ✅ (2025-07-21)
+- [x] **テストクラスへのdocstring追加**: 全テストクラスに包括的なdocstringを追加し、テストの目的を明確化
+- [x] **文字列連結の最適化**: detectors.pyでPERF003違反を修正し、パフォーマンスを改善
+
+#### 次に実装予定のタスク（優先順位順）
+1. **--version オプションの実装**: インストール後の動作確認とバージョン管理のため
+2. **--test コマンドの実装**: インストール後に即座に動作確認できるセルフテスト機能
+3. **カラー出力のサポート**: エラーメッセージと成功メッセージの視認性向上
+4. **検出結果の具体性向上**: 行番号表示と検出パターンのハイライト
 
 #### ユーザー体験の観点から追加されたタスク（2025-07-21）
 ##### 使用開始時の体験改善
