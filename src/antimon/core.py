@@ -22,13 +22,13 @@ from .detectors import (
     detect_localhost,
     detect_read_sensitive_files,
 )
-from .logging_config import get_logger
+from .logger import get_logger
 from .color_utils import ColorFormatter
 from .error_context import ErrorContext
 from .runtime_config import get_runtime_config
 from .last_error import save_last_error
 
-logger = get_logger(__name__)
+logger = get_logger()
 
 
 def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, int]]:
@@ -185,21 +185,21 @@ def _parse_json_input(color: ColorFormatter, quiet: bool) -> tuple[HookData | No
     except json.JSONDecodeError as e:
         logger.error(f"JSON parsing error: {e}")
         if not quiet:
-            print(f"\n{color.error('❌ JSON parsing error:')} {e}", file=sys.stderr)
-            print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
-            print("   Ensure your input is valid JSON. Example of valid format:", file=sys.stderr)
-            print('   {', file=sys.stderr)
-            print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
-            print('     "tool_name": "Write",', file=sys.stderr)
-            print('     "tool_input": {', file=sys.stderr)
-            print('       "file_path": "example.py",', file=sys.stderr)
-            print('       "content": "print(\'Hello\')"}', file=sys.stderr)
-            print('   }', file=sys.stderr)
-            print("\n   Common issues:", file=sys.stderr)
-            print("   • Missing quotes around strings", file=sys.stderr)
-            print("   • Trailing commas after last item", file=sys.stderr)
-            print("   • Unescaped quotes in strings (use \\\") ", file=sys.stderr)
-            print("   • Missing brackets or braces\n", file=sys.stderr)
+            error_msg = f"❌ JSON parsing error: {e}\n\n💡 How to fix:\n"
+            error_msg += "   Ensure your input is valid JSON. Example of valid format:\n"
+            error_msg += '   {\n'
+            error_msg += '     "hook_event_name": "PreToolUse",\n'
+            error_msg += '     "tool_name": "Write",\n'
+            error_msg += '     "tool_input": {\n'
+            error_msg += '       "file_path": "example.py",\n'
+            error_msg += '       "content": "print(\'Hello\')"}\n'
+            error_msg += '   }\n'
+            error_msg += "\n   Common issues:\n"
+            error_msg += "   • Missing quotes around strings\n"
+            error_msg += "   • Trailing commas after last item\n"
+            error_msg += "   • Unescaped quotes in strings (use \\\") \n"
+            error_msg += "   • Missing brackets or braces"
+            logger.error(error_msg)
         return None, 1
     except Exception as e:
         logger.error(f"Unexpected error reading input: {e}", exc_info=True)
@@ -304,7 +304,7 @@ def _validate_required_fields(json_data: HookData, tool_name: str, color: ColorF
 
 
 def _display_security_issues(issues: list[str], stats: dict[str, int], json_data: HookData, 
-                           tool_name: str, color: ColorFormatter, verbose: bool, quiet: bool, no_color: bool = False) -> None:
+                           tool_name: str, color: ColorFormatter, verbose: bool, quiet: bool, no_color: bool = False, dry_run: bool = False) -> None:
     """
     Display security issues found during validation.
     
@@ -317,6 +317,7 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
         verbose: Enable verbose output
         quiet: Suppress all output except errors
         no_color: Disable colored output
+        dry_run: If True, show issues but don't block
     """
     logger.info(f"Security validation failed with {len(issues)} issue(s)")
     
@@ -324,7 +325,10 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
     error_context = ErrorContext(no_color=no_color)
     
     # Always show security issues, even in quiet mode
-    print(f"\n{color.error('⚠️  Security issues detected:')}", file=sys.stderr)
+    if dry_run:
+        print(f"\n{color.warning('🔍 DRY RUN - Security issues that would be detected:')}", file=sys.stderr)
+    else:
+        print(f"\n{color.error('⚠️  Security issues detected:')}", file=sys.stderr)
     
     # Structured output for issues
     if verbose and not quiet:
@@ -351,16 +355,24 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
                 print(context, file=sys.stderr)
     
     if not quiet:
-        print("\n💡 How to proceed:", file=sys.stderr)
-        print("   1. Review the detected issues above", file=sys.stderr)
-        print("   2. Run 'antimon --explain-last-error' for detailed explanations", file=sys.stderr)
-        print("   3. If false positive, consider:", file=sys.stderr)
-        print("      • Using environment variables instead of hardcoded values", file=sys.stderr)
-        print("      • Moving sensitive data to separate config files", file=sys.stderr)
-        print("      • Using --allow-file or --ignore-pattern options", file=sys.stderr)
-        print("   4. For legitimate use cases, you can:", file=sys.stderr)
-        print("      • Temporarily disable the hook in Claude Code settings", file=sys.stderr)
-        print("      • Report false positives at: https://github.com/yourusername/antimon/issues\n", file=sys.stderr)
+        if dry_run:
+            print("\n💡 DRY RUN Summary:", file=sys.stderr)
+            print("   • This is a preview of what would be blocked", file=sys.stderr)
+            print("   • No actual blocking occurred", file=sys.stderr)
+            print("   • To actually block these operations, run without --dry-run", file=sys.stderr)
+            print("   • To allow specific files, use --allow-file", file=sys.stderr)
+            print("   • To disable specific detectors, use --disable-detector\n", file=sys.stderr)
+        else:
+            print("\n💡 How to proceed:", file=sys.stderr)
+            print("   1. Review the detected issues above", file=sys.stderr)
+            print("   2. Run 'antimon --explain-last-error' for detailed explanations", file=sys.stderr)
+            print("   3. If false positive, consider:", file=sys.stderr)
+            print("      • Using environment variables instead of hardcoded values", file=sys.stderr)
+            print("      • Moving sensitive data to separate config files", file=sys.stderr)
+            print("      • Using --allow-file or --ignore-pattern options", file=sys.stderr)
+            print("   4. For legitimate use cases, you can:", file=sys.stderr)
+            print("      • Temporarily disable the hook in Claude Code settings", file=sys.stderr)
+            print("      • Report false positives at: https://github.com/yourusername/antimon/issues\n", file=sys.stderr)
 
 
 def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = False) -> int:
@@ -443,10 +455,18 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
         issues = simplified_issues
 
     if has_issues:
-        # Save the error for later explanation
+        # Get runtime config to check for dry run mode
+        config = get_runtime_config()
+        
+        # Save the error for later explanation (even in dry run)
         save_last_error(issues, json_data)
-        _display_security_issues(issues, stats, json_data, tool_name, color, verbose, quiet, no_color)
-        return 2
+        _display_security_issues(issues, stats, json_data, tool_name, color, verbose, quiet, no_color, dry_run=config.dry_run)
+        
+        # In dry run mode, return success (0) instead of error (2)
+        if config.dry_run:
+            return 0
+        else:
+            return 2
 
     logger.info("Security validation passed")
     if verbose and not quiet:

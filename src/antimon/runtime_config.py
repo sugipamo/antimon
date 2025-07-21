@@ -26,6 +26,9 @@ class RuntimeConfig:
     # Disabled detectors
     disabled_detectors: Set[str] = field(default_factory=set)
     
+    # Dry run mode
+    dry_run: bool = False
+    
     @classmethod
     def from_args(cls, args) -> "RuntimeConfig":
         """Create RuntimeConfig from command line arguments."""
@@ -42,6 +45,10 @@ class RuntimeConfig:
         # Add disabled detectors
         if args.disable_detector:
             config.disabled_detectors.update(args.disable_detector)
+        
+        # Set dry run mode
+        if hasattr(args, 'dry_run'):
+            config.dry_run = args.dry_run
         
         # Also check environment variables
         config._load_from_env()
@@ -129,6 +136,9 @@ class RuntimeConfig:
         
         if self.disabled_detectors:
             summary.append(f"Disabled detectors: {', '.join(self.disabled_detectors)}")
+        
+        if self.dry_run:
+            summary.append("Mode: DRY RUN (preview only, no blocking)")
         
         return summary
 

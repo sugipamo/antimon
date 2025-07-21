@@ -24,6 +24,7 @@ from .error_context import show_error_help
 from .runtime_config import RuntimeConfig, set_runtime_config
 from .last_error import explain_last_error
 from .demo import run_demo
+from .status import show_status
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -150,6 +151,18 @@ For more information: https://github.com/yourusername/antimon
         help="Run interactive demo to see antimon's detection capabilities in action.",
     )
 
+    parser.add_argument(
+        "--status",
+        action="store_true",
+        help="Show current configuration, enabled detectors, and exclusion patterns.",
+    )
+
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview what would be detected without blocking. Shows all detections that would occur.",
+    )
+
     args = parser.parse_args(argv)
 
     # Check if this is the first run (before running test)
@@ -202,6 +215,13 @@ For more information: https://github.com/yourusername/antimon
         if first_run:
             mark_first_run_complete()
         run_demo()
+        return 0
+    
+    # Show status if requested
+    if args.status:
+        if first_run:
+            mark_first_run_complete()
+        show_status(no_color=args.no_color)
         return 0
     
     # Run self-test if requested
