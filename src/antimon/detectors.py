@@ -1,10 +1,13 @@
+# Copyright (c) 2025 Your Name
+# Licensed under the MIT License
+
 """
 Detection modules for various security patterns
 """
 
-from dataclasses import dataclass
-from typing import Dict, Any, Optional
 import re
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -14,10 +17,10 @@ class DetectionResult:
     detected: bool
     message: str = ""
     severity: str = "error"
-    details: Optional[Dict[str, Any]] = None
+    details: dict[str, Any] | None = None
 
 
-def detect_filenames(json_data: Dict[str, Any]) -> DetectionResult:
+def detect_filenames(json_data: dict[str, Any]) -> DetectionResult:
     """
     Detect dangerous or sensitive file paths
 
@@ -55,7 +58,7 @@ def detect_filenames(json_data: Dict[str, Any]) -> DetectionResult:
     return DetectionResult(detected=False)
 
 
-def detect_llm_api(json_data: Dict[str, Any]) -> DetectionResult:
+def detect_llm_api(json_data: dict[str, Any]) -> DetectionResult:
     """
     Detect references to external LLM APIs
 
@@ -87,20 +90,32 @@ def detect_llm_api(json_data: Dict[str, Any]) -> DetectionResult:
         r"from\s+google\.generativeai",
     ]
 
-    content = json_data.get("tool_input", {}).get("content", "")
+    # Check content field (for Write tool) and new_string field (for Edit/MultiEdit)
+    tool_input = json_data.get("tool_input", {})
+    content = tool_input.get("content", "")
+    new_string = tool_input.get("new_string", "")
 
-    for pattern in llm_patterns:
-        if re.search(pattern, content, re.IGNORECASE):
-            return DetectionResult(
-                detected=True,
-                message=f"External LLM API reference detected: {pattern}",
-                details={"pattern": pattern},
-            )
+    # For MultiEdit, check all edits
+    edits = tool_input.get("edits", [])
+    all_content = [content, new_string]
+    for edit in edits:
+        all_content.append(edit.get("new_string", ""))
+
+    for text in all_content:
+        if not text:
+            continue
+        for pattern in llm_patterns:
+            if re.search(pattern, text, re.IGNORECASE):
+                return DetectionResult(
+                    detected=True,
+                    message=f"External LLM API reference detected: {pattern}",
+                    details={"pattern": pattern},
+                )
 
     return DetectionResult(detected=False)
 
 
-def detect_api_key(json_data: Dict[str, Any]) -> DetectionResult:
+def detect_api_key(json_data: dict[str, Any]) -> DetectionResult:
     """
     Detect hardcoded API keys in content
 
@@ -120,20 +135,32 @@ def detect_api_key(json_data: Dict[str, Any]) -> DetectionResult:
         r"AIza[0-9A-Za-z\-_]{35}",  # Google API
     ]
 
-    content = json_data.get("tool_input", {}).get("content", "")
+    # Check content field (for Write tool) and new_string field (for Edit/MultiEdit)
+    tool_input = json_data.get("tool_input", {})
+    content = tool_input.get("content", "")
+    new_string = tool_input.get("new_string", "")
 
-    for pattern in api_key_patterns:
-        if re.search(pattern, content, re.IGNORECASE):
-            return DetectionResult(
-                detected=True,
-                message="Hardcoded API key detected",
-                details={"pattern": pattern},
-            )
+    # For MultiEdit, check all edits
+    edits = tool_input.get("edits", [])
+    all_content = [content, new_string]
+    for edit in edits:
+        all_content.append(edit.get("new_string", ""))
+
+    for text in all_content:
+        if not text:
+            continue
+        for pattern in api_key_patterns:
+            if re.search(pattern, text, re.IGNORECASE):
+                return DetectionResult(
+                    detected=True,
+                    message="Hardcoded API key detected",
+                    details={"pattern": pattern},
+                )
 
     return DetectionResult(detected=False)
 
 
-def detect_docker(json_data: Dict[str, Any]) -> DetectionResult:
+def detect_docker(json_data: dict[str, Any]) -> DetectionResult:
     """
     Detect Docker-related operations
 
@@ -153,23 +180,33 @@ def detect_docker(json_data: Dict[str, Any]) -> DetectionResult:
         r"docker\s+push",
     ]
 
-    content = json_data.get("tool_input", {}).get("content", "")
-    file_path = json_data.get("tool_input", {}).get("file_path", "")
+    # Check content field (for Write tool) and new_string field (for Edit/MultiEdit)
+    tool_input = json_data.get("tool_input", {})
+    content = tool_input.get("content", "")
+    new_string = tool_input.get("new_string", "")
+    file_path = tool_input.get("file_path", "")
 
-    check_content = f"{content} {file_path}"
+    # For MultiEdit, check all edits
+    edits = tool_input.get("edits", [])
+    all_content = [content, new_string, file_path]
+    for edit in edits:
+        all_content.append(edit.get("new_string", ""))
 
-    for pattern in docker_patterns:
-        if re.search(pattern, check_content, re.IGNORECASE):
-            return DetectionResult(
-                detected=True,
-                message="Docker operation detected",
-                details={"pattern": pattern},
-            )
+    for text in all_content:
+        if not text:
+            continue
+        for pattern in docker_patterns:
+            if re.search(pattern, text, re.IGNORECASE):
+                return DetectionResult(
+                    detected=True,
+                    message="Docker operation detected",
+                    details={"pattern": pattern},
+                )
 
     return DetectionResult(detected=False)
 
 
-def detect_localhost(json_data: Dict[str, Any]) -> DetectionResult:
+def detect_localhost(json_data: dict[str, Any]) -> DetectionResult:
     """
     Detect localhost and port references
 
@@ -186,20 +223,32 @@ def detect_localhost(json_data: Dict[str, Any]) -> DetectionResult:
         r":\s*(3000|8000|8080|5000|5432|3306)\b",
     ]
 
-    content = json_data.get("tool_input", {}).get("content", "")
+    # Check content field (for Write tool) and new_string field (for Edit/MultiEdit)
+    tool_input = json_data.get("tool_input", {})
+    content = tool_input.get("content", "")
+    new_string = tool_input.get("new_string", "")
 
-    for pattern in localhost_patterns:
-        if re.search(pattern, content):
-            return DetectionResult(
-                detected=True,
-                message="Localhost/port reference detected",
-                details={"pattern": pattern},
-            )
+    # For MultiEdit, check all edits
+    edits = tool_input.get("edits", [])
+    all_content = [content, new_string]
+    for edit in edits:
+        all_content.append(edit.get("new_string", ""))
+
+    for text in all_content:
+        if not text:
+            continue
+        for pattern in localhost_patterns:
+            if re.search(pattern, text):
+                return DetectionResult(
+                    detected=True,
+                    message="Localhost/port reference detected",
+                    details={"pattern": pattern},
+                )
 
     return DetectionResult(detected=False)
 
 
-def detect_claude_antipatterns(json_data: Dict[str, Any]) -> DetectionResult:
+def detect_claude_antipatterns(json_data: dict[str, Any]) -> DetectionResult:
     """
     Use Claude to detect anti-patterns and workarounds
 

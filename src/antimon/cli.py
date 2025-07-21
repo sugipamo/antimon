@@ -1,16 +1,19 @@
+# Copyright (c) 2025 Your Name
+# Licensed under the MIT License
+
 """
 Command-line interface for antimon
 """
 
-import sys
 import argparse
-from typing import Optional, List
+import sys
 
 from . import __version__
 from .core import process_stdin
+from .logging_config import setup_logging
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """
     Main CLI entry point
 
@@ -38,10 +41,13 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     args = parser.parse_args(argv)
 
+    # Setup logging
+    setup_logging(verbose=args.verbose)
+
     if args.config:
         print("Configuration file support coming in v0.3.0", file=sys.stderr)
 
-    return process_stdin()
+    return process_stdin(verbose=args.verbose)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Your Name
+# Licensed under the MIT License
+
 """
 antimon - Security validation tool for AI coding assistants
 
@@ -7,26 +10,25 @@ prohibited patterns in code modifications.
 
 __version__ = "0.2.0"
 
+from .core import validate_hook_data
 from .detectors import (
+    DetectionResult,
+    detect_api_key,
+    detect_claude_antipatterns,
+    detect_docker,
     detect_filenames,
     detect_llm_api,
-    detect_api_key,
-    detect_docker,
     detect_localhost,
-    detect_claude_antipatterns,
-    DetectionResult,
 )
 
-from .core import validate_hook_data
-
 __all__ = [
+    "DetectionResult",
+    "__version__",
+    "detect_api_key",
+    "detect_claude_antipatterns",
+    "detect_docker",
     "detect_filenames",
     "detect_llm_api",
-    "detect_api_key",
-    "detect_docker",
     "detect_localhost",
-    "detect_claude_antipatterns",
-    "DetectionResult",
     "validate_hook_data",
-    "__version__",
 ]
