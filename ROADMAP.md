@@ -2,7 +2,7 @@
 
 ## Current Status (2025-07-21)
 
-🎉 **Version 0.2.6 has been successfully completed!** 
+🎉 **Version 0.2.7 Major Features Completed!** 
 
 ### Recent Achievements:
 - ✅ **Version 0.2.0**: Transformed into a proper Python package with comprehensive testing
@@ -12,11 +12,15 @@
 - ✅ **Version 0.2.4**: Security fixes for Read/Bash tools
 - ✅ **Version 0.2.5**: Code quality improvements (refactoring, type hints)
 - ✅ **Version 0.2.6**: User experience improvements (first-run guide, better errors, runtime config)
+- ✅ **Version 0.2.7 (Partial)**: Critical improvements based on user feedback
+  - ✅ Fixed `--allow-file` option to only skip filename detection while keeping other detectors active
+  - ✅ Enhanced error messages with specific context and actionable suggestions
+  - ✅ Improved detection transparency with detailed explanations in `--explain-last-error`
 
 ### Quality Check Summary (2025-07-21)
-- ✅ **pytest**: All 83 tests passing with 84% code coverage
+- ✅ **pytest**: All 84 tests passing with 81% code coverage  
 - ✅ **Project structure**: Clean working directory, proper .gitignore configuration
-- ✅ **src-check score**: 71.0/100 (🟡 Good - some improvements needed)
+- ✅ **src-check score**: 68.1/100 (🟠 Moderate - some improvements needed)
 - ✅ **User Experience Review**: Comprehensive evaluation completed with actionable improvements identified
 
 ## Project Vision
@@ -50,24 +54,7 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [x] Add tests for Edit/MultiEdit tool support
 - [x] Update README with better examples and documentation
 
-### Remaining Code Quality Items from src-check 🔍
-- [ ] **Print statements**: Currently using print() for user-facing output (200+ occurrences across multiple files). This is intentional for CLI tool output, but consider structured logging for debugging
-- [ ] **Reduce coupling**: High external call count in core.py, detectors.py, color_utils.py, error_context.py, first_run.py, and last_error.py
-- [ ] **Unused imports cleanup**: Several unused imports in __init__.py (some intentionally re-exported for public API)
-- [ ] **Security concern in color_utils.py**: os.system() call for Windows ANSI enablement (line 71)
-- [ ] **Import inside functions**: Circular dependency concerns in color_utils.py, first_run.py, and last_error.py
-- [ ] **Type hint improvements**: Missing or incomplete type hints in several functions
-- [ ] **Documentation improvements**: Missing parameter and return documentation in many functions
-- [ ] **Performance improvements**: String concatenation in loops (use list.append() + ''.join() instead)
 
-
-### Version 0.2.6 ✅ COMPLETED (2025-07-21)
-
-#### ユーザー体験の改善
-- [x] **初回使用時のガイド改善**: インストール後のメッセージ、--quickstartコマンド、Claude Code連携の自動検出
-- [x] **エラーメッセージの実用性向上**: コンテキスト表示、具体的な修正提案、FAQリンク
-- [x] **設定ファイルなしでのカスタマイズ**: --ignore-pattern、--allow-file、--disable-detector、環境変数サポート
-- [x] **実際の使用フローの改善**: ブロック時の対処法表示、--explain-last-error機能、--help-errors
 
 ### Version 0.2.7 (In Progress) 🚀
 
@@ -92,51 +79,89 @@ Transform antimon from a standalone script into a robust, extensible Python pack
   - [ ] --dry-run モード（実際にブロックせずに検出結果を表示）
   - [ ] 検出ロジックの詳細トレース機能
   - [ ] 過去の検出履歴の参照機能
-#### その他のユーザビリティ改善
-- [ ] **学習曲線の緩和**:
-  - [ ] 初回実行時の対話的なチュートリアルモード
-  - [ ] よくある使用例のアニメーション表示（asciinemaスタイル）
-  - [ ] 段階的な機能紹介（基本→応用）
-- [ ] **フィードバックループの改善**:
-  - [ ] ユーザーの選択を学習して次回から適用
-  - [ ] 「この検出は役立ちましたか？」の簡易フィードバック
-- [ ] **統合テストモード**:
-  - [ ] プロジェクト全体をスキャンして潜在的な問題を事前に確認
-  - [ ] CI/CD前の事前チェックコマンド
-  - [ ] 修正提案の一括適用オプション
-- [ ] **コンテキスト認識の強化**:
-  - [ ] テストファイルでの誤検出を自動的に緩和
-  - [ ] プロジェクトタイプ（Web、CLI、ライブラリ等）の自動認識
-  - [ ] 言語・フレームワーク固有のベストプラクティス適用
-- [ ] **対話的修正モード**: 検出時に修正案を提示し、選択可能に
-- [ ] **バッチ処理サポート**: 複数ファイルの一括チェック機能
-- [ ] **CI/CD統合の簡易化**: GitHub Actions、GitLab CI用のテンプレート提供
-- [ ] **プログレスバー表示**: 大規模プロジェクトでの進捗表示
-- [ ] **インタラクティブチュートリアル**: antimon --tutorial コマンド
-- [ ] **ベストプラクティスガイド**: 一般的なユースケースの解決方法
-- [ ] **トラブルシューティングの自動診断**: --diagnose コマンド
-- [ ] **コミュニティフォーラムへの統合**: エラー時に関連する議論へのリンク
 
-#### 最優先の改善項目（2025-07-21 ユーザー評価より） 🚨
-- [ ] **`--allow-file` オプションの修正** 🔴 HIGH PRIORITY
-  - [ ] 現在、ファイルパスの許可が期待通りに動作しない問題の修正
-  - [ ] 許可したファイルでも他の検出器（API key等）は動作するよう改善
-  - [ ] グロブパターンのサポート（例: `--allow-file "~/project/*.env"`）
-- [ ] **エラーメッセージの具体性向上** 🟡 MEDIUM PRIORITY
-  - [ ] 検出パターンをより具体的に表示（例：「.envファイル」ではなく「環境変数ファイル」）
-  - [ ] 修正方法の実例をコンテキストに応じて表示
-  - [ ] 関連するドキュメントへの直接リンク
-  - [ ] 「なぜ危険か」の詳細説明オプション
-- [ ] **検出の透明性向上** 🟡 MEDIUM PRIORITY
-  - [ ] マッチしたパターンの詳細表示
-  - [ ] 検出ロジックの可視化
-  - [ ] 誤検出と正当な検出の区別を明確化
 
-#### パフォーマンスと信頼性の改善
-- [ ] **キャッシング機構**: 繰り返しチェックのためのキャッシュ実装
-- [ ] **非同期検出**: より良いパフォーマンスのための非同期処理
-- [ ] **大規模ファイル対応**: メモリ効率的な大規模ファイル処理
-- [ ] **エラーリカバリー**: 検出器エラー時の優雅な処理
+
+### Next Priority Tasks for Version 0.2.7
+
+#### グロブパターンサポート for `--allow-file` 🚀
+- [ ] ワイルドカードサポート（`*.env`, `config/*.json`）
+- [ ] 再帰的パターン（`**/*.secret`）
+- [ ] パスの正規化と展開
+- [ ] テストケースの追加
+
+#### インストール体験の改善（残り項目）
+- [ ] プラットフォーム別の詳細なインストールガイド
+- [ ] 依存関係の自動チェックと解決提案
+
+#### 検出結果の視覚的改善
+- [ ] 検出箇所のコードハイライト表示
+- [ ] 問題の深刻度レベルの視覚的表示（色分け・アイコン）
+- [ ] 検出パターンの説明を日本語でも表示するオプション
+
+#### 誤検出への対処改善
+- [ ] 誤検出報告の簡易化（--report-false-positive コマンド）
+- [ ] プロジェクト固有の除外設定の永続化
+- [ ] 一時的な無効化の履歴管理
+
+#### デバッグサポートの強化
+- [ ] --dry-run モード（実際にブロックせずに検出結果を表示）
+- [ ] 検出ロジックの詳細トレース機能
+- [ ] 過去の検出履歴の参照機能
+
+### Version 0.2.8 (User Experience Enhancement) 🎯
+
+#### ユーザー評価から判明した最優先改善項目 (2025-07-21)
+
+##### 1. 使用方法の明確化 🔴 CRITICAL
+- [ ] **動作確認コマンドの充実**:
+  - [ ] `antimon --demo` で様々なパターンの検出例を対話的に表示
+  - [ ] 検出される/されないケースの明確な例示
+  - [ ] ユーザーの実際のコードで試せるサンドボックスモード
+- [ ] **設定状態の可視化**:
+  - [ ] `antimon --status` で現在の設定、有効な検出器、除外パターンを一覧表示
+  - [ ] Claude Codeとの連携状態の確認機能
+  - [ ] 最近の検出履歴の表示
+
+##### 2. 操作の直感性向上 🟡 HIGH
+- [ ] **誤検出時のワンステップ対処**:
+  - [ ] 検出時に「このパターンを今後無視する？[Y/n]」の対話的選択
+  - [ ] 選択結果をプロジェクト設定（.antimon/config）に自動保存
+  - [ ] 除外設定の簡単な取り消し機能
+- [ ] **コンテキスト対応の検出**:
+  - [ ] テストファイル（*_test.py, test_*.py）での自動的な検出緩和
+  - [ ] ドキュメント内のコード例での誤検出防止
+  - [ ] 開発環境と本番環境の自動識別
+
+##### 3. ログ出力の有用性向上 🟡 HIGH
+- [ ] **構造化されたログ出力**:
+  - [ ] JSON形式でのログ出力オプション（--format json）
+  - [ ] 検出理由、リスクレベル、修正提案を構造化して表示
+  - [ ] CI/CDツールとの統合を考慮したマシンリーダブルな出力
+- [ ] **デバッグ情報の階層化**:
+  - [ ] -v で基本情報、-vv で詳細、-vvv で完全トレース
+  - [ ] 特定の検出器のみのデバッグ情報表示オプション
+  - [ ] パフォーマンス計測情報の表示
+
+##### 4. エラー時の明確な次のアクション 🟡 HIGH
+- [ ] **対話的トラブルシューティング**:
+  - [ ] エラー発生時に「次に何をすべきか」を番号付きリストで表示
+  - [ ] 選択した番号に応じて自動的にコマンド実行や設定変更
+  - [ ] よくあるエラーパターンのFAQへの自動マッチング
+- [ ] **自己診断機能**:
+  - [ ] `antimon --diagnose` で環境、設定、権限などを総合チェック
+  - [ ] 問題が見つかった場合の具体的な解決コマンドの提示
+  - [ ] 診断結果のレポート生成（サポート時に共有可能）
+
+##### 5. 期待値との差異の解消 🟡 MEDIUM
+- [ ] **動作の予測可能性向上**:
+  - [ ] --dry-run モードでの事前確認機能
+  - [ ] 検出ルールの一覧表示と各ルールの詳細説明
+  - [ ] 「なぜこれが検出されたか」の詳細トレース表示
+- [ ] **設定の透明性**:
+  - [ ] 現在有効な全設定の出所を表示（デフォルト/環境変数/設定ファイル/コマンドライン）
+  - [ ] 設定の優先順位の明確な説明
+  - [ ] 設定変更のプレビュー機能
 
 ## Version 0.3.0 (Configuration Support)
 - [ ] TOML configuration file support (`antimon.toml`)
@@ -211,32 +236,21 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [ ] Migration guides from other tools
 - [ ] Professional support options
 
+### Code Quality Improvements (from src-check)
+- [ ] Consider structured logging for debugging (200+ print statements currently)
+- [ ] Reduce coupling in core modules
+- [ ] Clean up unused imports
+- [ ] Address os.system() security concern in color_utils.py:71
+- [ ] Resolve circular dependency concerns
+- [ ] Complete type hints and documentation
+- [ ] Optimize string concatenation performance
 
 ## Long-term Goals
 
-### Long-term User Experience Goals
-- [ ] **ワンクリックセットアップ**: 主要なAIアシスタントとの自動連携設定
-- [ ] **リアルタイムフィードバック**: コード編集中のリアルタイム警告表示
-- [ ] **スマートサジェスト**: 検出パターンに基づく安全な代替案の自動提案
-- [ ] **学習型誤検出防止**: プロジェクト固有のパターンを学習して誤検出を削減
-- [ ] **統計ダッシュボード**: セキュリティ改善の進捗を可視化
-- [ ] **チーム共有設定**: チーム全体で設定を共有・同期
-- [ ] **コンテキスト適応型メッセージング**: 初心者/上級者向けメッセージレベル
-- [ ] **ゼロ摩擦統合**: エディタ拡張機能での視覚的フィードバック
-- [ ] **教育的アプローチ**: セキュリティベストプラクティスの段階的学習
-
 ### Developer Experience
-- [ ] **IDE Integration Guide**: 各IDEでの設定方法の詳細ドキュメント
-- [ ] **Hook debugging mode**: フックの動作をデバッグするための詳細ログモード
-- [ ] **Performance profiling**: 大規模プロジェクトでのパフォーマンス計測とボトルネック表示
-- [ ] **Rule customization**: カスタムルールの作成と管理機能
-- [ ] **API for extensions**: サードパーティ拡張のためのプラグインAPI
-
-### Internationalization
-- [ ] **Japanese support**: 日本語のエラーメッセージとヘルプ
-- [ ] **Locale detection**: 自動言語選択
-- [ ] **Language selection**: --lang オプション
-- [ ] **Localized docs**: 各言語でのドキュメント
+- [ ] IDE integration guides, hook debugging mode, performance profiling
+- [ ] Custom rule creation, plugin API for extensions
+- [ ] Internationalization (Japanese support, locale detection, localized docs)
 
 ### Community Building
 - [ ] Create antimon organization on GitHub
@@ -265,7 +279,8 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 | Version | Target Date | Focus Area |
 |---------|------------|------------|
-| 0.2.7 | 2025 Q3 | Performance improvements |
+| 0.2.7 | 2025 Q3 | Critical bug fixes & improvements (Partial Complete) |
+| 0.2.8 | 2025 Q3 | User Experience Enhancement |
 | 0.3.0 | 2025 Q4 | Configuration |
 | 0.4.0 | 2026 Q1 | Enhanced detection |
 | 0.5.0 | 2026 Q2 | Integrations |
@@ -274,54 +289,31 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 
 
-## ユーザージャーニーと改善ポイント（User Journey & Pain Points）
+## User Journey & Pain Points
 
-### 現在のユーザー体験フロー
+### Current User Experience (2025-07-21)
 
-1. **インストール時**
-   - ✅ pip/uvでの簡単なインストール
-   - ✅ 初回実行時のウェルカムメッセージ
-   - ✅ インタラクティブセットアップ（--setup）
-   - ❌ インストール直後の動作確認が不明確
+**Installation**: Simple pip/uv install, welcome message, interactive setup, but unclear initial verification and detection patterns
 
-2. **初期設定時**
-   - ✅ Claude Codeとの自動連携
-   - ✅ --testコマンドでの動作確認
-   - ❌ 他のツールとの連携方法が不明
-   - ❌ プロジェクト固有の設定方法が複雑
+**Initial Setup**: Auto Claude Code integration, test commands work, but complex project configuration and unclear verification
 
-3. **日常使用時**
-   - ✅ 明確なエラーメッセージ
-   - ✅ カラフルな出力
-   - ❌ 誤検出時の対処が面倒
-   - ❌ 許可オプションが期待通り動作しない
+**Daily Use**: Clear errors, colorful output, detailed explanations, but cumbersome false positive handling and undocumented debug mode
 
-4. **トラブル発生時**
-   - ✅ --explain-last-errorでの詳細確認
-   - ✅ --help-errorsでのガイダンス
-   - ❌ 実際の解決までの道のりが長い
-   - ❌ コミュニティサポートへのアクセスが不明
+**Troubleshooting**: Detailed error info, helpful guidance, but long resolution paths and no detection history
 
-### 理想のユーザー体験
+### Key Challenges from User Feedback
 
-1. **ゼロフリクション導入**
-   - インストール後、自動的に最適な設定を提案
-   - プロジェクトタイプを認識して適切なルールセットを適用
+1. **Usage Clarity**: Unclear practical usage, detection pattern overview, project-specific configuration
+2. **Operational Complexity**: Repetitive long options, unclear persistence, no batch checking
+3. **Log Output**: Abstract detection reasons, insufficient debug info, no CI/CD format
+4. **Error Resolution**: Unclear next steps, trial-and-error troubleshooting, ambiguous issue sources
 
-2. **インテリジェントな検出**
-   - コンテキストを理解した上での検出
-   - テストファイルと本番コードの区別
-   - プロジェクトの慣習を学習
+### Ideal User Experience
 
-3. **即座の問題解決**
-   - ワンクリックで誤検出を報告・除外
-   - 具体的な修正案の提示
-   - 類似ケースの自動認識
-
-4. **継続的な改善**
-   - 使用統計に基づく検出精度の向上
-   - コミュニティからのフィードバックの自動反映
-   - パーソナライズされた体験
+- **Zero-friction setup**: Auto-suggest optimal config, recognize project type
+- **Intelligent detection**: Context awareness, test vs production code, learn project conventions
+- **Instant resolution**: One-click false positive handling, concrete fixes, auto-recognize similar cases
+- **Continuous improvement**: Usage-based accuracy, community feedback integration, personalized experience
 
 ## How to Contribute
 

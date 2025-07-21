@@ -56,8 +56,8 @@ def test_is_file_ignored():
     config.ignore_patterns = ["*.test.py", "examples/*", "*.tmp"]
     config.allowed_files = {"/home/user/test.test.py", "test.test.py"}  # Add both forms
     
-    # Test ignored patterns
-    assert config.is_file_ignored("test.test.py") is False  # Explicitly allowed
+    # Test ignored patterns (allowed_files no longer affects is_file_ignored)
+    assert config.is_file_ignored("test.test.py") is True  # Matches *.test.py pattern
     assert config.is_file_ignored("other.test.py") is True
     assert config.is_file_ignored("examples/demo.py") is True
     assert config.is_file_ignored("file.tmp") is True

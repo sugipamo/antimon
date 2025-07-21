@@ -59,10 +59,8 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
     tool_name = json_data.get("tool_name", "")
     
     # Check if file is ignored by runtime config
-    file_path = json_data.get("tool_input", {}).get("file_path", "")
-    if file_path and config.is_file_ignored(file_path):
-        logger.info(f"File {file_path} is ignored by runtime configuration")
-        return False, [], {}
+    # Note: We moved this check to individual detectors to allow
+    # filename detection to be skipped while other detectors still run
     
     # Skip truly safe tools
     if tool_name in SAFE_TOOLS:
@@ -419,17 +417,29 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
     # Validate code-editing tools
     has_issues, issues, stats = validate_hook_data(json_data)
     
-    # In non-verbose mode, simplify error messages
-    if not verbose and has_issues:
+    # In verbose mode, add pattern visualization
+    if verbose and has_issues:
+        enhanced_issues = []
+        for issue in issues:
+            # Add visual separator for each issue
+            enhanced_issue = "─" * 60 + "\n" + issue
+            enhanced_issues.append(enhanced_issue)
+        issues = enhanced_issues
+    elif not verbose and has_issues:
+        # In non-verbose mode, simplify error messages
         simplified_issues = []
         for issue in issues:
-            # Remove pattern details from messages unless in verbose mode
+            # Keep only essential information
             lines = issue.split('\n')
-            simplified_lines = []
+            essential_lines = []
             for line in lines:
-                if not line.strip().startswith('Pattern matched:'):
-                    simplified_lines.append(line)
-            simplified_issues.append('\n'.join(simplified_lines))
+                line_stripped = line.strip()
+                # Keep main message, risk, suggestion, and allow-file hint
+                if (not line_stripped.startswith('Pattern matched:') and 
+                    not line_stripped.startswith('Type:') and
+                    not line_stripped.startswith('Found:')):
+                    essential_lines.append(line)
+            simplified_issues.append('\n'.join(essential_lines))
         issues = simplified_issues
 
     if has_issues:

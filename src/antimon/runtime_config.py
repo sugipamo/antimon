@@ -63,13 +63,6 @@ class RuntimeConfig:
     
     def is_file_ignored(self, file_path: str) -> bool:
         """Check if a file should be ignored based on patterns."""
-        # Normalize the file path for comparison
-        normalized_path = str(Path(file_path).resolve()) if Path(file_path).is_absolute() else file_path
-        
-        # Check if file is explicitly allowed (check both original and normalized)
-        if file_path in self.allowed_files or normalized_path in self.allowed_files:
-            return False
-        
         # Check ignore patterns
         for pattern in self.ignore_patterns:
             if fnmatch.fnmatch(file_path, pattern):

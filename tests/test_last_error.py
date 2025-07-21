@@ -87,11 +87,11 @@ def test_explain_last_error_with_error(tmp_path, capsys):
         assert "API key found in content" in captured.out
         assert "External LLM API usage detected" in captured.out
         
-        # Check for explanations
-        assert "API Keys:" in captured.out
-        assert "Hardcoded API keys in code are a security risk" in captured.out
-        assert "External AI APIs:" in captured.out
-        assert "Using external AI services can leak your code" in captured.out
+        # Check for explanations - more specific patterns for new format
+        assert "API Key Detection:" in captured.out
+        assert "dangerous" in captured.out.lower()
+        assert "LLM API Detection:" in captured.out or "External LLM API Detection:" in captured.out
+        assert "leave" in captured.out.lower() or "control" in captured.out.lower()
         
         # Check for solutions
         assert "For API Keys:" in captured.out

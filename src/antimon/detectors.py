@@ -61,6 +61,8 @@ def detect_filenames(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if dangerous paths were detected
     """
+    from .runtime_config import get_runtime_config
+    
     dangerous_patterns = [
         r"/etc/passwd",
         r"/etc/shadow",
@@ -77,14 +79,46 @@ def detect_filenames(json_data: HookData) -> DetectionResult:
     ]
 
     file_path = json_data.get("tool_input", {}).get("file_path", "")
+    
+    # Check if file is explicitly allowed or ignored
+    config = get_runtime_config()
+    if file_path in config.allowed_files or config.is_file_ignored(file_path):
+        return DetectionResult(detected=False)
 
     for pattern in dangerous_patterns:
         if re.search(pattern, file_path, re.IGNORECASE):
+            # Provide more specific context based on the pattern
+            if "/etc/" in pattern:
+                file_type = "system configuration file"
+                risk = "could expose system settings or user credentials"
+                suggestion = "Use application-specific config files in your project directory"
+            elif ".ssh" in pattern:
+                file_type = "SSH key file"
+                risk = "could compromise server access and authentication"
+                suggestion = "Never modify SSH keys programmatically. Use ssh-keygen or ssh-agent instead"
+            elif ".env" in pattern:
+                file_type = "environment variables file"
+                risk = "often contains API keys and secrets"
+                suggestion = "Read environment variables at runtime using os.environ or process.env"
+            elif pattern in [r"\.pem$", r"\.key$", r"\.p12$", r"\.pfx$"]:
+                file_type = "cryptographic key or certificate"
+                risk = "could compromise encryption and authentication"
+                suggestion = "Use proper key management services (AWS KMS, HashiCorp Vault, etc.)"
+            elif "credentials" in pattern or "secrets" in pattern:
+                file_type = "credentials file"
+                risk = "likely contains authentication tokens or passwords"
+                suggestion = "Use secure secret management solutions or environment variables"
+            else:
+                file_type = "sensitive file"
+                risk = "may contain confidential information"
+                suggestion = "Review if this file really needs to be accessed"
+            
             message_parts = [
-                f"Dangerous file path detected: {file_path}",
-                f"      Pattern matched: {pattern}",
-                f"      Why: This appears to be a sensitive system or credential file",
-                f"      Suggestion: Use environment variables or secure key management services instead"
+                f"Attempting to access {file_type}: {file_path}",
+                f"      Type: {file_type}",
+                f"      Risk: {risk}",
+                f"      Suggestion: {suggestion}",
+                f"      To allow this specific file: antimon --allow-file '{file_path}'"
             ]
             return DetectionResult(
                 detected=True,
@@ -105,6 +139,14 @@ def detect_llm_api(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if LLM API references were detected
     """
+    from .runtime_config import get_runtime_config
+    
+    # Check if file is ignored
+    file_path = json_data.get("tool_input", {}).get("file_path", "")
+    config = get_runtime_config()
+    if file_path and config.is_file_ignored(file_path):
+        return DetectionResult(detected=False)
+    
     llm_patterns = [
         r"openai\.com",
         r"api\.openai\.com",
@@ -146,12 +188,35 @@ def detect_llm_api(json_data: HookData) -> DetectionResult:
             if match:
                 line_num = find_line_number(text, match)
                 matched_text = match.group(0)
+                # Determine which LLM service is being referenced
+                if "openai" in matched_text.lower():
+                    service = "OpenAI"
+                    local_alt = "ollama with llama2 or mistral models"
+                    import_alt = "# Instead of: from openai import OpenAI\n            # Use: import ollama"
+                elif "gemini" in matched_text.lower() or "google" in matched_text.lower():
+                    service = "Google Gemini"
+                    local_alt = "llama.cpp with gemma models"
+                    import_alt = "# Consider using local models instead"
+                elif "anthropic" in matched_text.lower() or "claude" in matched_text.lower():
+                    service = "Anthropic Claude"
+                    local_alt = "the current AI assistant's capabilities"
+                    import_alt = "# You're already using Claude - no external API needed"
+                elif "cohere" in matched_text.lower():
+                    service = "Cohere"
+                    local_alt = "sentence-transformers for embeddings"
+                    import_alt = "# For embeddings: from sentence_transformers import SentenceTransformer"
+                else:
+                    service = "external LLM"
+                    local_alt = "local open-source models"
+                    import_alt = "# Consider local alternatives"
+                
                 message_parts = [
-                    f"External LLM API reference detected",
-                    f"      Line {line_num}: {matched_text}",
-                    f"      Pattern matched: {pattern}",
-                    f"      Why: Direct API calls to external LLMs may expose sensitive data",
-                    f"      Suggestion: Use Claude Code's built-in capabilities or proxy through a secure backend"
+                    f"{service} API reference detected on line {line_num}",
+                    f"      Found: {matched_text}",
+                    f"      Risk: Data leaves your system, costs can accumulate, requires API keys",
+                    f"      Local alternative: {local_alt}",
+                    f"      {import_alt}",
+                    f"      To allow external APIs: antimon --disable-detector llm_api"
                 ]
                 return DetectionResult(
                     detected=True,
@@ -172,6 +237,14 @@ def detect_api_key(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if API keys were detected
     """
+    from .runtime_config import get_runtime_config
+    
+    # Check if file is ignored
+    file_path = json_data.get("tool_input", {}).get("file_path", "")
+    config = get_runtime_config()
+    if file_path and config.is_file_ignored(file_path):
+        return DetectionResult(detected=False)
+    
     api_key_patterns = [
         r'api[_-]?key\s*=\s*["\'][^"\']+["\']',
         r'apikey\s*:\s*["\'][^"\']+["\']',
@@ -201,12 +274,31 @@ def detect_api_key(json_data: HookData) -> DetectionResult:
             if match:
                 line_num = find_line_number(text, match)
                 matched_text = match.group(0)
+                # Extract key name if possible
+                key_name_match = re.search(r'(\w+)\s*[=:]\s*["\']', matched_text)
+                key_name = key_name_match.group(1) if key_name_match else "key"
+                
+                # Determine the type of credential
+                if "api" in matched_text.lower():
+                    cred_type = "API key"
+                    example_fix = f"{key_name} = os.environ.get('{key_name.upper()}')"
+                elif "token" in matched_text.lower():
+                    cred_type = "access token"
+                    example_fix = f"{key_name} = os.getenv('{key_name.upper()}')"
+                elif "secret" in matched_text.lower():
+                    cred_type = "secret key"
+                    example_fix = f"{key_name} = config.get_secret('{key_name}')"
+                else:
+                    cred_type = "credential"
+                    example_fix = f"{key_name} = os.environ['{key_name.upper()}']"
+                
                 message_parts = [
-                    f"Hardcoded API key or secret detected",
-                    f"      Line {line_num}: {matched_text}",
-                    f"      Pattern matched: {pattern}",
-                    f"      Why: Hardcoded credentials are a security risk",
-                    f"      Suggestion: Use environment variables (e.g., os.getenv('API_KEY')) or secure vaults"
+                    f"Hardcoded {cred_type} detected on line {line_num}",
+                    f"      Found: {matched_text}",
+                    f"      Risk: Exposed credentials can be stolen from code repositories",
+                    f"      Quick fix: {example_fix}",
+                    f"      Best practice: Use .env files or secret management services",
+                    f"      For examples: Use placeholders like '{key_name} = \"your-{key_name}-here\"'"
                 ]
                 return DetectionResult(
                     detected=True,
@@ -227,6 +319,14 @@ def detect_docker(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if Docker operations were detected
     """
+    from .runtime_config import get_runtime_config
+    
+    # Check if file is ignored
+    file_path = json_data.get("tool_input", {}).get("file_path", "")
+    config = get_runtime_config()
+    if file_path and config.is_file_ignored(file_path):
+        return DetectionResult(detected=False)
+    
     docker_patterns = [
         r"docker\s+run",
         r"docker\s+build",
@@ -283,6 +383,14 @@ def detect_localhost(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if localhost references were detected
     """
+    from .runtime_config import get_runtime_config
+    
+    # Check if file is ignored
+    file_path = json_data.get("tool_input", {}).get("file_path", "")
+    config = get_runtime_config()
+    if file_path and config.is_file_ignored(file_path):
+        return DetectionResult(detected=False)
+    
     localhost_patterns = [
         r"localhost:[0-9]+",
         r"127\.0\.0\.1:[0-9]+",
@@ -355,8 +463,16 @@ def detect_read_sensitive_files(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if sensitive file read was attempted
     """
+    from .runtime_config import get_runtime_config
+    
     # Only check Read tool
     if json_data.get("tool_name") != "Read":
+        return DetectionResult(detected=False)
+    
+    # Check if file is explicitly allowed or ignored
+    file_path = json_data.get("tool_input", {}).get("file_path", "")
+    config = get_runtime_config()
+    if file_path in config.allowed_files or config.is_file_ignored(file_path):
         return DetectionResult(detected=False)
     
     # Sensitive file patterns for Read operations
