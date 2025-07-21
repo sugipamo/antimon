@@ -20,6 +20,21 @@ class DetectionResult:
     details: dict[str, Any] | None = None
 
 
+def find_line_number(text: str, pattern_match: re.Match[str]) -> int:
+    """
+    Find the line number where a pattern match occurs
+    
+    Args:
+        text: The full text
+        pattern_match: The regex match object
+        
+    Returns:
+        Line number (1-indexed)
+    """
+    start_pos = pattern_match.start()
+    return text[:start_pos].count('\n') + 1
+
+
 def detect_filenames(json_data: dict[str, Any]) -> DetectionResult:
     """
     Detect dangerous or sensitive file paths
@@ -111,9 +126,13 @@ def detect_llm_api(json_data: dict[str, Any]) -> DetectionResult:
         if not text:
             continue
         for pattern in llm_patterns:
-            if re.search(pattern, text, re.IGNORECASE):
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                line_num = find_line_number(text, match)
+                matched_text = match.group(0)
                 message_parts = [
                     f"External LLM API reference detected",
+                    f"      Line {line_num}: {matched_text}",
                     f"      Pattern matched: {pattern}",
                     f"      Why: Direct API calls to external LLMs may expose sensitive data",
                     f"      Suggestion: Use Claude Code's built-in capabilities or proxy through a secure backend"
@@ -121,7 +140,7 @@ def detect_llm_api(json_data: dict[str, Any]) -> DetectionResult:
                 return DetectionResult(
                     detected=True,
                     message="\n".join(message_parts),
-                    details={"pattern": pattern},
+                    details={"pattern": pattern, "line": line_num, "match": matched_text},
                 )
 
     return DetectionResult(detected=False)
@@ -162,9 +181,13 @@ def detect_api_key(json_data: dict[str, Any]) -> DetectionResult:
         if not text:
             continue
         for pattern in api_key_patterns:
-            if re.search(pattern, text, re.IGNORECASE):
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                line_num = find_line_number(text, match)
+                matched_text = match.group(0)
                 message_parts = [
                     f"Hardcoded API key or secret detected",
+                    f"      Line {line_num}: {matched_text}",
                     f"      Pattern matched: {pattern}",
                     f"      Why: Hardcoded credentials are a security risk",
                     f"      Suggestion: Use environment variables (e.g., os.getenv('API_KEY')) or secure vaults"
@@ -172,7 +195,7 @@ def detect_api_key(json_data: dict[str, Any]) -> DetectionResult:
                 return DetectionResult(
                     detected=True,
                     message="\n".join(message_parts),
-                    details={"pattern": pattern},
+                    details={"pattern": pattern, "line": line_num, "match": matched_text},
                 )
 
     return DetectionResult(detected=False)
@@ -214,9 +237,13 @@ def detect_docker(json_data: dict[str, Any]) -> DetectionResult:
         if not text:
             continue
         for pattern in docker_patterns:
-            if re.search(pattern, text, re.IGNORECASE):
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                line_num = find_line_number(text, match)
+                matched_text = match.group(0)
                 message_parts = [
                     f"Docker operation detected",
+                    f"      Line {line_num}: {matched_text}",
                     f"      Pattern matched: {pattern}",
                     f"      Why: Docker operations can pose security risks if not properly configured",
                     f"      Suggestion: Review Docker commands for security best practices"
@@ -224,7 +251,7 @@ def detect_docker(json_data: dict[str, Any]) -> DetectionResult:
                 return DetectionResult(
                     detected=True,
                     message="\n".join(message_parts),
-                    details={"pattern": pattern},
+                    details={"pattern": pattern, "line": line_num, "match": matched_text},
                 )
 
     return DetectionResult(detected=False)
@@ -262,9 +289,13 @@ def detect_localhost(json_data: dict[str, Any]) -> DetectionResult:
         if not text:
             continue
         for pattern in localhost_patterns:
-            if re.search(pattern, text):
+            match = re.search(pattern, text)
+            if match:
+                line_num = find_line_number(text, match)
+                matched_text = match.group(0)
                 message_parts = [
                     f"Localhost/port reference detected",
+                    f"      Line {line_num}: {matched_text}",
                     f"      Pattern matched: {pattern}",
                     f"      Why: Hardcoded localhost references may not work in production",
                     f"      Suggestion: Use configuration files or environment variables for host/port settings"
@@ -272,7 +303,7 @@ def detect_localhost(json_data: dict[str, Any]) -> DetectionResult:
                 return DetectionResult(
                     detected=True,
                     message="\n".join(message_parts),
-                    details={"pattern": pattern},
+                    details={"pattern": pattern, "line": line_num, "match": matched_text},
                 )
 
     return DetectionResult(detected=False)

@@ -19,6 +19,7 @@ from .detectors import (
     detect_localhost,
 )
 from .logging_config import get_logger
+from .color_utils import ColorFormatter
 
 logger = get_logger(__name__)
 
@@ -120,17 +121,20 @@ def validate_hook_data(json_data: dict[str, Any]) -> tuple[bool, list[str], dict
     return len(issues) > 0, issues, detector_stats
 
 
-def process_stdin(verbose: bool = False, quiet: bool = False) -> int:
+def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = False) -> int:
     """
     Process JSON input from stdin and validate
 
     Args:
         verbose: Enable verbose output
         quiet: Suppress all output except errors
+        no_color: Disable colored output
 
     Returns:
         Exit code (0=success, 1=parse error, 2=security issues)
     """
+    # Initialize color formatter
+    color = ColorFormatter(use_color=not no_color)
     try:
         logger.debug("Reading input from stdin")
         input_data = sys.stdin.read()
@@ -141,8 +145,8 @@ def process_stdin(verbose: bool = False, quiet: bool = False) -> int:
     except json.JSONDecodeError as e:
         logger.error(f"JSON parsing error: {e}")
         if not quiet:
-            print(f"\n❌ JSON parsing error: {e}", file=sys.stderr)
-            print("\n💡 How to fix:", file=sys.stderr)
+            print(f"\n{color.error('❌ JSON parsing error:')} {e}", file=sys.stderr)
+            print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
             print("   Ensure your input is valid JSON. Example of valid format:", file=sys.stderr)
             print('   {', file=sys.stderr)
             print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
@@ -160,8 +164,8 @@ def process_stdin(verbose: bool = False, quiet: bool = False) -> int:
     except Exception as e:
         logger.error(f"Unexpected error reading input: {e}", exc_info=True)
         if not quiet:
-            print(f"\n❌ Error reading input: {e}", file=sys.stderr)
-            print("\n💡 How to fix:", file=sys.stderr)
+            print(f"\n{color.error('❌ Error reading input:')} {e}", file=sys.stderr)
+            print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
             print("   • Ensure data is being piped to stdin", file=sys.stderr)
             print("   • Example: echo '{...}' | antimon", file=sys.stderr)
             print("   • Or: cat hook_data.json | antimon\n", file=sys.stderr)
@@ -185,8 +189,8 @@ def process_stdin(verbose: bool = False, quiet: bool = False) -> int:
             if "content" not in tool_input:
                 logger.error(f"Missing required field 'content' for {tool_name} tool")
                 if not quiet:
-                    print(f"\n❌ Validation error: Missing required field 'content' for {tool_name} tool", file=sys.stderr)
-                    print("\n💡 How to fix:", file=sys.stderr)
+                    print(f"\n{color.error('❌ Validation error:')} Missing required field 'content' for {tool_name} tool", file=sys.stderr)
+                    print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
                     print("   The Write tool requires both 'file_path' and 'content' fields:", file=sys.stderr)
                     print('   {', file=sys.stderr)
                     print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
@@ -234,11 +238,24 @@ def process_stdin(verbose: bool = False, quiet: bool = False) -> int:
     
     # Validate code-editing tools
     has_issues, issues, stats = validate_hook_data(json_data)
+    
+    # In non-verbose mode, simplify error messages
+    if not verbose and has_issues:
+        simplified_issues = []
+        for issue in issues:
+            # Remove pattern details from messages unless in verbose mode
+            lines = issue.split('\n')
+            simplified_lines = []
+            for line in lines:
+                if not line.strip().startswith('Pattern matched:'):
+                    simplified_lines.append(line)
+            simplified_issues.append('\n'.join(simplified_lines))
+        issues = simplified_issues
 
     if has_issues:
         logger.info(f"Security validation failed with {len(issues)} issue(s)")
         # Always show security issues, even in quiet mode
-        print("\n⚠️  Security issues detected:", file=sys.stderr)
+        print(f"\n{color.error('⚠️  Security issues detected:')}", file=sys.stderr)
         
         # Structured output for issues
         if verbose and not quiet:
@@ -251,7 +268,7 @@ def process_stdin(verbose: bool = False, quiet: bool = False) -> int:
                 print(f"   [{i}] {issue}", file=sys.stderr)
         else:
             for issue in issues:
-                print(f"  • {issue}", file=sys.stderr)
+                print(f"  • {color.format_security_issue(issue)}", file=sys.stderr)
         
         if not quiet:
             print("\n💡 How to proceed:", file=sys.stderr)

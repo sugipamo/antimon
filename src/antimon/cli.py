@@ -11,6 +11,7 @@ import sys
 from . import __version__
 from .core import process_stdin
 from .logging_config import setup_logging
+from .self_test import run_self_test
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -74,7 +75,23 @@ For more information: https://github.com/yourusername/antimon
         help="Suppress all output except errors. Only display security issues when detected.",
     )
 
+    parser.add_argument(
+        "--test",
+        action="store_true",
+        help="Run a self-test to verify antimon is working correctly. Useful after installation.",
+    )
+
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Disable colored output. Useful for CI/CD pipelines or when terminal doesn't support colors.",
+    )
+
     args = parser.parse_args(argv)
+
+    # Run self-test if requested
+    if args.test:
+        return run_self_test(verbose=args.verbose)
 
     # Check for conflicting options
     if args.verbose and args.quiet:
@@ -92,7 +109,7 @@ For more information: https://github.com/yourusername/antimon
         print("   • Customize detector sensitivity", file=sys.stderr)
         print("   • Add project-specific rules\n", file=sys.stderr)
 
-    return process_stdin(verbose=args.verbose, quiet=args.quiet)
+    return process_stdin(verbose=args.verbose, quiet=args.quiet, no_color=args.no_color)
 
 
 if __name__ == "__main__":
