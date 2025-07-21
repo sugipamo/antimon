@@ -63,7 +63,7 @@ def show_first_run_guide(no_color: bool = False) -> None:
     print()
     
     print(apply_color("📚 Learn More:", Colors.OKBLUE, no_color))
-    print("• Documentation: https://github.com/yourusername/antimon")
+    print("• Documentation: https://github.com/antimon-security/antimon")
     print("• Run 'antimon --help' for all options")
     print("• Use 'antimon --test' to verify your installation")
     print()
@@ -246,7 +246,7 @@ def run_interactive_setup(no_color: bool = False) -> None:
     print(apply_color("📚 Next steps:", Colors.OKBLUE, no_color))
     print("• Run 'antimon --test' to see example detections")
     print("• Run 'antimon --help' to see all available options")
-    print("• Visit https://github.com/yourusername/antimon for documentation")
+    print("• Visit https://github.com/antimon-security/antimon for documentation")
     print()
     print(apply_color("Happy coding with antimon! 🚀", Colors.OKGREEN, no_color))
 

@@ -372,7 +372,7 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
             print("      • Using --allow-file or --ignore-pattern options", file=sys.stderr)
             print("   4. For legitimate use cases, you can:", file=sys.stderr)
             print("      • Temporarily disable the hook in Claude Code settings", file=sys.stderr)
-            print("      • Report false positives at: https://github.com/yourusername/antimon/issues\n", file=sys.stderr)
+            print("      • Report false positives at: https://github.com/antimon-security/antimon/issues\n", file=sys.stderr)
 
 
 def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = False) -> int:
@@ -469,15 +469,18 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
             return 2
 
     logger.info("Security validation passed")
-    if verbose and not quiet:
-        # Only in verbose mode, show detailed summary
-        print(f"\n📊 Detection Summary:", file=sys.stderr)
-        print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
-        print(f"   • Passed: {stats['passed']}", file=sys.stderr)
-        print(f"   • Failed: {stats['failed']}", file=sys.stderr)
-        if stats['errors'] > 0:
-            print(f"   • Errors: {stats['errors']}", file=sys.stderr)
-    # No output in normal mode when no issues are detected (matches README example)
+    if config.show_stats or verbose:
+        if not quiet:
+            # Show detailed summary
+            print(f"\n📊 Detection Summary:", file=sys.stderr)
+            print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
+            print(f"   • Passed: {stats['passed']}", file=sys.stderr)
+            print(f"   • Failed: {stats['failed']}", file=sys.stderr)
+            if stats['errors'] > 0:
+                print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+    elif not quiet:
+        # Simple success message in normal mode
+        print("✅ Check passed", file=sys.stderr)
     return 0
 
 
@@ -541,14 +544,15 @@ def check_file_directly(file_path: str, verbose: bool = False, quiet: bool = Fal
         else:
             return 2
     
-    if verbose and not quiet:
-        print(f"\n✅ File '{file_path}' passed all security checks", file=sys.stderr)
-        print(f"\n📊 Detection Summary:", file=sys.stderr)
-        print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
-        print(f"   • Passed: {stats['passed']}", file=sys.stderr)
-        print(f"   • Failed: {stats['failed']}", file=sys.stderr)
-        if stats['errors'] > 0:
-            print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+    if config.show_stats or verbose:
+        if not quiet:
+            print(f"\n✅ File '{file_path}' passed all security checks", file=sys.stderr)
+            print(f"\n📊 Detection Summary:", file=sys.stderr)
+            print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
+            print(f"   • Passed: {stats['passed']}", file=sys.stderr)
+            print(f"   • Failed: {stats['failed']}", file=sys.stderr)
+            if stats['errors'] > 0:
+                print(f"   • Errors: {stats['errors']}", file=sys.stderr)
     elif not quiet:
         print(f"✅ No security issues found in '{file_path}'", file=sys.stderr)
     
@@ -599,14 +603,15 @@ def check_content_directly(content: str, file_name: str = "stdin", verbose: bool
         else:
             return 2
     
-    if verbose and not quiet:
-        print(f"\n✅ Content passed all security checks", file=sys.stderr)
-        print(f"\n📊 Detection Summary:", file=sys.stderr)
-        print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
-        print(f"   • Passed: {stats['passed']}", file=sys.stderr)
-        print(f"   • Failed: {stats['failed']}", file=sys.stderr)
-        if stats['errors'] > 0:
-            print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+    if config.show_stats or verbose:
+        if not quiet:
+            print(f"\n✅ Content passed all security checks", file=sys.stderr)
+            print(f"\n📊 Detection Summary:", file=sys.stderr)
+            print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
+            print(f"   • Passed: {stats['passed']}", file=sys.stderr)
+            print(f"   • Failed: {stats['failed']}", file=sys.stderr)
+            if stats['errors'] > 0:
+                print(f"   • Errors: {stats['errors']}", file=sys.stderr)
     elif not quiet:
         print("✅ No security issues found in provided content", file=sys.stderr)
     

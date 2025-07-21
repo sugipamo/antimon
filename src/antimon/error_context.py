@@ -118,7 +118,7 @@ class ErrorContext:
     
     def _get_faq_link(self, message: str) -> Optional[str]:
         """Get a relevant FAQ link based on the error."""
-        base_url = "https://github.com/yourusername/antimon/blob/main/docs/faq.md"
+        base_url = "https://github.com/antimon-security/antimon/blob/main/docs/faq.md"
         
         if "API key" in message:
             return f"{base_url}#api-key-false-positives"
@@ -170,5 +170,5 @@ def show_error_help(no_color: bool = False) -> None:
     print("   • Re-enable after: claude-code config set hooks.PreToolUse antimon")
     print()
     print(apply_color("📚 Full documentation:", Colors.OKBLUE, no_color), end=" ")
-    print("https://github.com/yourusername/antimon/blob/main/README.md")
+    print("https://github.com/antimon-security/antimon/blob/main/README.md")
     print()

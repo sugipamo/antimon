@@ -29,6 +29,9 @@ class RuntimeConfig:
     # Dry run mode
     dry_run: bool = False
     
+    # Show stats
+    show_stats: bool = False
+    
     @classmethod
     def from_args(cls, args) -> "RuntimeConfig":
         """Create RuntimeConfig from command line arguments."""
@@ -49,6 +52,10 @@ class RuntimeConfig:
         # Set dry run mode
         if hasattr(args, 'dry_run'):
             config.dry_run = args.dry_run
+        
+        # Set stats mode
+        if hasattr(args, 'stats'):
+            config.show_stats = args.stats
         
         # Also check environment variables
         config._load_from_env()
@@ -139,6 +146,9 @@ class RuntimeConfig:
         
         if self.dry_run:
             summary.append("Mode: DRY RUN (preview only, no blocking)")
+        
+        if self.show_stats:
+            summary.append("Stats: Enabled")
         
         return summary
 

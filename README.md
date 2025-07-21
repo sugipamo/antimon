@@ -1,6 +1,6 @@
 # antimon
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/yourusername/antimon/releases)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/antimon-security/antimon/releases)
 
 A security validation tool for AI coding assistants that detects potentially dangerous operations and prohibited patterns in code modifications.
 
@@ -90,6 +90,9 @@ antimon --check-content 'import os; os.system("rm -rf /")'
 # Check with options
 antimon --check-file config.py --verbose
 antimon --check-file test.py --allow-file '*.test.py'
+
+# Dry-run mode: preview detections without blocking
+antimon --check-file main.py --dry-run
 ```
 
 #### JSON Input (For Hooks & Automation)
@@ -264,6 +267,7 @@ def validate_all(hook_data):
 3. **Claude Code Auto-Setup**: `antimon --setup-claude-code` - One-command integration
 4. **Non-Interactive Demo**: `antimon --demo --non-interactive` - See capabilities automatically
 5. **Enhanced Status Display**: `antimon --status` - Shows Claude Code integration status
+6. **Dry-Run Mode**: `antimon --dry-run` - Preview what would be detected without blocking
 
 ### Detection Capabilities
 
@@ -279,6 +283,28 @@ def validate_all(hook_data):
 - `0`: No issues detected (or non-code-editing operation)
 - `1`: JSON parsing error
 - `2`: Security issues detected
+
+### Dry-Run Mode
+
+The `--dry-run` option allows you to preview what would be detected without actually blocking operations. This is useful for:
+
+- Testing new patterns or configurations
+- Understanding why certain code is being flagged
+- Debugging false positives
+- Onboarding new team members
+
+```bash
+# Preview what would be detected in a file
+antimon --check-file deploy.py --dry-run
+
+# Use with JSON input for hook testing
+echo '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"file_path": "config.py", "content": "api_key = \"sk-123\""}}' | antimon --dry-run
+```
+
+In dry-run mode, antimon will:
+- Show all detections that would normally block
+- Return exit code 0 (success) regardless of detections
+- Display "[DRY-RUN]" prefix on detection messages
 
 ## Common Use Cases
 
@@ -617,7 +643,7 @@ print("Checking filenames:", detect_filenames(data))
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/antimon.git
+git clone https://github.com/antimon-security/antimon.git
 cd antimon
 
 # Install in development mode

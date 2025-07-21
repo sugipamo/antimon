@@ -118,8 +118,17 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
     if not claude_code_path:
         print(f"{color.error('❌ Claude Code not found in PATH')}")
         print("\n💡 To install Claude Code:")
-        print("   • Visit: https://claude.ai/code")
-        print("   • Or run: npm install -g @anthropic/claude-code")
+        print("   1. Visit the official download page:")
+        print(f"      {color.code('https://claude.ai/download')}")
+        print("\n   2. Or install via npm (requires Node.js):")
+        print(f"      {color.code('npm install -g @anthropic/claude-code')}")
+        print("\n   3. For macOS users with Homebrew:")
+        print(f"      {color.code('brew install claude-code')}")
+        print("\n   4. After installation, restart your terminal and run:")
+        print(f"      {color.code('antimon --setup-claude-code')}")
+        print("\n📚 For more help, see:")
+        print("   • Claude Code docs: https://claude.ai/docs/code")
+        print("   • antimon setup guide: https://github.com/antimon-security/antimon#claude-code-hook")
         return False
     
     print(f"{color.success('✅ Claude Code found:')} {claude_code_path}")
@@ -197,7 +206,7 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
             
             print("\n📚 Learn more:")
             print("   • Run: antimon --help")
-            print("   • Visit: https://github.com/yourusername/antimon")
+            print("   • Visit: https://github.com/antimon-security/antimon")
             
             return True
         else:

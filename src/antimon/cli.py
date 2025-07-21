@@ -60,7 +60,7 @@ Exit codes:
   1 - JSON parsing error or internal error
   2 - Security issues detected
 
-For more information: https://github.com/yourusername/antimon
+For more information: https://github.com/antimon-security/antimon
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -171,6 +171,12 @@ For more information: https://github.com/yourusername/antimon
     )
     
     parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="Show detailed statistics after checks (detector counts, pass/fail rates).",
+    )
+    
+    parser.add_argument(
         "--check-file",
         type=str,
         help="Check a specific file directly without JSON input. Example: antimon --check-file config.py",
@@ -269,12 +275,17 @@ For more information: https://github.com/yourusername/antimon
     setup_logging(verbose=args.verbose, quiet=args.quiet)
 
     if args.config and not args.quiet:
-        print("\n⚠️  Configuration file support coming in v0.3.0", file=sys.stderr)
-        print("   This will allow you to:", file=sys.stderr)
-        print("   • Define custom detection patterns", file=sys.stderr)
-        print("   • Whitelist specific files or patterns", file=sys.stderr)
-        print("   • Customize detector sensitivity", file=sys.stderr)
-        print("   • Add project-specific rules\n", file=sys.stderr)
+        print("\n⚠️  Configuration file support is not yet available", file=sys.stderr)
+        print("   This feature is planned for v0.3.0 and will include:", file=sys.stderr)
+        print("   • Custom detection patterns", file=sys.stderr)
+        print("   • Project-specific whitelists", file=sys.stderr)
+        print("   • Detector sensitivity tuning", file=sys.stderr)
+        print("   • Team-wide configuration sharing", file=sys.stderr)
+        print("\n📌 For now, you can use:", file=sys.stderr)
+        print("   • --allow-file: Allow specific files or patterns", file=sys.stderr)
+        print("   • --disable-detector: Disable specific detectors", file=sys.stderr)
+        print("   • --ignore-pattern: Ignore files matching patterns", file=sys.stderr)
+        print("\n💡 Example: antimon --allow-file '*.env' --disable-detector api_key\n", file=sys.stderr)
 
     # Handle direct file checking
     if args.check_file:

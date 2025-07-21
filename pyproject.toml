@@ -22,10 +22,10 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/yourusername/antimon"
-Documentation = "https://github.com/yourusername/antimon#readme"
-Repository = "https://github.com/yourusername/antimon"
-Issues = "https://github.com/yourusername/antimon/issues"
+Homepage = "https://github.com/antimon-security/antimon"
+Documentation = "https://github.com/antimon-security/antimon#readme"
+Repository = "https://github.com/antimon-security/antimon"
+Issues = "https://github.com/antimon-security/antimon/issues"
 
 [project.scripts]
 antimon = "antimon.cli:main"
