@@ -25,10 +25,16 @@ def setup_logging(verbose: bool = False, quiet: bool = False) -> None:
         level = logging.WARNING  # Changed from INFO to WARNING for normal mode
 
     # Create formatter with simplified timestamp for better readability
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%H:%M:%S",
-    )
+    # Only include timestamp in verbose mode
+    if verbose:
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%H:%M:%S",
+        )
+    else:
+        formatter = logging.Formatter(
+            "%(name)s - %(levelname)s - %(message)s"
+        )
 
     # Create console handler
     console_handler = logging.StreamHandler(sys.stderr)

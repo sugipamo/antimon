@@ -42,7 +42,7 @@ def run_self_test(verbose: bool = False) -> int:
                 }
             },
             "should_detect": True,
-            "expected_pattern": "Dangerous file path"
+            "expected_pattern": "system configuration file"
         },
         
         # Test 2: Should detect API key
@@ -72,7 +72,7 @@ def run_self_test(verbose: bool = False) -> int:
                 }
             },
             "should_detect": True,
-            "expected_pattern": "LLM API"
+            "expected_pattern": "OpenAI API"
         },
         
         # Test 4: Should detect Docker operations

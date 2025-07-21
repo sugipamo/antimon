@@ -121,7 +121,7 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
         try:
             result = detector(json_data)
             if result.detected:
-                logger.warning(
+                logger.debug(
                     f"Detector {detector.__name__} found issue: {result.message}"
                 )
                 issues.append(result.message)

@@ -16,7 +16,7 @@
 - ✅ **pytest**: All 107 tests passing with 82% code coverage  
 - ✅ **Project structure**: Clean working directory, proper .gitignore configuration (cache files exist but are properly ignored)
 - ⚠️ **src-check score**: 53.5/100 (🔴 Decreased from 59.3/100 - requires attention)
-  - Main issues: High use of print statements instead of logging, high coupling in several modules, missing type hints in some places
+  - Main issues: High use of print statements instead of logging (378 print statements found), high coupling in several modules, missing type hints in some places
   - New issues detected: Dangerous functions (os.system, input), circular dependencies, high complexity functions
 - ✅ **User Experience Review**: Comprehensive evaluation completed with actionable improvements identified
 
@@ -38,92 +38,36 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 ### Version 0.2.8 (User Experience Enhancement) 🎯
 
-#### 最優先改善項目 (2025-07-21 更新)
+#### 最優先改善項目 🔴 CRITICAL
+1. **JSON入力不要の直接チェック機能**
+   - [ ] `--check-file <path>` - 実ファイルを直接チェック
+   - [ ] `--check-content "code here"` - コンテンツを直接チェック
+   - [ ] 対話的な入力モード（JSONを意識させない）
 
-##### 0. 緊急修正項目 🔴 CRITICAL
-- [ ] **重複ログ出力の修正**: 同じメッセージが2回表示される問題を修正
-- [ ] **テストケースの修正**: 失敗している2つのテストを新しいメッセージフォーマットに合わせて修正
-- [ ] **ログ出力の改善**: タイムスタンプは--verboseモードのみで表示
+2. **Claude Code統合の簡単設定**
+   - [ ] `--setup-claude-code` コマンドの実装
+   - [ ] 自動的に適切な設定を行い、確認方法も表示
 
-##### 1. 使用方法の明確化 🔴 CRITICAL
-- [x] **動作確認コマンドの充実 (部分的)** ✅
-- [x] **設定状態の可視化** ✅ (2025-07-21)
-  - [x] `antimon --status` で現在の設定、有効な検出器、除外パターンを一覧表示
-  - [x] Claude Codeとの連携状態の確認機能
-- [ ] **残りの機能**:
-  - [ ] 非対話的デモモード (`--demo --non-interactive`) - CI/CDでも使用可能
-  - [ ] 実ファイルテスト機能 (`--check-file <path>`) - 実際のファイルでブロック判定を事前確認
-  - [ ] テストコマンドの修正 - 失敗している2つのテストケースを修正
-  - [ ] 最近の検出履歴の表示
+3. **動作確認機能の充実**
+   - [ ] 非対話的デモモード (`--demo --non-interactive`)
+   - [ ] 最近の検出履歴の表示
+   - [ ] verboseモードのログ重複修正
 
-##### 2. 操作の直感性向上 🟡 HIGH
-- [x] **簡潔なエラー表示** ✅ (2025-07-21)
-  - [x] `--dry-run` オプションで検出のプレビューモード（実際のブロックなし）
-  - [x] エラーメッセージの階層化（簡潔→詳細）
-- [ ] **残りの機能**:
-  - [ ] `--brief` オプションで簡潔なエラー表示モード
-  - [ ] 詳細は `--explain-last-error` で確認する設計の改善
-- [ ] **誤検出時のワンステップ対処**:
-  - [ ] 検出時に「このパターンを今後無視する？[Y/n]」の対話的選択
-  - [ ] 選択結果をプロジェクト設定（.antimon/config）に自動保存
-  - [ ] 除外設定の簡単な取り消し機能
-- [ ] **コンテキスト対応の検出**:
-  - [ ] テストファイル（*_test.py, test_*.py）での自動的な検出緩和
-  - [ ] ドキュメント内のコード例での誤検出防止
-  - [ ] 開発環境と本番環境の自動識別
+#### ユーザビリティ改善 🟡 HIGH
+1. **エラー時の明確な次のアクション**
+   - [ ] `--faq` コマンドで一般的な問題と解決策を表示
+   - [ ] エラー発生時に「次に何をすべきか」を番号付きリストで表示
+   - [ ] `antimon --diagnose` で環境、設定、権限などを総合チェック
 
-##### 3. ログ出力の有用性向上 🟡 HIGH
-- [ ] **構造化されたログ出力**:
-  - [ ] JSON形式でのログ出力オプション（--format json）
-  - [ ] 検出理由、リスクレベル、修正提案を構造化して表示
-  - [ ] CI/CDツールとの統合を考慮したマシンリーダブルな出力
-- [ ] **デバッグ情報の階層化**:
-  - [ ] -v で基本情報、-vv で詳細、-vvv で完全トレース
-  - [ ] 特定の検出器のみのデバッグ情報表示オプション
-  - [ ] パフォーマンス計測情報の表示
+2. **誤検出時のワンステップ対処**
+   - [ ] 検出時に「このパターンを今後無視する？[Y/n]」の対話的選択
+   - [ ] 選択結果をプロジェクト設定（.antimon/config）に自動保存
+   - [ ] テストファイル（*_test.py）での自動的な検出緩和
 
-##### 4. エラー時の明確な次のアクション 🟡 HIGH
-- [ ] **FAQ/トラブルシューティングガイド**:
-  - [ ] `--faq` コマンドで一般的な問題と解決策を表示
-  - [ ] よくある誤検出パターンと対処法のドキュメント
-  - [ ] エラーコードベースの解決策提示
-- [ ] **対話的トラブルシューティング**:
-  - [ ] エラー発生時に「次に何をすべきか」を番号付きリストで表示
-  - [ ] 選択した番号に応じて自動的にコマンド実行や設定変更
-  - [ ] よくあるエラーパターンのFAQへの自動マッチング
-- [ ] **自己診断機能**:
-  - [ ] `antimon --diagnose` で環境、設定、権限などを総合チェック
-  - [ ] 問題が見つかった場合の具体的な解決コマンドの提示
-  - [ ] 診断結果のレポート生成（サポート時に共有可能）
-
-##### 5. 期待値との差異の解消 🟡 MEDIUM
-- [ ] **設定テンプレート機能**:
-  - [ ] `--generate-config` で設定ファイルのテンプレート生成
-  - [ ] プロジェクトタイプ別の推奨設定（Web開発、データ分析、インフラなど）
-  - [ ] 設定ファイルのバリデーション機能
-- [ ] **動作の予測可能性向上**:
-  - [ ] --dry-run モードでの事前確認機能
-  - [ ] 検出ルールの一覧表示と各ルールの詳細説明
-  - [ ] 「なぜこれが検出されたか」の詳細トレース表示
-- [ ] **設定の透明性**:
-  - [ ] 現在有効な全設定の出所を表示（デフォルト/環境変数/設定ファイル/コマンドライン）
-  - [ ] 設定の優先順位の明確な説明
-  - [ ] 設定変更のプレビュー機能
-
-##### 6. ユーザビリティ改善項目 🟡 HIGH
-- [ ] **初回利用時の体験改善**: 動作確認フローとクイックスタートガイドの改善
-- [ ] **エラーメッセージの最適化**: --briefモードでワンライナー、--verboseで技術的詳細
-- [ ] **設定の永続化**: プロジェクトごとの設定ファイル（.antimon/config）とグローバル設定
-- [ ] **実行コンテキストの認識**: CI/CD環境での自動出力調整、TTY検出による対話モード切替
-
-##### 7. その他の利便性向上 🟢 LOW
-- [ ] **統計情報機能**:
-  - [ ] `--stats` で検出統計を表示（どの検出器が最も頻繁に動作しているか）
-  - [ ] プロジェクトごとの検出傾向分析
-- [ ] **バッチ検証モード**:
-  - [ ] 複数のファイルを一括でチェック
-  - [ ] プロジェクト全体のセキュリティ監査に使用
-  - [ ] 結果のエクスポート機能（CSV、JSON形式）
+3. **成功時のフィードバック**
+   - [ ] `--verbose` 時は「✓ Operation allowed」のような肯定的フィードバック
+   - [ ] `--quiet` モードでの完全な無音動作
+   - [ ] 統計情報表示（「3 operations checked, all allowed」など）
 
 ## Version 0.3.0 (Configuration Support)
 - [ ] TOML configuration file support (`antimon.toml`)
@@ -172,9 +116,8 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [ ] Migration guides & professional support
 
 ### Code Quality Improvements (Score: 53.5/100) ⚠️
-- [x] **ロギング**: AntimonLoggerクラス作成済み (部分的完了)
-  - [ ] 残り378個のprint文をlogger呼び出しに移行
 - [ ] **セキュリティ**: os.system()とinput()の使用を修正
+- [ ] **ロギング**: 残り378個のprint文をlogger呼び出しに移行
 - [ ] **アーキテクチャ**: 循環依存の解決とモジュール結合度の削減
 - [ ] **コード品質**: 複雑度の高い関数の簡素化と型ヒントの追加
 
@@ -188,21 +131,12 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 ## Next Steps
 
-### 🚨 緊急対応 (1-2日)
-1. **重複ログ出力の修正** - 同じメッセージが2回表示される問題
-2. **テストケースの修正** - `antimon --test`ですべてパスするように
-3. **出力の簡潔化** - デフォルトでタイムスタンプを非表示に
+### 🎯 Version 0.2.8 Priority (In Progress)
+- Focus on items listed in Version 0.2.8 section above
+- Priority: Direct file checking without JSON, Claude Code integration
 
-### ⚠️ コード品質改善 (1週間)
-1. **セキュリティ修正** - os.system()とinput()の使用を修正
-2. **ロギング移行完了** - 残り378個のprint文を移行
-3. **アーキテクチャ改善** - 循環依存の解決と複雑度の削減
-
-### 🎯 中期目標 (2週間)
-1. **設定ファイルサポート** - .antimonrcでプロジェクト設定を永続化
-2. **対話的な誤検出対処** - 「今後許可する？」の選択肢
-3. **`--check-file`コマンド** - 実ファイルの事前チェック
-4. **検出履歴と統計** - 検出傾向の分析機能
+### 🎯 Version 0.3.0 Next (Configuration)
+- See Version 0.3.0 section for detailed tasks
 
 
 
