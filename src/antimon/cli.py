@@ -119,7 +119,9 @@ For more information: https://github.com/yourusername/antimon
     parser.add_argument(
         "--allow-file",
         action="append",
-        help="Allow specific file path (can be used multiple times). Example: --allow-file /home/user/.config/app.conf",
+        help="Allow specific file path or glob pattern (can be used multiple times). "
+             "Examples: --allow-file /home/user/.config/app.conf, --allow-file '*.env', "
+             "--allow-file 'config/*.json', --allow-file '**/*.secret'",
     )
 
     parser.add_argument(

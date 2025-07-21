@@ -82,7 +82,7 @@ def detect_filenames(json_data: HookData) -> DetectionResult:
     
     # Check if file is explicitly allowed or ignored
     config = get_runtime_config()
-    if file_path in config.allowed_files or config.is_file_ignored(file_path):
+    if config.is_file_allowed(file_path) or config.is_file_ignored(file_path):
         return DetectionResult(detected=False)
 
     for pattern in dangerous_patterns:

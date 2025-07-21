@@ -113,3 +113,72 @@ def test_global_runtime_config():
     config2 = get_runtime_config()
     assert config2 is new_config
     assert config2.ignore_patterns == ["test.py"]
+
+
+def test_is_file_allowed_glob_patterns():
+    """Test file allow logic with glob patterns."""
+    config = RuntimeConfig()
+    config.allowed_files = {
+        "/etc/myapp.conf",  # Exact match
+        "*.env",  # Simple glob
+        "config/*.json",  # Directory glob
+        "**/*.secret",  # Recursive glob
+        "test_*.py",  # Prefix glob
+        "*.test.py",  # Suffix glob
+    }
+    
+    # Test exact matches
+    assert config.is_file_allowed("/etc/myapp.conf") is True
+    
+    # Test simple glob patterns
+    assert config.is_file_allowed(".env") is True
+    assert config.is_file_allowed("production.env") is True
+    assert config.is_file_allowed("local.env") is True
+    assert config.is_file_allowed("env") is False
+    
+    # Test directory glob patterns
+    assert config.is_file_allowed("config/app.json") is True
+    assert config.is_file_allowed("config/database.json") is True
+    assert config.is_file_allowed("app.json") is False
+    assert config.is_file_allowed("other/app.json") is False
+    
+    # Test recursive glob patterns
+    assert config.is_file_allowed("api.secret") is True
+    assert config.is_file_allowed("config/api.secret") is True
+    assert config.is_file_allowed("deep/nested/dir/api.secret") is True
+    assert config.is_file_allowed("secret") is False
+    
+    # Test prefix/suffix patterns
+    assert config.is_file_allowed("test_app.py") is True
+    assert config.is_file_allowed("app_test.py") is False
+    assert config.is_file_allowed("app.test.py") is True
+    assert config.is_file_allowed("test.py") is False
+
+
+def test_is_file_allowed_special_chars():
+    """Test file allow logic with special characters in patterns."""
+    config = RuntimeConfig()
+    config.allowed_files = {
+        "file?.txt",  # ? matches single character
+        "[abc]file.txt",  # Character class
+        "file[0-9].txt",  # Character range
+    }
+    
+    # Test ? pattern (matches any single character)
+    assert config.is_file_allowed("file1.txt") is True
+    assert config.is_file_allowed("fileA.txt") is True
+    assert config.is_file_allowed("file.txt") is False
+    assert config.is_file_allowed("file12.txt") is False
+    
+    # Test character class
+    assert config.is_file_allowed("afile.txt") is True
+    assert config.is_file_allowed("bfile.txt") is True
+    assert config.is_file_allowed("cfile.txt") is True
+    assert config.is_file_allowed("dfile.txt") is False
+    
+    # Test character range (only matches digits 0-9)
+    assert config.is_file_allowed("file0.txt") is True
+    assert config.is_file_allowed("file5.txt") is True
+    assert config.is_file_allowed("file9.txt") is True
+    # fileA.txt matches file?.txt pattern, not file[0-9].txt
+    assert config.is_file_allowed("fileX.txt") is True  # matches file?.txt

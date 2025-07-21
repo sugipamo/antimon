@@ -7,6 +7,7 @@ Runtime configuration management for antimon
 
 import os
 import fnmatch
+import glob
 from pathlib import Path
 from typing import Set, Optional, List
 from dataclasses import dataclass, field
@@ -67,6 +68,44 @@ class RuntimeConfig:
         for pattern in self.ignore_patterns:
             if fnmatch.fnmatch(file_path, pattern):
                 return True
+        
+        return False
+    
+    def is_file_allowed(self, file_path: str) -> bool:
+        """Check if a file is explicitly allowed.
+        
+        Supports:
+        - Exact file paths
+        - Glob patterns (*.env, config/*.json)
+        - Recursive patterns (**/*.secret)
+        """
+        # Check exact match first
+        if file_path in self.allowed_files:
+            return True
+        
+        # Check glob patterns
+        for pattern in self.allowed_files:
+            # If pattern contains glob characters, use fnmatch
+            if any(char in pattern for char in ['*', '?', '[', ']']):
+                # Handle ** for recursive matching
+                if '**' in pattern:
+                    # Convert ** to match any directory depth
+                    # e.g., **/*.txt matches any .txt file in any subdirectory
+                    import re
+                    # First, escape special regex characters except * and ?
+                    regex_pattern = re.escape(pattern)
+                    # Then convert glob patterns to regex
+                    regex_pattern = regex_pattern.replace(r'\*\*/', '(.*/)?')  # **/ matches any depth including none
+                    regex_pattern = regex_pattern.replace(r'\*\*', '.*')  # ** matches anything
+                    regex_pattern = regex_pattern.replace(r'\*', '[^/]*')  # * matches anything except /
+                    regex_pattern = regex_pattern.replace(r'\?', '[^/]')  # ? matches single char except /
+                    regex_pattern = '^' + regex_pattern + '$'
+                    if re.match(regex_pattern, file_path):
+                        return True
+                else:
+                    # Use fnmatch for simple glob patterns
+                    if fnmatch.fnmatch(file_path, pattern):
+                        return True
         
         return False
     

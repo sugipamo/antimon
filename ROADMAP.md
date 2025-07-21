@@ -18,9 +18,10 @@
   - ✅ Improved detection transparency with detailed explanations in `--explain-last-error`
 
 ### Quality Check Summary (2025-07-21)
-- ✅ **pytest**: All 84 tests passing with 81% code coverage  
-- ✅ **Project structure**: Clean working directory, proper .gitignore configuration
-- ✅ **src-check score**: 68.1/100 (🟠 Moderate - some improvements needed)
+- ✅ **pytest**: All 88 tests passing with 82% code coverage  
+- ✅ **Project structure**: Clean working directory, proper .gitignore configuration (cache files exist but are properly ignored)
+- ✅ **src-check score**: 64.3/100 (🟠 Moderate - improvements needed)
+  - Main issues: High use of print statements instead of logging, high coupling in several modules, missing type hints in some places
 - ✅ **User Experience Review**: Comprehensive evaluation completed with actionable improvements identified
 
 ## Project Vision
@@ -58,56 +59,28 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 ### Version 0.2.7 (In Progress) 🚀
 
-#### ユーザビリティの改善
-- [x] **インストール体験の改善**: 
+#### 完了済みタスク ✅
+- [x] **インストール体験の改善（部分的）**: 
   - [x] インストール完了後の自動セットアップウィザード ✅ (2025-07-21)
     - 実装内容: インタラクティブなセットアップウィザードを追加
     - `--setup` コマンドでいつでも実行可能
     - Claude Codeの自動検出と設定
     - セットアップの検証機能付き
-  - [ ] プラットフォーム別の詳細なインストールガイド
-  - [ ] 依存関係の自動チェックと解決提案
-- [ ] **検出結果の視覚的改善**:
-  - [ ] 検出箇所のコードハイライト表示
-  - [ ] 問題の深刻度レベルの視覚的表示（色分け・アイコン）
-  - [ ] 検出パターンの説明を日本語でも表示するオプション
-- [ ] **誤検出への対処改善**:
-  - [ ] 誤検出報告の簡易化（--report-false-positive コマンド）
-  - [ ] プロジェクト固有の除外設定の永続化
-  - [ ] 一時的な無効化の履歴管理
-- [ ] **デバッグサポートの強化**:
-  - [ ] --dry-run モード（実際にブロックせずに検出結果を表示）
-  - [ ] 検出ロジックの詳細トレース機能
-  - [ ] 過去の検出履歴の参照機能
 
+#### 残りのタスク 📋
 
+##### 1. グロブパターンサポート for `--allow-file` ✅ COMPLETED (2025-07-21)
+- [x] ワイルドカードサポート（`*.env`, `config/*.json`）
+- [x] 再帰的パターン（`**/*.secret`）
+- [x] パスの正規化と展開
+- [x] テストケースの追加
+  - 実装内容: fnmatchとカスタム正規表現を使用してグロブパターンマッチングを実装
+  - `is_file_allowed`メソッドを追加してグロブパターンサポートを提供
+  - エンドツーエンドテストで動作確認済み
 
-### Next Priority Tasks for Version 0.2.7
-
-#### グロブパターンサポート for `--allow-file` 🚀
-- [ ] ワイルドカードサポート（`*.env`, `config/*.json`）
-- [ ] 再帰的パターン（`**/*.secret`）
-- [ ] パスの正規化と展開
-- [ ] テストケースの追加
-
-#### インストール体験の改善（残り項目）
+##### 2. 残りの実装項目
 - [ ] プラットフォーム別の詳細なインストールガイド
 - [ ] 依存関係の自動チェックと解決提案
-
-#### 検出結果の視覚的改善
-- [ ] 検出箇所のコードハイライト表示
-- [ ] 問題の深刻度レベルの視覚的表示（色分け・アイコン）
-- [ ] 検出パターンの説明を日本語でも表示するオプション
-
-#### 誤検出への対処改善
-- [ ] 誤検出報告の簡易化（--report-false-positive コマンド）
-- [ ] プロジェクト固有の除外設定の永続化
-- [ ] 一時的な無効化の履歴管理
-
-#### デバッグサポートの強化
-- [ ] --dry-run モード（実際にブロックせずに検出結果を表示）
-- [ ] 検出ロジックの詳細トレース機能
-- [ ] 過去の検出履歴の参照機能
 
 ### Version 0.2.8 (User Experience Enhancement) 🎯
 
@@ -236,14 +209,19 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [ ] Migration guides from other tools
 - [ ] Professional support options
 
-### Code Quality Improvements (from src-check)
-- [ ] Consider structured logging for debugging (200+ print statements currently)
-- [ ] Reduce coupling in core modules
-- [ ] Clean up unused imports
-- [ ] Address os.system() security concern in color_utils.py:71
-- [ ] Resolve circular dependency concerns
-- [ ] Complete type hints and documentation
-- [ ] Optimize string concatenation performance
+### Code Quality Improvements (from src-check - Score: 64.3/100)
+- [ ] **High Priority**: Replace 200+ print statements with structured logging
+  - Affects: core.py, color_utils.py, first_run.py, last_error.py, error_context.py
+- [ ] **High Priority**: Reduce coupling in core modules
+  - core.py: 165 external calls (limit: 15)
+  - color_utils.py: 53 external calls (limit: 15)
+  - detectors.py: 78 external calls (limit: 15)
+- [ ] **Security**: Address os.system() usage in color_utils.py:71
+- [ ] **Architecture**: Resolve circular dependency warnings (multiple import-inside-function instances)
+- [ ] Clean up unused imports (especially in __init__.py)
+- [ ] Complete missing type hints and parameter documentation
+- [ ] Optimize string concatenation in loops (use list.append() and ''.join())
+- [ ] Reduce function complexity (main, validate_hook_data, process_stdin exceed limit)
 
 ## Long-term Goals
 
@@ -289,31 +267,6 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 
 
-## User Journey & Pain Points
-
-### Current User Experience (2025-07-21)
-
-**Installation**: Simple pip/uv install, welcome message, interactive setup, but unclear initial verification and detection patterns
-
-**Initial Setup**: Auto Claude Code integration, test commands work, but complex project configuration and unclear verification
-
-**Daily Use**: Clear errors, colorful output, detailed explanations, but cumbersome false positive handling and undocumented debug mode
-
-**Troubleshooting**: Detailed error info, helpful guidance, but long resolution paths and no detection history
-
-### Key Challenges from User Feedback
-
-1. **Usage Clarity**: Unclear practical usage, detection pattern overview, project-specific configuration
-2. **Operational Complexity**: Repetitive long options, unclear persistence, no batch checking
-3. **Log Output**: Abstract detection reasons, insufficient debug info, no CI/CD format
-4. **Error Resolution**: Unclear next steps, trial-and-error troubleshooting, ambiguous issue sources
-
-### Ideal User Experience
-
-- **Zero-friction setup**: Auto-suggest optimal config, recognize project type
-- **Intelligent detection**: Context awareness, test vs production code, learn project conventions
-- **Instant resolution**: One-click false positive handling, concrete fixes, auto-recognize similar cases
-- **Continuous improvement**: Usage-based accuracy, community feedback integration, personalized experience
 
 ## How to Contribute
 
@@ -326,4 +279,5 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 ## Feedback
 
 We welcome feedback and suggestions! Please open an issue or start a discussion to share your ideas for improving antimon.
+
 
