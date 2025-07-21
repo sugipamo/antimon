@@ -22,7 +22,7 @@ def setup_logging(verbose: bool = False, quiet: bool = False) -> None:
     elif verbose:
         level = logging.DEBUG
     else:
-        level = logging.INFO
+        level = logging.WARNING  # Changed from INFO to WARNING for normal mode
 
     # Create formatter with simplified timestamp for better readability
     formatter = logging.Formatter(

@@ -176,19 +176,59 @@ def process_stdin(verbose: bool = False, quiet: bool = False) -> int:
     
     tool_name = json_data.get("tool_name", "")
     
+    # Validate required fields for code-editing tools
+    if tool_name in CODE_EDITING_TOOLS:
+        tool_input = json_data.get("tool_input", {})
+        
+        # Check for required fields based on tool type
+        if tool_name == "Write":
+            if "content" not in tool_input:
+                logger.error(f"Missing required field 'content' for {tool_name} tool")
+                if not quiet:
+                    print(f"\n❌ Validation error: Missing required field 'content' for {tool_name} tool", file=sys.stderr)
+                    print("\n💡 How to fix:", file=sys.stderr)
+                    print("   The Write tool requires both 'file_path' and 'content' fields:", file=sys.stderr)
+                    print('   {', file=sys.stderr)
+                    print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+                    print('     "tool_name": "Write",', file=sys.stderr)
+                    print('     "tool_input": {', file=sys.stderr)
+                    print('       "file_path": "example.py",', file=sys.stderr)
+                    print('       "content": "file contents here"', file=sys.stderr)
+                    print('     }', file=sys.stderr)
+                    print('   }\n', file=sys.stderr)
+                return 1
+        elif tool_name in {"Edit", "MultiEdit"}:
+            # Edit tools need either 'new_string' or both 'old_string' and 'new_string'
+            if "new_string" not in tool_input:
+                logger.error(f"Missing required field 'new_string' for {tool_name} tool")
+                if not quiet:
+                    print(f"\n❌ Validation error: Missing required field 'new_string' for {tool_name} tool", file=sys.stderr)
+                    print("\n💡 How to fix:", file=sys.stderr)
+                    print(f"   The {tool_name} tool requires 'old_string' and 'new_string' fields:", file=sys.stderr)
+                    print('   {', file=sys.stderr)
+                    print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+                    print(f'     "tool_name": "{tool_name}",', file=sys.stderr)
+                    print('     "tool_input": {', file=sys.stderr)
+                    print('       "file_path": "example.py",', file=sys.stderr)
+                    print('       "old_string": "text to replace",', file=sys.stderr)
+                    print('       "new_string": "replacement text"', file=sys.stderr)
+                    print('     }', file=sys.stderr)
+                    print('   }\n', file=sys.stderr)
+                return 1
+    
     # Provide feedback for non-code-editing tools
     if tool_name not in CODE_EDITING_TOOLS:
         if tool_name in SAFE_TOOLS:
             logger.info(f"Safe tool {tool_name} - no security validation needed")
-            if not verbose and not quiet:
+            if verbose and not quiet:
                 print(f"ℹ️  Tool '{tool_name}' is considered safe - no security validation performed", file=sys.stderr)
         elif tool_name:
             logger.info(f"Unknown tool {tool_name} - skipping validation")
-            if not verbose and not quiet:
+            if verbose and not quiet:
                 print(f"ℹ️  Unknown tool '{tool_name}' - no security validation performed", file=sys.stderr)
         else:
             logger.info("No tool name provided - skipping validation")
-            if not verbose and not quiet:
+            if verbose and not quiet:
                 print("ℹ️  No tool specified - no security validation performed", file=sys.stderr)
         return 0
     
@@ -197,22 +237,23 @@ def process_stdin(verbose: bool = False, quiet: bool = False) -> int:
 
     if has_issues:
         logger.info(f"Security validation failed with {len(issues)} issue(s)")
+        # Always show security issues, even in quiet mode
+        print("\n⚠️  Security issues detected:", file=sys.stderr)
+        
+        # Structured output for issues
+        if verbose and not quiet:
+            print(f"\n📊 Detection Results:", file=sys.stderr)
+            print(f"   File: {json_data.get('tool_input', {}).get('file_path', 'N/A')}", file=sys.stderr)
+            print(f"   Tool: {tool_name}", file=sys.stderr)
+            print(f"   Summary: {stats['failed']} failed, {stats['passed']} passed, {stats['errors']} errors\n", file=sys.stderr)
+            print("   Issues found:", file=sys.stderr)
+            for i, issue in enumerate(issues, 1):
+                print(f"   [{i}] {issue}", file=sys.stderr)
+        else:
+            for issue in issues:
+                print(f"  • {issue}", file=sys.stderr)
+        
         if not quiet:
-            print("\n⚠️  Security issues detected:", file=sys.stderr)
-            
-            # Structured output for issues
-            if verbose:
-                print(f"\n📊 Detection Results:", file=sys.stderr)
-                print(f"   File: {json_data.get('tool_input', {}).get('file_path', 'N/A')}", file=sys.stderr)
-                print(f"   Tool: {tool_name}", file=sys.stderr)
-                print(f"   Summary: {stats['failed']} failed, {stats['passed']} passed, {stats['errors']} errors\n", file=sys.stderr)
-                print("   Issues found:", file=sys.stderr)
-                for i, issue in enumerate(issues, 1):
-                    print(f"   [{i}] {issue}", file=sys.stderr)
-            else:
-                for issue in issues:
-                    print(f"  • {issue}", file=sys.stderr)
-            
             print("\n💡 How to proceed:", file=sys.stderr)
             print("   1. Review the detected issues above", file=sys.stderr)
             print("   2. If false positive, consider:", file=sys.stderr)
@@ -225,16 +266,13 @@ def process_stdin(verbose: bool = False, quiet: bool = False) -> int:
         return 2
 
     logger.info("Security validation passed")
-    if not quiet:
-        if verbose:
-            # In verbose mode, show detailed summary
-            print(f"\n📊 Detection Summary:", file=sys.stderr)
-            print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
-            print(f"   • Passed: {stats['passed']}", file=sys.stderr)
-            print(f"   • Failed: {stats['failed']}", file=sys.stderr)
-            if stats['errors'] > 0:
-                print(f"   • Errors: {stats['errors']}", file=sys.stderr)
-        else:
-            # In non-verbose/non-quiet mode, print success message with summary
-            print(f"✅ No security issues detected ({stats['total']} detectors passed)", file=sys.stderr)
+    if verbose and not quiet:
+        # Only in verbose mode, show detailed summary
+        print(f"\n📊 Detection Summary:", file=sys.stderr)
+        print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
+        print(f"   • Passed: {stats['passed']}", file=sys.stderr)
+        print(f"   • Failed: {stats['failed']}", file=sys.stderr)
+        if stats['errors'] > 0:
+            print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+    # No output in normal mode when no issues are detected (matches README example)
     return 0
