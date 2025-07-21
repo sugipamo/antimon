@@ -2,7 +2,19 @@
 
 ## Current Status (2025-07-21)
 
-🎉 **Version 0.2.0 has been successfully completed!** The project has been transformed into a proper Python package with comprehensive testing, documentation, and code quality checks. All tests are passing (20/20) and the code quality score is 93.8/100.
+🎉 **Version 0.2.0 has been successfully completed!** The project has been transformed into a proper Python package with comprehensive testing, documentation, and code quality checks. All tests are passing (20/20) and the code quality score is 93.9/100.
+
+### Quality Check Summary (2025-07-21)
+- ✅ **pytest**: All 20 tests passing with 50% code coverage
+- ✅ **Project structure**: Clean working directory, proper .gitignore configuration
+- ✅ **src-check score**: 93.9/100 (🟢 Excellent)
+  - Architecture: 92.0/100
+  - Code quality: 94.0/100
+  - Compliance: 95.0/100
+  - Documentation: 90.0/100
+  - Performance: 98.0/100
+  - Testing: 94.0/100
+  - Type safety: 94.0/100
 
 ## Project Vision
 
@@ -15,7 +27,7 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [x] JSON input processing
 - [x] Error output formatting
 
-## Version 0.2.0 (Package Structure) ✅ COMPLETED
+## Version 0.2.0 (Package Structure) ✅ COMPLETED (2025-07-21)
 - [x] Convert to proper Python package structure
   - [x] `src/antimon/` directory structure
   - [x] `__init__.py` with public API
@@ -30,79 +42,66 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [x] Code quality checks (ruff, mypy, black)
 - [x] Updated .gitignore for Python projects
 
-### Version 0.2.1 (Bug Fixes & Improvements) ✅ COMPLETED
+### Version 0.2.1 (Bug Fixes & Improvements) ✅ COMPLETED (2025-07-21)
 - [x] Fix detector functions to check both 'content' and 'new_string' fields
 - [x] Add tests for Edit/MultiEdit tool support
 - [x] Update README with better examples and documentation
 
 ### User Experience Improvements (ユーザー体験の改善)
 
-#### 即時対応が必要な項目 (High Priority)
-- [x] **Success feedback**: 検出されなかった場合に「No security issues detected」等の成功メッセージを表示（実装済み）
-- [x] **Verbose mode fix**: -vオプションが正常に動作するように修正（実装済み、ただし非verboseモード時との差別化が必要）
-- [x] **Help text improvement**: --helpで表示される説明をより具体的に（使用例の追加）✅ 2025-07-21
-- [x] **Error message clarity**: エラーメッセージに対処法を含める（例：「JSON parsing error: Expected property name... → Try: echo '{valid json}' | antimon」）✅ 2025-07-21
-- [x] **Exit code behavior**: 非コード編集ツール（Read, Bashなど）の場合の明確なフィードバック ✅ 2025-07-21
+#### 即時対応が必要な項目 (High Priority) ✅ COMPLETED
+- [x] **Success feedback**: 検出されなかった場合に「No security issues detected」等の成功メッセージを表示
+- [x] **Verbose mode fix**: -vオプションが正常に動作するように修正
+- [x] **Help text improvement**: --helpで表示される説明をより具体的に（使用例の追加）
+- [x] **Error message clarity**: エラーメッセージに対処法を含める
+- [x] **Exit code behavior**: 非コード編集ツール（Read, Bashなど）の場合の明確なフィードバック
 
-#### ログ出力の改善 (Logging Improvements)
+### Code Quality Improvements from src-check (2025-07-21) 🔍
+- [ ] **Replace print statements with logging in core.py**: Currently using print() for output, should use proper logging
+- [ ] **Reduce coupling in core.py and detectors.py**: High external call count
+- [ ] **Add docstrings to test classes**: All test files missing docstrings
+- [ ] **Optimize string concatenation in detectors.py**: Use list.append() and join() instead of += in loops
+
+
+### Version 0.2.2 (Next Priority Tasks) 🚀
+次に実装予定のタスク（2025-07-21 更新）:
+
+#### 1. ログ出力の改善 🔧
+- [ ] **Quiet mode (-q/--quiet)**: エラーのみを表示し、成功時は何も出力しないモード
+- [ ] **Summary at end**: 全検出器の実行結果サマリー（例：「6 detectors run, 1 issue found」）
+- [ ] **Structured logging**: 検出結果を構造化して表示（検出器名、ファイルパス、行番号など）
 - [ ] **Log format simplification**: タイムスタンプをシンプルに（現在：2025-07-21 10:14:33 → 10:14:33）
 - [ ] **Log level visibility**: DEBUGログとINFO/WARNINGログの視覚的差別化
-- [ ] **Structured logging**: 検出結果を構造化して表示（検出器名、ファイルパス、行番号など）
-- [ ] **Summary at end**: 全検出器の実行結果サマリー（例：「6 detectors run, 1 issue found」）
-- [ ] **Quiet mode**: エラーのみを表示し、成功時は何も出力しないモード（--quiet/-q）
 
-#### インストールと初回使用 (Installation & First Use)
+#### 2. インストールと初回使用の体験向上 📦
 - [ ] **Installation verification**: インストール後の動作確認コマンド（antimon --version、antimon --test）
 - [ ] **Quick test command**: サンプルデータで即座に動作確認できるコマンド（antimon --demo）
 - [ ] **README examples**: コピペで試せる実例を3-5個追加
 - [ ] **Common errors section**: よくあるエラーと解決方法のセクション
 
-#### 検出結果の理解しやすさ (Detection Result Clarity)
-- [ ] **Detection context**: なぜ危険なのかの簡潔な説明（例：「/etc/passwd: System password file (read can expose user info)」）
+#### 3. 開発者向け機能 👨‍💻
+- [ ] **JSON output mode**: CI/CD統合のためのJSON形式出力（--output-format json）
+- [ ] **Debug output**: 内部処理の詳細を出力するデバッグモード（--debug）
+- [ ] **Dry-run mode**: 実際の検証を行わず、何がチェックされるかを表示するモード
+- [ ] **Hook test mode**: フック設定のテストモード（実際のAIツールなしで動作確認）
+
+#### 4. 検出結果の理解しやすさ 📊
+- [ ] **Detection context**: なぜ危険なのかの簡潔な説明
 - [ ] **Severity levels**: 検出の深刻度表示（Critical/High/Medium/Low）
 - [ ] **Fix suggestions**: 検出された問題の修正方法の提案
 - [ ] **Whitelist instructions**: 誤検出の場合の除外方法の案内
 
-#### 開発者向け機能 (Developer Features)
-- [ ] **Dry-run mode**: 実際の検証を行わず、何がチェックされるかを表示するモード
-- [ ] **JSON output mode**: CI/CD統合のためのJSON形式出力（--output-format json）
-- [ ] **Hook test mode**: フック設定のテストモード（実際のAIツールなしで動作確認）
-- [ ] **Debug output**: 内部処理の詳細を出力するデバッグモード（--debug）
+#### 5. テストの改善（t-wada推奨形式） 🧪
+- [ ] **Test docstrings**: テストクラスにdocstringを追加して目的を明確化
+- [ ] **Parameterized tests**: 類似のテストケースを@pytest.mark.parametrizeで効率化
+- [ ] **Edge case tests**: 空の入力、不正な形式、境界値のテストを追加
 
-#### ドキュメントの充実 (Documentation Enhancement)
+#### 6. ドキュメントの充実 📚
 - [ ] **Troubleshooting guide**: よくある問題と解決方法
 - [ ] **Integration examples**: Claude Code以外のツールとの統合例
 - [ ] **Configuration guide**: 将来の設定ファイル機能の使い方（v0.3.0向け）
 - [ ] **API documentation**: Pythonモジュールとして使用する際のAPIドキュメント
 
-### Version 0.2.2 (Next Priority Tasks) 🚀
-次に実装予定のタスク（2025-07-21 更新）:
-
-上記の「User Experience Improvements」セクションから優先度の高い項目を選択して実装します。特に以下を重点的に:
-- ログ出力の改善（Quiet mode、Summary、Progress indicator）
-- インストールと初回使用の体験向上（Interactive setup、Platform-specific instructions）
-- 開発者向け機能（Batch mode、Watch mode）
-
-#### ユーザー体験の向上 (User Experience Enhancement) 🆕
-- [ ] **Interactive mode**: 検出時に「続行しますか？」の確認プロンプト（--interactive）
-- [ ] **Temporary bypass**: 一時的に特定の検出をスキップする機能（--bypass-once）
-- [ ] **Context display**: 検出箇所の前後のコードを表示して文脈を理解しやすく
-- [ ] **Detection history**: 過去の検出履歴を記録し、パターンを学習
-- [ ] **Smart suggestions**: 検出パターンに基づいた代替案の提案
-
-#### フォルスポジティブ対策 (False Positive Mitigation) 🆕
-- [ ] **Inline annotations**: コード内のコメントで特定行の検出を無効化（# antimon-ignore-next-line）
-- [ ] **Pattern refinement**: より正確な検出パターン（例：テストファイルでの挙動を変更）
-- [ ] **Context awareness**: ファイルパスやプロジェクト構造を考慮した検出
-- [ ] **Confidence levels**: 検出の確信度を表示（High/Medium/Low）
-
-#### 多言語対応 (Internationalization) 🆕
-- [ ] **Japanese messages**: 日本語のエラーメッセージとヘルプテキスト
-- [ ] **Locale detection**: システムロケールに基づく自動言語選択
-- [ ] **Language selection**: --lang オプションで言語を指定
-- [ ] **Localized documentation**: 各言語でのREADMEとドキュメント
-
-これらのタスクは、ユーザーからのフィードバックを基に優先度を調整しながら実装していきます。
 
 ## Version 0.3.0 (Configuration Support)
 - [ ] TOML configuration file support (`antimon.toml`)
@@ -136,11 +135,7 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [ ] GitHub Actions integration
 - [ ] GitLab CI integration
 - [ ] VS Code extension API
-- [ ] Reporting formats:
-  - [ ] SARIF (Static Analysis Results Interchange Format)
-  - [ ] JUnit XML
-  - [ ] HTML reports
-  - [ ] Markdown reports
+- [ ] Reporting formats (SARIF, JUnit XML, HTML, Markdown)
 
 ## Version 0.6.0 (Performance & Reliability)
 - [ ] Async detection for better performance
@@ -182,13 +177,20 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [ ] **API for extensions**: サードパーティ拡張のためのプラグインAPI
 - [ ] **Learning mode**: 誤検出を学習し、プロジェクト固有のルールを生成
 
-### ユーザビリティの向上 (Usability Improvements) 🆕
-- [ ] **Real-time feedback**: AIツールとの連携時にリアルタイムで検証結果を表示
-- [ ] **Visual indicators**: ターミナルでの色分けやアイコンによる視覚的フィードバック
-- [ ] **Smart defaults**: プロジェクトタイプ（Web、ML、インフラなど）に応じた適切なデフォルト設定
-- [ ] **Contextual help**: エラー発生時に関連するドキュメントへのリンクを自動表示
-- [ ] **Undo support**: 誤検出による中断を取り消して再実行する機能
-- [ ] **Telemetry opt-in**: ユーザー同意のもと、使用状況を収集して改善に活用
+### Advanced User Experience
+- [ ] **Interactive mode**: 検出時に「続行しますか？」の確認プロンプト
+- [ ] **Context display**: 検出箇所の前後のコードを表示
+- [ ] **Detection history**: 過去の検出履歴を記録
+- [ ] **Real-time feedback**: リアルタイムで検証結果を表示
+- [ ] **Visual indicators**: ターミナルでの色分けやアイコン
+- [ ] **Smart defaults**: プロジェクトタイプに応じた設定
+- [ ] **Telemetry opt-in**: 使用状況収集（ユーザー同意制）
+
+### Internationalization
+- [ ] **Japanese support**: 日本語のエラーメッセージとヘルプ
+- [ ] **Locale detection**: 自動言語選択
+- [ ] **Language selection**: --lang オプション
+- [ ] **Localized docs**: 各言語でのドキュメント
 
 ### Community Building
 - [ ] Create antimon organization on GitHub
