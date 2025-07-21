@@ -58,6 +58,8 @@ def supports_color() -> bool:
             major = int(version.split('.')[0])
             if major >= 10:
                 # Enable ANSI color support on Windows 10+
+                # Note: os.system('') is the documented way to enable ANSI on Windows
+                # See: https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
                 os.system('')  # This enables ANSI escape sequences
                 return True
         except:
@@ -87,12 +89,9 @@ class ColorFormatter:
         if not self.use_color:
             return text
         
-        codes = []
         if bold:
-            codes.append(Colors.BOLD)
-        codes.append(color)
-        
-        return f"{''.join(codes)}{text}{Colors.RESET}"
+            return f"{Colors.BOLD}{color}{text}{Colors.RESET}"
+        return f"{color}{text}{Colors.RESET}"
     
     def error(self, text: str, bold: bool = True) -> str:
         """Format error messages in red"""
@@ -140,7 +139,8 @@ class ColorFormatter:
             elif line.startswith('Line '):
                 # Format line number and matched text
                 parts = line.split(':', 1)
-                if len(parts) == 2:
+                parts_count = len(parts)
+                if parts_count == 2:
                     line_info = parts[0]
                     code = parts[1].strip()
                     formatted_lines.append(f"      {self.highlight(line_info + ':')} {self.bold(code)}")

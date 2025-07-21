@@ -7,7 +7,23 @@ Detection modules for various security patterns
 
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypedDict
+
+
+class ToolInput(TypedDict, total=False):
+    """Type definition for tool input data."""
+    file_path: str
+    content: str
+    new_string: str
+    old_string: str
+    command: str
+
+
+class HookData(TypedDict, total=False):
+    """Type definition for hook data structure."""
+    hook_event_name: str
+    tool_name: str
+    tool_input: ToolInput
 
 
 @dataclass
@@ -35,7 +51,7 @@ def find_line_number(text: str, pattern_match: re.Match[str]) -> int:
     return text[:start_pos].count('\n') + 1
 
 
-def detect_filenames(json_data: dict[str, Any]) -> DetectionResult:
+def detect_filenames(json_data: HookData) -> DetectionResult:
     """
     Detect dangerous or sensitive file paths
 
@@ -79,7 +95,7 @@ def detect_filenames(json_data: dict[str, Any]) -> DetectionResult:
     return DetectionResult(detected=False)
 
 
-def detect_llm_api(json_data: dict[str, Any]) -> DetectionResult:
+def detect_llm_api(json_data: HookData) -> DetectionResult:
     """
     Detect references to external LLM APIs
 
@@ -146,7 +162,7 @@ def detect_llm_api(json_data: dict[str, Any]) -> DetectionResult:
     return DetectionResult(detected=False)
 
 
-def detect_api_key(json_data: dict[str, Any]) -> DetectionResult:
+def detect_api_key(json_data: HookData) -> DetectionResult:
     """
     Detect hardcoded API keys in content
 
@@ -201,7 +217,7 @@ def detect_api_key(json_data: dict[str, Any]) -> DetectionResult:
     return DetectionResult(detected=False)
 
 
-def detect_docker(json_data: dict[str, Any]) -> DetectionResult:
+def detect_docker(json_data: HookData) -> DetectionResult:
     """
     Detect Docker-related operations
 
@@ -257,7 +273,7 @@ def detect_docker(json_data: dict[str, Any]) -> DetectionResult:
     return DetectionResult(detected=False)
 
 
-def detect_localhost(json_data: dict[str, Any]) -> DetectionResult:
+def detect_localhost(json_data: HookData) -> DetectionResult:
     """
     Detect localhost and port references
 
@@ -309,7 +325,7 @@ def detect_localhost(json_data: dict[str, Any]) -> DetectionResult:
     return DetectionResult(detected=False)
 
 
-def detect_claude_antipatterns(json_data: dict[str, Any]) -> DetectionResult:
+def detect_claude_antipatterns(json_data: HookData) -> DetectionResult:
     """
     Use Claude to detect anti-patterns and workarounds
 
@@ -329,7 +345,7 @@ def detect_claude_antipatterns(json_data: dict[str, Any]) -> DetectionResult:
     )
 
 
-def detect_read_sensitive_files(json_data: dict[str, Any]) -> DetectionResult:
+def detect_read_sensitive_files(json_data: HookData) -> DetectionResult:
     """
     Detect Read tool attempts to access sensitive files
     
@@ -405,7 +421,7 @@ def detect_read_sensitive_files(json_data: dict[str, Any]) -> DetectionResult:
     return DetectionResult(detected=False)
 
 
-def detect_bash_dangerous_commands(json_data: dict[str, Any]) -> DetectionResult:
+def detect_bash_dangerous_commands(json_data: HookData) -> DetectionResult:
     """
     Detect dangerous Bash commands
     
