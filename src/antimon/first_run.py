@@ -7,8 +7,10 @@ First-run detection and setup guide for antimon
 
 import os
 import sys
+import subprocess
+import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 from .color_utils import apply_color, Colors
 
@@ -104,3 +106,169 @@ def suggest_claude_code_setup(no_color: bool = False) -> None:
         print("   Run this command to set it up:")
         print(apply_color("   $ claude-code config set hooks.PreToolUse antimon", Colors.BOLD, no_color))
         print()
+
+
+def prompt_yes_no(question: str, default: bool = True, no_color: bool = False) -> bool:
+    """Prompt user for yes/no answer."""
+    # Check if stdin is interactive
+    if not sys.stdin.isatty():
+        # Non-interactive mode, return default
+        return default
+    
+    default_str = "Y/n" if default else "y/N"
+    prompt = f"{question} [{default_str}]: "
+    
+    try:
+        while True:
+            response = input(apply_color(prompt, Colors.OKBLUE, no_color)).strip().lower()
+            if not response:
+                return default
+            if response in ['y', 'yes']:
+                return True
+            if response in ['n', 'no']:
+                return False
+            print(apply_color("Please answer 'y' or 'n'.", Colors.WARNING, no_color))
+    except (EOFError, KeyboardInterrupt):
+        print()  # New line after ^C
+        return default
+
+
+def run_command(cmd: list, timeout: int = 10) -> Tuple[bool, str, str]:
+    """Run a command and return success status, stdout, and stderr."""
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        return result.returncode == 0, result.stdout, result.stderr
+    except (subprocess.SubprocessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+        return False, "", str(e)
+
+
+def setup_claude_code_automatically(no_color: bool = False) -> bool:
+    """Automatically set up Claude Code integration."""
+    print(apply_color("⚙️  Setting up Claude Code integration...", Colors.HEADER, no_color))
+    
+    success, stdout, stderr = run_command(
+        ["claude-code", "config", "set", "hooks.PreToolUse", "antimon"]
+    )
+    
+    if success:
+        print(apply_color("✅ Successfully configured Claude Code!", Colors.OKGREEN, no_color))
+        return True
+    else:
+        print(apply_color("❌ Failed to configure Claude Code:", Colors.FAIL, no_color))
+        if stderr:
+            print(f"   {stderr}")
+        return False
+
+
+def verify_setup(no_color: bool = False) -> bool:
+    """Verify that antimon is set up correctly."""
+    print()
+    print(apply_color("🔍 Verifying setup...", Colors.HEADER, no_color))
+    
+    # Check if antimon is in PATH
+    antimon_path = shutil.which("antimon")
+    if not antimon_path:
+        print(apply_color("❌ antimon not found in PATH", Colors.FAIL, no_color))
+        return False
+    print(apply_color(f"✅ antimon found at: {antimon_path}", Colors.OKGREEN, no_color))
+    
+    # Check Claude Code setup if available
+    claude_status = check_claude_code_setup()
+    if claude_status == "configured":
+        print(apply_color("✅ Claude Code integration configured", Colors.OKGREEN, no_color))
+    elif claude_status == "not_configured":
+        print(apply_color("⚠️  Claude Code found but not configured", Colors.WARNING, no_color))
+    else:
+        print(apply_color("ℹ️  Claude Code not detected (optional)", Colors.OKBLUE, no_color))
+    
+    # Test antimon functionality
+    test_data = '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"file_path": "/etc/passwd", "content": "test"}}'
+    success, stdout, stderr = run_command(
+        ["sh", "-c", f"echo '{test_data}' | antimon"],
+        timeout=5
+    )
+    
+    if not success and "Security issue detected" in stderr:
+        print(apply_color("✅ antimon detection working correctly", Colors.OKGREEN, no_color))
+        return True
+    else:
+        print(apply_color("❌ antimon detection test failed", Colors.FAIL, no_color))
+        return False
+
+
+def run_interactive_setup(no_color: bool = False) -> None:
+    """Run an interactive setup wizard for antimon."""
+    print()
+    print(apply_color("🧙 antimon Setup Wizard", Colors.HEADER, no_color))
+    print(apply_color("=" * 50, Colors.HEADER, no_color))
+    print()
+    print("This wizard will help you set up antimon for your environment.")
+    print()
+    
+    # Check for Claude Code
+    claude_status = check_claude_code_setup()
+    
+    if claude_status == "not_configured":
+        print(apply_color("📍 Claude Code detected!", Colors.OKGREEN, no_color))
+        if prompt_yes_no("Would you like to configure antimon with Claude Code automatically?", default=True, no_color=no_color):
+            if setup_claude_code_automatically(no_color=no_color):
+                print()
+                print(apply_color("🎉 Setup complete!", Colors.OKGREEN, no_color))
+            else:
+                print()
+                print("You can manually configure it later with:")
+                print(apply_color("  $ claude-code config set hooks.PreToolUse antimon", Colors.BOLD, no_color))
+    elif claude_status == "configured":
+        print(apply_color("✅ Claude Code is already configured with antimon!", Colors.OKGREEN, no_color))
+    else:
+        print(apply_color("ℹ️  Claude Code not detected.", Colors.OKBLUE, no_color))
+        print("   You can install it from: https://claude.ai/code")
+        print("   Or use antimon with other tools via JSON input.")
+    
+    print()
+    
+    # Offer to run verification
+    if prompt_yes_no("Would you like to verify your antimon installation?", default=True, no_color=no_color):
+        if verify_setup(no_color=no_color):
+            print()
+            print(apply_color("✨ Everything is working correctly!", Colors.OKGREEN, no_color))
+        else:
+            print()
+            print(apply_color("⚠️  Some issues were detected.", Colors.WARNING, no_color))
+            print("   Please check the messages above and refer to the documentation.")
+    
+    print()
+    print(apply_color("📚 Next steps:", Colors.OKBLUE, no_color))
+    print("• Run 'antimon --test' to see example detections")
+    print("• Run 'antimon --help' to see all available options")
+    print("• Visit https://github.com/yourusername/antimon for documentation")
+    print()
+    print(apply_color("Happy coding with antimon! 🚀", Colors.OKGREEN, no_color))
+
+
+def show_first_run_guide_interactive(no_color: bool = False) -> None:
+    """Display the first-run guide with interactive setup option."""
+    # If not in a terminal (e.g., piped), show the regular guide
+    if not sys.stdin.isatty():
+        show_first_run_guide(no_color=no_color)
+        suggest_claude_code_setup(no_color=no_color)
+        return
+    
+    print()
+    print(apply_color("🎉 Welcome to antimon!", Colors.HEADER, no_color))
+    print(apply_color("=" * 50, Colors.HEADER, no_color))
+    print()
+    print("antimon is a security validation tool for AI coding assistants.")
+    print("It helps prevent potentially dangerous operations in your code.")
+    print()
+    
+    if prompt_yes_no("Would you like to run the interactive setup wizard?", default=True, no_color=no_color):
+        run_interactive_setup(no_color=no_color)
+    else:
+        # Show the original non-interactive guide
+        show_first_run_guide(no_color=no_color)

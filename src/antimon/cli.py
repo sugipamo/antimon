@@ -17,6 +17,8 @@ from .first_run import (
     mark_first_run_complete,
     show_first_run_guide,
     suggest_claude_code_setup,
+    show_first_run_guide_interactive,
+    run_interactive_setup,
 )
 from .error_context import show_error_help
 from .runtime_config import RuntimeConfig, set_runtime_config
@@ -133,6 +135,12 @@ For more information: https://github.com/yourusername/antimon
         help="Show detailed explanation of the last error that occurred. Run this after antimon blocks an operation.",
     )
 
+    parser.add_argument(
+        "--setup",
+        action="store_true",
+        help="Run the interactive setup wizard to configure antimon with your tools.",
+    )
+
     args = parser.parse_args(argv)
 
     # Check if this is the first run (before running test)
@@ -173,6 +181,13 @@ For more information: https://github.com/yourusername/antimon
             mark_first_run_complete()
         return 0
     
+    # Run setup wizard if requested
+    if args.setup:
+        run_interactive_setup(no_color=args.no_color)
+        if first_run:
+            mark_first_run_complete()
+        return 0
+    
     # Run self-test if requested
     if args.test:
         if first_run:
@@ -181,10 +196,8 @@ For more information: https://github.com/yourusername/antimon
 
     # Show first-run guide if needed
     if first_run and not args.quiet:
-        show_first_run_guide(no_color=args.no_color)
+        show_first_run_guide_interactive(no_color=args.no_color)
         mark_first_run_complete()
-        # Also suggest Claude Code setup if available
-        suggest_claude_code_setup(no_color=args.no_color)
 
     # Check for conflicting options
     if args.verbose and args.quiet:

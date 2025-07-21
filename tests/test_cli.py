@@ -291,3 +291,16 @@ class TestCLIOutputModes:
         exit_code, stdout, stderr = self.run_antimon(data, ["-v"])
         assert exit_code == 0
         assert "Tool 'LS' is considered safe" in stderr
+    
+    def test_setup_flag(self):
+        """Test that --setup flag runs the interactive setup wizard."""
+        # Since we can't interact with the wizard in tests, just verify it runs
+        result = subprocess.run(
+            [sys.executable, "-m", "antimon", "--setup"],
+            capture_output=True,
+            text=True
+        )
+        # Should exit successfully
+        assert result.returncode == 0
+        # Should show setup wizard header
+        assert "antimon Setup Wizard" in result.stdout or "antimon Setup Wizard" in result.stderr

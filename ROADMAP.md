@@ -14,9 +14,9 @@
 - ✅ **Version 0.2.6**: User experience improvements (first-run guide, better errors, runtime config)
 
 ### Quality Check Summary (2025-07-21)
-- ✅ **pytest**: All 76 tests passing with 82% code coverage
+- ✅ **pytest**: All 83 tests passing with 84% code coverage
 - ✅ **Project structure**: Clean working directory, proper .gitignore configuration
-- ✅ **src-check score**: 74.4/100 (🟡 Good - some improvements needed)
+- ✅ **src-check score**: 71.0/100 (🟡 Good - some improvements needed)
 - ✅ **User Experience Review**: Comprehensive evaluation completed with actionable improvements identified
 
 ## Project Vision
@@ -69,11 +69,15 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [x] **設定ファイルなしでのカスタマイズ**: --ignore-pattern、--allow-file、--disable-detector、環境変数サポート
 - [x] **実際の使用フローの改善**: ブロック時の対処法表示、--explain-last-error機能、--help-errors
 
-### Version 0.2.7 (Next Up) 🚀
+### Version 0.2.7 (In Progress) 🚀
 
 #### ユーザビリティの改善
-- [ ] **インストール体験の改善**: 
-  - [ ] インストール完了後の自動セットアップウィザード
+- [x] **インストール体験の改善**: 
+  - [x] インストール完了後の自動セットアップウィザード ✅ (2025-07-21)
+    - 実装内容: インタラクティブなセットアップウィザードを追加
+    - `--setup` コマンドでいつでも実行可能
+    - Claude Codeの自動検出と設定
+    - セットアップの検証機能付き
   - [ ] プラットフォーム別の詳細なインストールガイド
   - [ ] 依存関係の自動チェックと解決提案
 - [ ] **検出結果の視覚的改善**:
@@ -88,6 +92,22 @@ Transform antimon from a standalone script into a robust, extensible Python pack
   - [ ] --dry-run モード（実際にブロックせずに検出結果を表示）
   - [ ] 検出ロジックの詳細トレース機能
   - [ ] 過去の検出履歴の参照機能
+#### その他のユーザビリティ改善
+- [ ] **学習曲線の緩和**:
+  - [ ] 初回実行時の対話的なチュートリアルモード
+  - [ ] よくある使用例のアニメーション表示（asciinemaスタイル）
+  - [ ] 段階的な機能紹介（基本→応用）
+- [ ] **フィードバックループの改善**:
+  - [ ] ユーザーの選択を学習して次回から適用
+  - [ ] 「この検出は役立ちましたか？」の簡易フィードバック
+- [ ] **統合テストモード**:
+  - [ ] プロジェクト全体をスキャンして潜在的な問題を事前に確認
+  - [ ] CI/CD前の事前チェックコマンド
+  - [ ] 修正提案の一括適用オプション
+- [ ] **コンテキスト認識の強化**:
+  - [ ] テストファイルでの誤検出を自動的に緩和
+  - [ ] プロジェクトタイプ（Web、CLI、ライブラリ等）の自動認識
+  - [ ] 言語・フレームワーク固有のベストプラクティス適用
 - [ ] **対話的修正モード**: 検出時に修正案を提示し、選択可能に
 - [ ] **バッチ処理サポート**: 複数ファイルの一括チェック機能
 - [ ] **CI/CD統合の簡易化**: GitHub Actions、GitLab CI用のテンプレート提供
@@ -96,6 +116,21 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [ ] **ベストプラクティスガイド**: 一般的なユースケースの解決方法
 - [ ] **トラブルシューティングの自動診断**: --diagnose コマンド
 - [ ] **コミュニティフォーラムへの統合**: エラー時に関連する議論へのリンク
+
+#### 最優先の改善項目（2025-07-21 ユーザー評価より） 🚨
+- [ ] **`--allow-file` オプションの修正** 🔴 HIGH PRIORITY
+  - [ ] 現在、ファイルパスの許可が期待通りに動作しない問題の修正
+  - [ ] 許可したファイルでも他の検出器（API key等）は動作するよう改善
+  - [ ] グロブパターンのサポート（例: `--allow-file "~/project/*.env"`）
+- [ ] **エラーメッセージの具体性向上** 🟡 MEDIUM PRIORITY
+  - [ ] 検出パターンをより具体的に表示（例：「.envファイル」ではなく「環境変数ファイル」）
+  - [ ] 修正方法の実例をコンテキストに応じて表示
+  - [ ] 関連するドキュメントへの直接リンク
+  - [ ] 「なぜ危険か」の詳細説明オプション
+- [ ] **検出の透明性向上** 🟡 MEDIUM PRIORITY
+  - [ ] マッチしたパターンの詳細表示
+  - [ ] 検出ロジックの可視化
+  - [ ] 誤検出と正当な検出の区別を明確化
 
 #### パフォーマンスと信頼性の改善
 - [ ] **キャッシング機構**: 繰り返しチェックのためのキャッシュ実装
@@ -179,13 +214,16 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 ## Long-term Goals
 
-### ユーザー中心の機能改善（User-Centric Improvements）
+### Long-term User Experience Goals
 - [ ] **ワンクリックセットアップ**: 主要なAIアシスタントとの自動連携設定
 - [ ] **リアルタイムフィードバック**: コード編集中のリアルタイム警告表示
 - [ ] **スマートサジェスト**: 検出パターンに基づく安全な代替案の自動提案
 - [ ] **学習型誤検出防止**: プロジェクト固有のパターンを学習して誤検出を削減
 - [ ] **統計ダッシュボード**: セキュリティ改善の進捗を可視化
 - [ ] **チーム共有設定**: チーム全体で設定を共有・同期
+- [ ] **コンテキスト適応型メッセージング**: 初心者/上級者向けメッセージレベル
+- [ ] **ゼロ摩擦統合**: エディタ拡張機能での視覚的フィードバック
+- [ ] **教育的アプローチ**: セキュリティベストプラクティスの段階的学習
 
 ### Developer Experience
 - [ ] **IDE Integration Guide**: 各IDEでの設定方法の詳細ドキュメント
@@ -233,6 +271,57 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 | 0.5.0 | 2026 Q2 | Integrations |
 | 1.0.0 | 2027 Q3 | Production ready |
 
+
+
+
+## ユーザージャーニーと改善ポイント（User Journey & Pain Points）
+
+### 現在のユーザー体験フロー
+
+1. **インストール時**
+   - ✅ pip/uvでの簡単なインストール
+   - ✅ 初回実行時のウェルカムメッセージ
+   - ✅ インタラクティブセットアップ（--setup）
+   - ❌ インストール直後の動作確認が不明確
+
+2. **初期設定時**
+   - ✅ Claude Codeとの自動連携
+   - ✅ --testコマンドでの動作確認
+   - ❌ 他のツールとの連携方法が不明
+   - ❌ プロジェクト固有の設定方法が複雑
+
+3. **日常使用時**
+   - ✅ 明確なエラーメッセージ
+   - ✅ カラフルな出力
+   - ❌ 誤検出時の対処が面倒
+   - ❌ 許可オプションが期待通り動作しない
+
+4. **トラブル発生時**
+   - ✅ --explain-last-errorでの詳細確認
+   - ✅ --help-errorsでのガイダンス
+   - ❌ 実際の解決までの道のりが長い
+   - ❌ コミュニティサポートへのアクセスが不明
+
+### 理想のユーザー体験
+
+1. **ゼロフリクション導入**
+   - インストール後、自動的に最適な設定を提案
+   - プロジェクトタイプを認識して適切なルールセットを適用
+
+2. **インテリジェントな検出**
+   - コンテキストを理解した上での検出
+   - テストファイルと本番コードの区別
+   - プロジェクトの慣習を学習
+
+3. **即座の問題解決**
+   - ワンクリックで誤検出を報告・除外
+   - 具体的な修正案の提示
+   - 類似ケースの自動認識
+
+4. **継続的な改善**
+   - 使用統計に基づく検出精度の向上
+   - コミュニティからのフィードバックの自動反映
+   - パーソナライズされた体験
 
 ## How to Contribute
 
