@@ -8,7 +8,7 @@ A Python package that detects potentially dangerous operations and
 prohibited patterns in code modifications.
 """
 
-__version__ = "0.2.4"
+__version__ = "0.2.6"
 
 from .core import validate_hook_data
 from .detectors import (
@@ -22,6 +22,10 @@ from .detectors import (
     detect_localhost,
     detect_read_sensitive_files,
 )
+from .runtime_config import RuntimeConfig, get_runtime_config, set_runtime_config
+from .error_context import ErrorContext
+from .first_run import is_first_run, mark_first_run_complete
+from .last_error import save_last_error, load_last_error, explain_last_error
 
 __all__ = [
     "DetectionResult",
@@ -35,4 +39,13 @@ __all__ = [
     "detect_localhost",
     "detect_read_sensitive_files",
     "validate_hook_data",
+    "RuntimeConfig",
+    "get_runtime_config",
+    "set_runtime_config",
+    "ErrorContext",
+    "is_first_run",
+    "mark_first_run_complete",
+    "save_last_error",
+    "load_last_error",
+    "explain_last_error",
 ]

@@ -12,6 +12,15 @@ from . import __version__
 from .core import process_stdin
 from .logging_config import setup_logging
 from .self_test import run_self_test
+from .first_run import (
+    is_first_run,
+    mark_first_run_complete,
+    show_first_run_guide,
+    suggest_claude_code_setup,
+)
+from .error_context import show_error_help
+from .runtime_config import RuntimeConfig, set_runtime_config
+from .last_error import explain_last_error
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -87,11 +96,95 @@ For more information: https://github.com/yourusername/antimon
         help="Disable colored output. Useful for CI/CD pipelines or when terminal doesn't support colors.",
     )
 
+    parser.add_argument(
+        "--quickstart",
+        action="store_true",
+        help="Show the quick start guide and examples. Useful for new users.",
+    )
+
+    parser.add_argument(
+        "--help-errors",
+        action="store_true",
+        help="Show help for dealing with antimon errors and blocks.",
+    )
+
+    parser.add_argument(
+        "--ignore-pattern",
+        action="append",
+        help="Add file pattern to ignore (can be used multiple times). Example: --ignore-pattern '*.test.py' --ignore-pattern 'examples/*'",
+    )
+
+    parser.add_argument(
+        "--allow-file",
+        action="append",
+        help="Allow specific file path (can be used multiple times). Example: --allow-file /home/user/.config/app.conf",
+    )
+
+    parser.add_argument(
+        "--disable-detector",
+        action="append",
+        choices=["filenames", "llm_api", "api_key", "docker", "localhost", "claude_antipatterns", "bash", "read"],
+        help="Disable specific detector (can be used multiple times). Example: --disable-detector api_key --disable-detector localhost",
+    )
+
+    parser.add_argument(
+        "--explain-last-error",
+        action="store_true",
+        help="Show detailed explanation of the last error that occurred. Run this after antimon blocks an operation.",
+    )
+
     args = parser.parse_args(argv)
 
+    # Check if this is the first run (before running test)
+    first_run = is_first_run()
+    
+    # Create and set runtime configuration
+    runtime_config = RuntimeConfig.from_args(args)
+    set_runtime_config(runtime_config)
+    
+    # Show runtime config in verbose mode
+    if args.verbose and not args.quiet:
+        config_summary = runtime_config.get_summary()
+        if config_summary:
+            print("\n📋 Runtime Configuration:", file=sys.stderr)
+            for line in config_summary:
+                print(f"   • {line}", file=sys.stderr)
+            print("", file=sys.stderr)  # Empty line
+    
+    # Show quickstart guide if requested
+    if args.quickstart:
+        show_first_run_guide(no_color=args.no_color)
+        suggest_claude_code_setup(no_color=args.no_color)
+        if first_run:
+            mark_first_run_complete()
+        return 0
+    
+    # Show error help if requested
+    if args.help_errors:
+        show_error_help(no_color=args.no_color)
+        if first_run:
+            mark_first_run_complete()
+        return 0
+    
+    # Explain last error if requested
+    if args.explain_last_error:
+        explain_last_error(no_color=args.no_color)
+        if first_run:
+            mark_first_run_complete()
+        return 0
+    
     # Run self-test if requested
     if args.test:
+        if first_run:
+            mark_first_run_complete()
         return run_self_test(verbose=args.verbose)
+
+    # Show first-run guide if needed
+    if first_run and not args.quiet:
+        show_first_run_guide(no_color=args.no_color)
+        mark_first_run_complete()
+        # Also suggest Claude Code setup if available
+        suggest_claude_code_setup(no_color=args.no_color)
 
     # Check for conflicting options
     if args.verbose and args.quiet:

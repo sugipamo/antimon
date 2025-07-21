@@ -35,12 +35,12 @@ class TestCLIExitCodes:
                 "content": "print('Hello World')"
             }
         }
-        exit_code, stdout, stderr = self.run_antimon(data)
+        # Use quiet mode to suppress first-run guide
+        exit_code, stdout, stderr = self.run_antimon(data, ["--quiet"])
         assert exit_code == 0
-        # In normal mode, no output for safe operations
+        # In quiet mode, no output for safe operations
         assert stdout == ""
-        assert "Security issues detected" not in stderr
-        assert "No security issues detected" not in stderr  # No success message in normal mode
+        assert stderr == ""
     
     def test_exit_code_0_for_safe_tools(self):
         """Test that truly safe tools like LS return exit code 0."""

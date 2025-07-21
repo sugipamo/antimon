@@ -2,7 +2,7 @@
 
 ## Current Status (2025-07-21)
 
-🎉 **Version 0.2.2 has been successfully completed!** 
+🎉 **Version 0.2.6 has been successfully completed!** 
 
 ### Recent Achievements:
 - ✅ **Version 0.2.0**: Transformed into a proper Python package with comprehensive testing
@@ -11,11 +11,13 @@
 - ✅ **Version 0.2.3**: Enhanced UX with colors, test command, and better errors
 - ✅ **Version 0.2.4**: Security fixes for Read/Bash tools
 - ✅ **Version 0.2.5**: Code quality improvements (refactoring, type hints)
+- ✅ **Version 0.2.6**: User experience improvements (first-run guide, better errors, runtime config)
 
 ### Quality Check Summary (2025-07-21)
-- ✅ **pytest**: All 52 tests passing with 87% code coverage
+- ✅ **pytest**: All 76 tests passing with 82% code coverage
 - ✅ **Project structure**: Clean working directory, proper .gitignore configuration
-- ✅ **src-check score**: 88.4/100 (🟡 Good)
+- ✅ **src-check score**: 74.4/100 (🟡 Good - some improvements needed)
+- ✅ **User Experience Review**: Comprehensive evaluation completed with actionable improvements identified
 
 ## Project Vision
 
@@ -49,25 +51,57 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [x] Update README with better examples and documentation
 
 ### Remaining Code Quality Items from src-check 🔍
-- [ ] **Print statements in core.py**: Currently using print() for user-facing output (65+ occurrences). This is intentional for CLI tool output, but consider structured logging for debugging
-- [ ] **Reduce coupling**: High external call count in core.py, detectors.py, and color_utils.py
-- [ ] **Unused imports cleanup**: Several unused imports (some intentionally re-exported for public API)
-- [ ] **Security concern in color_utils.py**: os.system() call for Windows ANSI enablement
+- [ ] **Print statements**: Currently using print() for user-facing output (200+ occurrences across multiple files). This is intentional for CLI tool output, but consider structured logging for debugging
+- [ ] **Reduce coupling**: High external call count in core.py, detectors.py, color_utils.py, error_context.py, first_run.py, and last_error.py
+- [ ] **Unused imports cleanup**: Several unused imports in __init__.py (some intentionally re-exported for public API)
+- [ ] **Security concern in color_utils.py**: os.system() call for Windows ANSI enablement (line 71)
+- [ ] **Import inside functions**: Circular dependency concerns in color_utils.py, first_run.py, and last_error.py
+- [ ] **Type hint improvements**: Missing or incomplete type hints in several functions
+- [ ] **Documentation improvements**: Missing parameter and return documentation in many functions
+- [ ] **Performance improvements**: String concatenation in loops (use list.append() + ''.join() instead)
 
 
-
-
-
-
-
-### Version 0.2.6 (Next Up) 🚀
+### Version 0.2.6 ✅ COMPLETED (2025-07-21)
 
 #### ユーザー体験の改善
-- [ ] **初回使用時のガイド改善**: インストール後のメッセージ、quickstartコマンド、Claude Code連携の自動設定
-- [ ] **エラーメッセージの実用性向上**: コンテキスト表示、具体的な修正提案、FAQリンク
-- [ ] **設定ファイルなしでのカスタマイズ**: --ignore-pattern、--allow-file、環境変数サポート
-- [ ] **実際の使用フローの改善**: ブロック時の対処法表示、--explain-last-error機能
+- [x] **初回使用時のガイド改善**: インストール後のメッセージ、--quickstartコマンド、Claude Code連携の自動検出
+- [x] **エラーメッセージの実用性向上**: コンテキスト表示、具体的な修正提案、FAQリンク
+- [x] **設定ファイルなしでのカスタマイズ**: --ignore-pattern、--allow-file、--disable-detector、環境変数サポート
+- [x] **実際の使用フローの改善**: ブロック時の対処法表示、--explain-last-error機能、--help-errors
 
+### Version 0.2.7 (Next Up) 🚀
+
+#### ユーザビリティの改善
+- [ ] **インストール体験の改善**: 
+  - [ ] インストール完了後の自動セットアップウィザード
+  - [ ] プラットフォーム別の詳細なインストールガイド
+  - [ ] 依存関係の自動チェックと解決提案
+- [ ] **検出結果の視覚的改善**:
+  - [ ] 検出箇所のコードハイライト表示
+  - [ ] 問題の深刻度レベルの視覚的表示（色分け・アイコン）
+  - [ ] 検出パターンの説明を日本語でも表示するオプション
+- [ ] **誤検出への対処改善**:
+  - [ ] 誤検出報告の簡易化（--report-false-positive コマンド）
+  - [ ] プロジェクト固有の除外設定の永続化
+  - [ ] 一時的な無効化の履歴管理
+- [ ] **デバッグサポートの強化**:
+  - [ ] --dry-run モード（実際にブロックせずに検出結果を表示）
+  - [ ] 検出ロジックの詳細トレース機能
+  - [ ] 過去の検出履歴の参照機能
+- [ ] **対話的修正モード**: 検出時に修正案を提示し、選択可能に
+- [ ] **バッチ処理サポート**: 複数ファイルの一括チェック機能
+- [ ] **CI/CD統合の簡易化**: GitHub Actions、GitLab CI用のテンプレート提供
+- [ ] **プログレスバー表示**: 大規模プロジェクトでの進捗表示
+- [ ] **インタラクティブチュートリアル**: antimon --tutorial コマンド
+- [ ] **ベストプラクティスガイド**: 一般的なユースケースの解決方法
+- [ ] **トラブルシューティングの自動診断**: --diagnose コマンド
+- [ ] **コミュニティフォーラムへの統合**: エラー時に関連する議論へのリンク
+
+#### パフォーマンスと信頼性の改善
+- [ ] **キャッシング機構**: 繰り返しチェックのためのキャッシュ実装
+- [ ] **非同期検出**: より良いパフォーマンスのための非同期処理
+- [ ] **大規模ファイル対応**: メモリ効率的な大規模ファイル処理
+- [ ] **エラーリカバリー**: 検出器エラー時の優雅な処理
 
 ## Version 0.3.0 (Configuration Support)
 - [ ] TOML configuration file support (`antimon.toml`)
@@ -104,10 +138,6 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [ ] Reporting formats (SARIF, JUnit XML, HTML, Markdown)
 
 ## Version 0.6.0 (Performance & Reliability)
-- [ ] Async detection for better performance
-- [ ] Caching mechanism for repeated checks
-- [ ] Batch processing support
-- [ ] Memory-efficient large file handling
 - [ ] Retry mechanism for Claude API calls
 - [ ] Offline mode with cached patterns
 - [ ] Progress indicators for long operations
@@ -149,22 +179,20 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 ## Long-term Goals
 
+### ユーザー中心の機能改善（User-Centric Improvements）
+- [ ] **ワンクリックセットアップ**: 主要なAIアシスタントとの自動連携設定
+- [ ] **リアルタイムフィードバック**: コード編集中のリアルタイム警告表示
+- [ ] **スマートサジェスト**: 検出パターンに基づく安全な代替案の自動提案
+- [ ] **学習型誤検出防止**: プロジェクト固有のパターンを学習して誤検出を削減
+- [ ] **統計ダッシュボード**: セキュリティ改善の進捗を可視化
+- [ ] **チーム共有設定**: チーム全体で設定を共有・同期
+
 ### Developer Experience
 - [ ] **IDE Integration Guide**: 各IDEでの設定方法の詳細ドキュメント
 - [ ] **Hook debugging mode**: フックの動作をデバッグするための詳細ログモード
 - [ ] **Performance profiling**: 大規模プロジェクトでのパフォーマンス計測とボトルネック表示
 - [ ] **Rule customization**: カスタムルールの作成と管理機能
 - [ ] **API for extensions**: サードパーティ拡張のためのプラグインAPI
-- [ ] **Learning mode**: 誤検出を学習し、プロジェクト固有のルールを生成
-
-### Advanced User Experience
-- [ ] **Interactive mode**: 検出時に「続行しますか？」の確認プロンプト
-- [ ] **Context display**: 検出箇所の前後のコードを表示
-- [ ] **Detection history**: 過去の検出履歴を記録
-- [ ] **Real-time feedback**: リアルタイムで検証結果を表示
-- [ ] **Visual indicators**: ターミナルでの色分けやアイコン
-- [ ] **Smart defaults**: プロジェクトタイプに応じた設定
-- [ ] **Telemetry opt-in**: 使用状況収集（ユーザー同意制）
 
 ### Internationalization
 - [ ] **Japanese support**: 日本語のエラーメッセージとヘルプ
@@ -199,7 +227,7 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 | Version | Target Date | Focus Area |
 |---------|------------|------------|
-| 0.2.6 | 2025 Q3 | User experience improvements |
+| 0.2.7 | 2025 Q3 | Performance improvements |
 | 0.3.0 | 2025 Q4 | Configuration |
 | 0.4.0 | 2026 Q1 | Enhanced detection |
 | 0.5.0 | 2026 Q2 | Integrations |

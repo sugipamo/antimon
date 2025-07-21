@@ -24,6 +24,9 @@ from .detectors import (
 )
 from .logging_config import get_logger
 from .color_utils import ColorFormatter
+from .error_context import ErrorContext
+from .runtime_config import get_runtime_config
+from .last_error import save_last_error
 
 logger = get_logger(__name__)
 
@@ -38,6 +41,9 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
     Returns:
         Tuple of (has_issues, list_of_messages, detector_stats)
     """
+    # Get runtime configuration
+    config = get_runtime_config()
+    
     # Define code-editing tools that need validation
     CODE_EDITING_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
     
@@ -51,6 +57,12 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
     }
     
     tool_name = json_data.get("tool_name", "")
+    
+    # Check if file is ignored by runtime config
+    file_path = json_data.get("tool_input", {}).get("file_path", "")
+    if file_path and config.is_file_ignored(file_path):
+        logger.info(f"File {file_path} is ignored by runtime configuration")
+        return False, [], {}
     
     # Skip truly safe tools
     if tool_name in SAFE_TOOLS:
@@ -101,6 +113,12 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
 
     for detector in detectors:
         detector_name = detector.__name__.replace("detect_", "").replace("_", " ").title()
+        
+        # Check if detector is enabled
+        if not config.is_detector_enabled(detector.__name__):
+            logger.debug(f"Skipping disabled detector: {detector.__name__}")
+            continue
+        
         logger.debug(f"Running detector: {detector.__name__}")
         try:
             result = detector(json_data)
@@ -288,7 +306,7 @@ def _validate_required_fields(json_data: HookData, tool_name: str, color: ColorF
 
 
 def _display_security_issues(issues: list[str], stats: dict[str, int], json_data: HookData, 
-                           tool_name: str, color: ColorFormatter, verbose: bool, quiet: bool) -> None:
+                           tool_name: str, color: ColorFormatter, verbose: bool, quiet: bool, no_color: bool = False) -> None:
     """
     Display security issues found during validation.
     
@@ -300,8 +318,13 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
         color: Color formatter instance
         verbose: Enable verbose output
         quiet: Suppress all output except errors
+        no_color: Disable colored output
     """
     logger.info(f"Security validation failed with {len(issues)} issue(s)")
+    
+    # Create error context handler
+    error_context = ErrorContext(no_color=no_color)
+    
     # Always show security issues, even in quiet mode
     print(f"\n{color.error('⚠️  Security issues detected:')}", file=sys.stderr)
     
@@ -314,18 +337,30 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
         print("   Issues found:", file=sys.stderr)
         for i, issue in enumerate(issues, 1):
             print(f"   [{i}] {issue}", file=sys.stderr)
+            # Add context for each issue
+            context = error_context.get_context_for_error(issue, json_data)
+            if context:
+                print(f"\n{context}", file=sys.stderr)
     else:
         for issue in issues:
             print(f"  • {color.format_security_issue(issue)}", file=sys.stderr)
+        
+        # Show context for the first issue in non-verbose mode
+        if issues and not quiet:
+            print("", file=sys.stderr)  # Empty line
+            context = error_context.get_context_for_error(issues[0], json_data)
+            if context:
+                print(context, file=sys.stderr)
     
     if not quiet:
         print("\n💡 How to proceed:", file=sys.stderr)
         print("   1. Review the detected issues above", file=sys.stderr)
-        print("   2. If false positive, consider:", file=sys.stderr)
+        print("   2. Run 'antimon --explain-last-error' for detailed explanations", file=sys.stderr)
+        print("   3. If false positive, consider:", file=sys.stderr)
         print("      • Using environment variables instead of hardcoded values", file=sys.stderr)
         print("      • Moving sensitive data to separate config files", file=sys.stderr)
-        print("      • Adding patterns to whitelist (config support coming in v0.3.0)", file=sys.stderr)
-        print("   3. For legitimate use cases, you can:", file=sys.stderr)
+        print("      • Using --allow-file or --ignore-pattern options", file=sys.stderr)
+        print("   4. For legitimate use cases, you can:", file=sys.stderr)
         print("      • Temporarily disable the hook in Claude Code settings", file=sys.stderr)
         print("      • Report false positives at: https://github.com/yourusername/antimon/issues\n", file=sys.stderr)
 
@@ -398,7 +433,9 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
         issues = simplified_issues
 
     if has_issues:
-        _display_security_issues(issues, stats, json_data, tool_name, color, verbose, quiet)
+        # Save the error for later explanation
+        save_last_error(issues, json_data)
+        _display_security_issues(issues, stats, json_data, tool_name, color, verbose, quiet, no_color)
         return 2
 
     logger.info("Security validation passed")

@@ -27,6 +27,14 @@ class Colors:
     
     # Reset
     RESET = '\033[0m'
+    
+    # Semantic aliases
+    HEADER = BOLD
+    OKBLUE = BLUE
+    OKGREEN = GREEN
+    WARNING = YELLOW
+    FAIL = RED
+    INFO = CYAN
 
 
 def supports_color() -> bool:
@@ -157,3 +165,25 @@ class ColorFormatter:
                 formatted_lines.append(self.error(line))
         
         return '\n'.join(formatted_lines)
+
+
+def apply_color(text: str, color: str, no_color: bool = False) -> str:
+    """
+    Apply color to text if color is enabled
+    
+    Args:
+        text: Text to colorize
+        color: Color code from Colors class
+        no_color: If True, don't apply color
+        
+    Returns:
+        Colored text or original text if no_color is True
+    """
+    if no_color or not supports_color():
+        return text
+    
+    # Enable ANSI colors on Windows
+    if sys.platform == "win32":
+        enable_windows_ansi_support()
+    
+    return f"{color}{text}{Colors.RESET}"
