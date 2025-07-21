@@ -51,7 +51,10 @@ def detect_filenames(json_data: dict[str, Any]) -> DetectionResult:
         if re.search(pattern, file_path, re.IGNORECASE):
             return DetectionResult(
                 detected=True,
-                message=f"Dangerous file path detected: {file_path}",
+                message=f"Dangerous file path detected: {file_path}\n" +
+                        f"      Pattern matched: {pattern}\n" +
+                        f"      Why: This appears to be a sensitive system or credential file\n" +
+                        f"      Suggestion: Use environment variables or secure key management services instead",
                 details={"pattern": pattern, "file_path": file_path},
             )
 
@@ -108,7 +111,10 @@ def detect_llm_api(json_data: dict[str, Any]) -> DetectionResult:
             if re.search(pattern, text, re.IGNORECASE):
                 return DetectionResult(
                     detected=True,
-                    message=f"External LLM API reference detected: {pattern}",
+                    message=f"External LLM API reference detected\n" +
+                            f"      Pattern matched: {pattern}\n" +
+                            f"      Why: Direct API calls to external LLMs may expose sensitive data\n" +
+                            f"      Suggestion: Use Claude Code's built-in capabilities or proxy through a secure backend",
                     details={"pattern": pattern},
                 )
 
@@ -153,7 +159,10 @@ def detect_api_key(json_data: dict[str, Any]) -> DetectionResult:
             if re.search(pattern, text, re.IGNORECASE):
                 return DetectionResult(
                     detected=True,
-                    message="Hardcoded API key detected",
+                    message=f"Hardcoded API key or secret detected\n" +
+                            f"      Pattern matched: {pattern}\n" +
+                            f"      Why: Hardcoded credentials are a security risk\n" +
+                            f"      Suggestion: Use environment variables (e.g., os.getenv('API_KEY')) or secure vaults",
                     details={"pattern": pattern},
                 )
 
@@ -199,7 +208,10 @@ def detect_docker(json_data: dict[str, Any]) -> DetectionResult:
             if re.search(pattern, text, re.IGNORECASE):
                 return DetectionResult(
                     detected=True,
-                    message="Docker operation detected",
+                    message=f"Docker operation detected\n" +
+                            f"      Pattern matched: {pattern}\n" +
+                            f"      Why: Docker operations can pose security risks if not properly configured\n" +
+                            f"      Suggestion: Review Docker commands for security best practices",
                     details={"pattern": pattern},
                 )
 
@@ -241,7 +253,10 @@ def detect_localhost(json_data: dict[str, Any]) -> DetectionResult:
             if re.search(pattern, text):
                 return DetectionResult(
                     detected=True,
-                    message="Localhost/port reference detected",
+                    message=f"Localhost/port reference detected\n" +
+                            f"      Pattern matched: {pattern}\n" +
+                            f"      Why: Hardcoded localhost references may not work in production\n" +
+                            f"      Suggestion: Use configuration files or environment variables for host/port settings",
                     details={"pattern": pattern},
                 )
 

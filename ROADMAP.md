@@ -30,19 +30,19 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [x] Code quality checks (ruff, mypy, black)
 - [x] Updated .gitignore for Python projects
 
-### Version 0.2.1 (Bug Fixes & Improvements)
+### Version 0.2.1 (Bug Fixes & Improvements) ✅ COMPLETED
 - [x] Fix detector functions to check both 'content' and 'new_string' fields
 - [x] Add tests for Edit/MultiEdit tool support
-- [ ] Update README with better examples and documentation
+- [x] Update README with better examples and documentation
 
 ### User Experience Improvements (ユーザー体験の改善)
 
 #### 即時対応が必要な項目 (High Priority)
 - [x] **Success feedback**: 検出されなかった場合に「No security issues detected」等の成功メッセージを表示（実装済み）
 - [x] **Verbose mode fix**: -vオプションが正常に動作するように修正（実装済み、ただし非verboseモード時との差別化が必要）
-- [ ] **Help text improvement**: --helpで表示される説明をより具体的に（使用例の追加）
-- [ ] **Error message clarity**: エラーメッセージに対処法を含める（例：「JSON parsing error: Expected property name... → Try: echo '{valid json}' | antimon」）
-- [ ] **Exit code behavior**: 非コード編集ツール（Read, Bashなど）の場合の明確なフィードバック
+- [x] **Help text improvement**: --helpで表示される説明をより具体的に（使用例の追加）✅ 2025-07-21
+- [x] **Error message clarity**: エラーメッセージに対処法を含める（例：「JSON parsing error: Expected property name... → Try: echo '{valid json}' | antimon」）✅ 2025-07-21
+- [x] **Exit code behavior**: 非コード編集ツール（Read, Bashなど）の場合の明確なフィードバック ✅ 2025-07-21
 
 #### ログ出力の改善 (Logging Improvements)
 - [ ] **Log format simplification**: タイムスタンプをシンプルに（現在：2025-07-21 10:14:33 → 10:14:33）
@@ -75,16 +75,47 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [ ] **Configuration guide**: 将来の設定ファイル機能の使い方（v0.3.0向け）
 - [ ] **API documentation**: Pythonモジュールとして使用する際のAPIドキュメント
 
+### Version 0.2.2 (Next Priority Tasks) 🚀
+次に実装予定のタスク（2025-07-21 更新）:
+
+上記の「User Experience Improvements」セクションから優先度の高い項目を選択して実装します。特に以下を重点的に:
+- ログ出力の改善（Quiet mode、Summary、Progress indicator）
+- インストールと初回使用の体験向上（Interactive setup、Platform-specific instructions）
+- 開発者向け機能（Batch mode、Watch mode）
+
+#### ユーザー体験の向上 (User Experience Enhancement) 🆕
+- [ ] **Interactive mode**: 検出時に「続行しますか？」の確認プロンプト（--interactive）
+- [ ] **Temporary bypass**: 一時的に特定の検出をスキップする機能（--bypass-once）
+- [ ] **Context display**: 検出箇所の前後のコードを表示して文脈を理解しやすく
+- [ ] **Detection history**: 過去の検出履歴を記録し、パターンを学習
+- [ ] **Smart suggestions**: 検出パターンに基づいた代替案の提案
+
+#### フォルスポジティブ対策 (False Positive Mitigation) 🆕
+- [ ] **Inline annotations**: コード内のコメントで特定行の検出を無効化（# antimon-ignore-next-line）
+- [ ] **Pattern refinement**: より正確な検出パターン（例：テストファイルでの挙動を変更）
+- [ ] **Context awareness**: ファイルパスやプロジェクト構造を考慮した検出
+- [ ] **Confidence levels**: 検出の確信度を表示（High/Medium/Low）
+
+#### 多言語対応 (Internationalization) 🆕
+- [ ] **Japanese messages**: 日本語のエラーメッセージとヘルプテキスト
+- [ ] **Locale detection**: システムロケールに基づく自動言語選択
+- [ ] **Language selection**: --lang オプションで言語を指定
+- [ ] **Localized documentation**: 各言語でのREADMEとドキュメント
+
+これらのタスクは、ユーザーからのフィードバックを基に優先度を調整しながら実装していきます。
+
 ## Version 0.3.0 (Configuration Support)
 - [ ] TOML configuration file support (`antimon.toml`)
 - [ ] Custom pattern definitions
 - [ ] Enable/disable specific detectors
 - [ ] Severity levels for detections
 - [ ] Whitelist/ignore patterns
-- [ ] Per-project configuration (`antimon.toml`)
 - [ ] Global configuration (`~/.config/antimon/antimon.toml`)
 - [ ] Environment variable overrides
 - [ ] Configuration file validation and schema
+- [ ] Configuration wizard: 対話的な設定ファイル生成ツール（antimon --init）
+- [ ] Profile support: 開発/本番環境などプロファイル別設定
+- [ ] Override mechanism: コマンドライン引数による設定の一時的な上書き
 
 ## Version 0.4.0 (Enhanced Detection)
 - [ ] Additional security patterns:
@@ -147,9 +178,17 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [ ] **IDE Integration Guide**: 各IDEでの設定方法の詳細ドキュメント
 - [ ] **Hook debugging mode**: フックの動作をデバッグするための詳細ログモード
 - [ ] **Performance profiling**: 大規模プロジェクトでのパフォーマンス計測とボトルネック表示
-- [ ] **Rule explanation**: なぜその検出が危険なのかを説明する機能
-- [ ] **Fix suggestions**: 検出された問題に対する修正提案
+- [ ] **Rule customization**: カスタムルールの作成と管理機能
+- [ ] **API for extensions**: サードパーティ拡張のためのプラグインAPI
 - [ ] **Learning mode**: 誤検出を学習し、プロジェクト固有のルールを生成
+
+### ユーザビリティの向上 (Usability Improvements) 🆕
+- [ ] **Real-time feedback**: AIツールとの連携時にリアルタイムで検証結果を表示
+- [ ] **Visual indicators**: ターミナルでの色分けやアイコンによる視覚的フィードバック
+- [ ] **Smart defaults**: プロジェクトタイプ（Web、ML、インフラなど）に応じた適切なデフォルト設定
+- [ ] **Contextual help**: エラー発生時に関連するドキュメントへのリンクを自動表示
+- [ ] **Undo support**: 誤検出による中断を取り消して再実行する機能
+- [ ] **Telemetry opt-in**: ユーザー同意のもと、使用状況を収集して改善に活用
 
 ### Community Building
 - [ ] Create antimon organization on GitHub
@@ -179,6 +218,8 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 | Version | Target Date | Focus Area |
 |---------|------------|------------|
 | 0.2.0 | ✅ Completed | Package structure |
+| 0.2.1 | ✅ Completed | Bug fixes & README improvements |
+| 0.2.2 | 2025 Q3 | User experience & logging |
 | 0.3.0 | 2025 Q4 | Configuration |
 | 0.4.0 | 2026 Q1 | Enhanced detection |
 | 0.5.0 | 2026 Q2 | Integrations |

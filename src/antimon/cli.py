@@ -24,7 +24,30 @@ def main(argv: list[str] | None = None) -> int:
         Exit code
     """
     parser = argparse.ArgumentParser(
-        prog="antimon", description="Security validation tool for AI coding assistants"
+        prog="antimon",
+        description="Security validation tool for AI coding assistants that detects potentially dangerous operations and prohibited patterns in code modifications.",
+        epilog="""
+Examples:
+  # Validate JSON input from stdin
+  echo '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"file_path": "hello.py", "content": "print(\\"Hello\\")"}}' | antimon
+  
+  # Use with a file
+  cat hook_data.json | antimon
+  
+  # Enable verbose logging
+  cat hook_data.json | antimon --verbose
+  
+  # Use as a Claude Code hook (add to settings.json)
+  {"hooks": {"PreToolUse": "antimon"}}
+
+Exit codes:
+  0 - No security issues detected (or non-code-editing operation)
+  1 - JSON parsing error or internal error
+  2 - Security issues detected
+
+For more information: https://github.com/yourusername/antimon
+        """,
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     parser.add_argument(
@@ -32,11 +55,16 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     parser.add_argument(
-        "--config", type=str, help="Path to configuration file (not yet implemented)"
+        "--config",
+        type=str,
+        help="Path to configuration file (coming in v0.3.0). Will allow custom patterns and detector settings.",
     )
 
     parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose output"
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Enable verbose output with detailed logging of each detector's execution",
     )
 
     args = parser.parse_args(argv)
@@ -45,7 +73,12 @@ def main(argv: list[str] | None = None) -> int:
     setup_logging(verbose=args.verbose)
 
     if args.config:
-        print("Configuration file support coming in v0.3.0", file=sys.stderr)
+        print("\n⚠️  Configuration file support coming in v0.3.0", file=sys.stderr)
+        print("   This will allow you to:", file=sys.stderr)
+        print("   • Define custom detection patterns", file=sys.stderr)
+        print("   • Whitelist specific files or patterns", file=sys.stderr)
+        print("   • Customize detector sensitivity", file=sys.stderr)
+        print("   • Add project-specific rules\n", file=sys.stderr)
 
     return process_stdin(verbose=args.verbose)
 
