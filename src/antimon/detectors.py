@@ -327,3 +327,197 @@ def detect_claude_antipatterns(json_data: dict[str, Any]) -> DetectionResult:
     return DetectionResult(
         detected=False, message="Claude anti-pattern detection not implemented yet"
     )
+
+
+def detect_read_sensitive_files(json_data: dict[str, Any]) -> DetectionResult:
+    """
+    Detect Read tool attempts to access sensitive files
+    
+    Args:
+        json_data: Hook data containing file path information
+        
+    Returns:
+        DetectionResult indicating if sensitive file read was attempted
+    """
+    # Only check Read tool
+    if json_data.get("tool_name") != "Read":
+        return DetectionResult(detected=False)
+    
+    # Sensitive file patterns for Read operations
+    sensitive_patterns = [
+        r"/etc/shadow",
+        r"/etc/passwd",
+        r"\.ssh/id_[^/]+$",  # SSH private keys
+        r"\.ssh/known_hosts",
+        r"\.ssh/authorized_keys",
+        r"\.pem$",
+        r"\.key$",
+        r"\.pfx$",
+        r"\.p12$",
+        r"\.jks$",  # Java keystore
+        r"\.gpg$",  # GPG keys
+        r"\.asc$",  # ASCII armored keys
+        r"\.env$",
+        r"\.aws/credentials",
+        r"\.aws/config",
+        r"\.kube/config",
+        r"\.docker/config\.json",
+        r"\.npmrc",
+        r"\.pypirc",
+        r"\.gitconfig",
+        r"\.netrc",
+        r"credentials\.json",
+        r"secrets\.yaml",
+        r"secrets\.yml",
+        r"service[_-]?account[_-]?key\.json",
+        r"private[_-]?key",
+        r"deploy[_-]?key",
+        r"/proc/",  # Process information
+        r"/sys/",   # System information
+        r"/dev/",   # Device files
+        r"\.history$",  # Shell history files
+        r"\.bash_history",
+        r"\.zsh_history",
+        r"\.mysql_history",
+        r"\.psql_history",
+        r"\.sqlite_history",
+        r"wallet\.dat",  # Cryptocurrency wallets
+        r"\.gnupg/",
+        r"\.password-store/",
+    ]
+    
+    file_path = json_data.get("tool_input", {}).get("file_path", "")
+    
+    for pattern in sensitive_patterns:
+        if re.search(pattern, file_path, re.IGNORECASE):
+            message_parts = [
+                f"Attempt to read sensitive file: {file_path}",
+                f"      Pattern matched: {pattern}",
+                f"      Why: This file may contain sensitive credentials or system information",
+                f"      Suggestion: Consider if this access is necessary and handle with appropriate security measures"
+            ]
+            return DetectionResult(
+                detected=True,
+                message="\n".join(message_parts),
+                details={"pattern": pattern, "file_path": file_path},
+            )
+    
+    return DetectionResult(detected=False)
+
+
+def detect_bash_dangerous_commands(json_data: dict[str, Any]) -> DetectionResult:
+    """
+    Detect dangerous Bash commands
+    
+    Args:
+        json_data: Hook data containing command information
+        
+    Returns:
+        DetectionResult indicating if dangerous commands were detected
+    """
+    # Only check Bash tool
+    if json_data.get("tool_name") != "Bash":
+        return DetectionResult(detected=False)
+    
+    command = json_data.get("tool_input", {}).get("command", "")
+    
+    # Dangerous command patterns
+    dangerous_patterns = [
+        # Destructive commands
+        (r"rm\s+-rf\s+/", "Destructive file removal of root directory"),
+        (r"rm\s+-rf\s+\*", "Destructive file removal with wildcard"),
+        (r">\s*/dev/sda", "Direct disk write operation"),
+        (r"dd\s+.*of=/dev/[^/\s]+", "Direct disk write with dd"),
+        (r"mkfs\.", "Filesystem formatting command"),
+        
+        # System modification
+        (r"chmod\s+777", "Overly permissive file permissions"),
+        (r"chmod\s+-R\s+777", "Recursive overly permissive permissions"),
+        (r"chown\s+-R\s+root", "Recursive root ownership change"),
+        
+        # Privilege escalation
+        (r"sudo\s+su", "Privilege escalation to root"),
+        (r"sudo\s+-i", "Interactive root shell"),
+        (r"sudo\s+bash", "Root shell execution"),
+        (r"sudo\s+sh", "Root shell execution"),
+        
+        # Remote code execution
+        (r"curl\s+[^|]+\|\s*bash", "Remote script execution via curl"),
+        (r"wget\s+[^|]+\|\s*bash", "Remote script execution via wget"),
+        (r"curl\s+[^|]+\|\s*sh", "Remote script execution via curl"),
+        (r"wget\s+[^|]+\|\s*sh", "Remote script execution via wget"),
+        (r"eval\s*\(", "Dynamic code execution with eval"),
+        (r"exec\s*\(", "Dynamic code execution with exec"),
+        
+        # System file modification
+        (r">\s*/etc/", "Writing to system configuration directory"),
+        (r">>\s*/etc/", "Appending to system configuration directory"),
+        (r"echo\s+.*>\s*/etc/", "Writing to system configuration"),
+        (r"echo\s+.*>>\s*/etc/", "Appending to system configuration"),
+        
+        # Network operations
+        (r"nc\s+-l", "Netcat listener (potential backdoor)"),
+        (r"ncat\s+-l", "Ncat listener (potential backdoor)"),
+        (r"socat\s+.*LISTEN", "Socat listener (potential backdoor)"),
+        
+        # Package management (potentially dangerous)
+        (r"pip\s+install\s+--force", "Force pip installation"),
+        (r"npm\s+install\s+--force", "Force npm installation"),
+        (r"apt-get\s+install\s+-y", "Unattended package installation"),
+        (r"yum\s+install\s+-y", "Unattended package installation"),
+        
+        # Cryptocurrency mining
+        (r"xmrig", "Cryptocurrency miner"),
+        (r"minergate", "Cryptocurrency miner"),
+        (r"nicehash", "Cryptocurrency miner"),
+        
+        # Information disclosure
+        (r"cat\s+/etc/shadow", "Attempting to read password hashes"),
+        (r"cat\s+.*\.ssh/id_", "Attempting to read SSH private keys"),
+        (r"find\s+.*-name\s+.*password", "Searching for password files"),
+        (r"grep\s+-r\s+.*password", "Searching for passwords in files"),
+    ]
+    
+    for pattern, description in dangerous_patterns:
+        if re.search(pattern, command, re.IGNORECASE):
+            message_parts = [
+                f"Dangerous command detected: {description}",
+                f"      Command: {command}",
+                f"      Pattern matched: {pattern}",
+                f"      Why: This command could damage the system or expose sensitive data",
+                f"      Suggestion: Review if this operation is necessary and consider safer alternatives"
+            ]
+            return DetectionResult(
+                detected=True,
+                message="\n".join(message_parts),
+                details={"pattern": pattern, "command": command, "description": description},
+            )
+    
+    # Check for attempts to read sensitive files via common commands
+    sensitive_file_patterns = [
+        (r"cat\s+[^|]*\.env", "Reading environment file"),
+        (r"cat\s+[^|]*credentials", "Reading credential file"),
+        (r"less\s+[^|]*\.env", "Reading environment file"),
+        (r"less\s+[^|]*credentials", "Reading credential file"),
+        (r"more\s+[^|]*\.env", "Reading environment file"),
+        (r"more\s+[^|]*credentials", "Reading credential file"),
+        (r"head\s+[^|]*\.env", "Reading environment file"),
+        (r"tail\s+[^|]*\.env", "Reading environment file"),
+    ]
+    
+    for pattern, description in sensitive_file_patterns:
+        if re.search(pattern, command, re.IGNORECASE):
+            message_parts = [
+                f"Sensitive file access via command: {description}",
+                f"      Command: {command}",
+                f"      Pattern matched: {pattern}",
+                f"      Why: This may expose sensitive credentials or configuration",
+                f"      Suggestion: Use appropriate security measures when handling sensitive files"
+            ]
+            return DetectionResult(
+                detected=True,
+                message="\n".join(message_parts),
+                details={"pattern": pattern, "command": command, "description": description},
+            )
+    
+    return DetectionResult(detected=False)

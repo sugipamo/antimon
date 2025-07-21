@@ -136,14 +136,56 @@ def run_self_test(verbose: bool = False) -> int:
             "expected_pattern": "API key"
         },
         
-        # Test 8: Non-code-editing tools should pass
+        # Test 8: Safe Read tool should pass
         {
-            "name": "Non-code-editing tool (should pass)",
+            "name": "Safe Read operation (should pass)",
             "data": {
                 "hook_event_name": "PreToolUse",
                 "tool_name": "Read",
                 "tool_input": {
                     "file_path": "README.md"
+                }
+            },
+            "should_detect": False,
+            "expected_pattern": None
+        },
+        
+        # Test 9: Read tool with sensitive file
+        {
+            "name": "Read sensitive file detection",
+            "data": {
+                "hook_event_name": "PreToolUse",
+                "tool_name": "Read",
+                "tool_input": {
+                    "file_path": "/etc/shadow"
+                }
+            },
+            "should_detect": True,
+            "expected_pattern": "sensitive file"
+        },
+        
+        # Test 10: Bash tool with dangerous command
+        {
+            "name": "Bash dangerous command detection",
+            "data": {
+                "hook_event_name": "PreToolUse",
+                "tool_name": "Bash",
+                "tool_input": {
+                    "command": "rm -rf /"
+                }
+            },
+            "should_detect": True,
+            "expected_pattern": "Dangerous command"
+        },
+        
+        # Test 11: Safe Bash command should pass
+        {
+            "name": "Safe Bash command (should pass)",
+            "data": {
+                "hook_event_name": "PreToolUse",
+                "tool_name": "Bash",
+                "tool_input": {
+                    "command": "ls -la"
                 }
             },
             "should_detect": False,

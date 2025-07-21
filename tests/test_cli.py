@@ -43,19 +43,97 @@ class TestCLIExitCodes:
         assert "No security issues detected" not in stderr  # No success message in normal mode
     
     def test_exit_code_0_for_safe_tools(self):
-        """Test that safe tools like Read return exit code 0."""
+        """Test that truly safe tools like LS return exit code 0."""
         data = {
             "hook_event_name": "PreToolUse",
-            "tool_name": "Read",
+            "tool_name": "LS",
             "tool_input": {
-                "file_path": "/etc/passwd"
+                "path": "/home/user"
             }
         }
         exit_code, stdout, stderr = self.run_antimon(data)
         assert exit_code == 0
         # In normal mode, no output for safe tools
         assert stdout == ""
-        assert "Tool 'Read' is considered safe" not in stderr  # No message in normal mode
+        assert "Tool 'LS' is considered safe" not in stderr  # No message in normal mode
+    
+    def test_exit_code_2_for_read_sensitive_file(self):
+        """Test that Read tool with sensitive file returns exit code 2."""
+        data = {
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Read",
+            "tool_input": {
+                "file_path": "/etc/shadow"
+            }
+        }
+        exit_code, stdout, stderr = self.run_antimon(data)
+        assert exit_code == 2
+        assert "Security issues detected" in stderr
+        assert "Attempt to read sensitive file" in stderr
+    
+    def test_exit_code_0_for_read_safe_file(self):
+        """Test that Read tool with safe file returns exit code 0."""
+        data = {
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Read",
+            "tool_input": {
+                "file_path": "/home/user/project/README.md"
+            }
+        }
+        exit_code, stdout, stderr = self.run_antimon(data)
+        assert exit_code == 0
+        assert stdout == ""
+    
+    def test_exit_code_2_for_bash_dangerous_command(self):
+        """Test that Bash tool with dangerous command returns exit code 2."""
+        data = {
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+            "tool_input": {
+                "command": "rm -rf /"
+            }
+        }
+        exit_code, stdout, stderr = self.run_antimon(data)
+        assert exit_code == 2
+        assert "Security issues detected" in stderr
+        assert "Dangerous command detected" in stderr
+    
+    def test_exit_code_0_for_bash_safe_command(self):
+        """Test that Bash tool with safe command returns exit code 0."""
+        data = {
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+            "tool_input": {
+                "command": "ls -la"
+            }
+        }
+        exit_code, stdout, stderr = self.run_antimon(data)
+        assert exit_code == 0
+        assert stdout == ""
+    
+    def test_exit_code_1_for_read_missing_file_path(self):
+        """Test that Read tool with missing file_path returns exit code 1."""
+        data = {
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Read",
+            "tool_input": {}
+        }
+        exit_code, stdout, stderr = self.run_antimon(data)
+        assert exit_code == 1
+        assert "Missing required field 'file_path'" in stderr
+        assert "How to fix:" in stderr
+    
+    def test_exit_code_1_for_bash_missing_command(self):
+        """Test that Bash tool with missing command returns exit code 1."""
+        data = {
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+            "tool_input": {}
+        }
+        exit_code, stdout, stderr = self.run_antimon(data)
+        assert exit_code == 1
+        assert "Missing required field 'command'" in stderr
+        assert "How to fix:" in stderr
     
     def test_exit_code_1_for_json_error(self):
         """Test that JSON parse errors return exit code 1."""
@@ -202,14 +280,14 @@ class TestCLIOutputModes:
         assert "failed" in stderr
     
     def test_verbose_mode_for_safe_tools(self):
-        """Test verbose mode shows info for safe tools."""
+        """Test verbose mode shows info for truly safe tools."""
         data = {
             "hook_event_name": "PreToolUse",
-            "tool_name": "Read",
+            "tool_name": "LS",
             "tool_input": {
-                "file_path": "/etc/passwd"
+                "path": "/home/user"
             }
         }
         exit_code, stdout, stderr = self.run_antimon(data, ["-v"])
         assert exit_code == 0
-        assert "Tool 'Read' is considered safe" in stderr
+        assert "Tool 'LS' is considered safe" in stderr

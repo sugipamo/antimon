@@ -12,11 +12,13 @@ from typing import Any
 
 from .detectors import (
     detect_api_key,
+    detect_bash_dangerous_commands,
     detect_claude_antipatterns,
     detect_docker,
     detect_filenames,
     detect_llm_api,
     detect_localhost,
+    detect_read_sensitive_files,
 )
 from .logging_config import get_logger
 from .color_utils import ColorFormatter
@@ -37,32 +39,54 @@ def validate_hook_data(json_data: dict[str, Any]) -> tuple[bool, list[str], dict
     # Define code-editing tools that need validation
     CODE_EDITING_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
     
-    # Define known safe tools that don't need validation
+    # Define tools that need special validation
+    SPECIAL_VALIDATION_TOOLS = {"Read", "Bash"}
+    
+    # Define safe tools that don't need validation
     SAFE_TOOLS = {
-        "Read", "Bash", "LS", "Glob", "Grep", "NotebookRead",
+        "LS", "Glob", "Grep", "NotebookRead",
         "WebFetch", "WebSearch", "TodoWrite", "exit_plan_mode"
     }
     
     tool_name = json_data.get("tool_name", "")
     
-    # Skip non-code-editing operations
-    if tool_name not in CODE_EDITING_TOOLS:
-        if tool_name in SAFE_TOOLS:
-            logger.debug(f"Skipping safe non-code-editing tool: {tool_name}")
-        elif tool_name:
+    # Skip truly safe tools
+    if tool_name in SAFE_TOOLS:
+        logger.debug(f"Skipping safe non-code-editing tool: {tool_name}")
+        return False, [], {}
+    elif tool_name not in CODE_EDITING_TOOLS and tool_name not in SPECIAL_VALIDATION_TOOLS:
+        if tool_name:
             logger.debug(f"Skipping unknown tool: {tool_name}")
         else:
             logger.debug("No tool name provided")
         return False, [], {}
 
-    detectors = [
-        detect_filenames,
-        detect_llm_api,
-        detect_api_key,
-        detect_docker,
-        detect_localhost,
-        detect_claude_antipatterns,
-    ]
+    # Select appropriate detectors based on tool type
+    if tool_name in CODE_EDITING_TOOLS:
+        detectors = [
+            detect_filenames,
+            detect_llm_api,
+            detect_api_key,
+            detect_docker,
+            detect_localhost,
+            detect_claude_antipatterns,
+        ]
+    elif tool_name == "Read":
+        detectors = [detect_read_sensitive_files]
+    elif tool_name == "Bash":
+        detectors = [detect_bash_dangerous_commands]
+    else:
+        # Fallback to all detectors
+        detectors = [
+            detect_filenames,
+            detect_llm_api,
+            detect_api_key,
+            detect_docker,
+            detect_localhost,
+            detect_claude_antipatterns,
+            detect_read_sensitive_files,
+            detect_bash_dangerous_commands,
+        ]
 
     issues = []
     detector_stats = {
@@ -173,8 +197,9 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
 
     # Define tool categories for user feedback
     CODE_EDITING_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
+    SPECIAL_VALIDATION_TOOLS = {"Read", "Bash"}
     SAFE_TOOLS = {
-        "Read", "Bash", "LS", "Glob", "Grep", "NotebookRead",
+        "LS", "Glob", "Grep", "NotebookRead",
         "WebFetch", "WebSearch", "TodoWrite", "exit_plan_mode"
     }
     
@@ -220,8 +245,44 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
                     print('   }\n', file=sys.stderr)
                 return 1
     
+    # Validate required fields for Read tool
+    if tool_name == "Read":
+        tool_input = json_data.get("tool_input", {})
+        if "file_path" not in tool_input:
+            logger.error(f"Missing required field 'file_path' for {tool_name} tool")
+            if not quiet:
+                print(f"\n{color.error('❌ Validation error:')} Missing required field 'file_path' for {tool_name} tool", file=sys.stderr)
+                print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
+                print("   The Read tool requires a 'file_path' field:", file=sys.stderr)
+                print('   {', file=sys.stderr)
+                print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+                print('     "tool_name": "Read",', file=sys.stderr)
+                print('     "tool_input": {', file=sys.stderr)
+                print('       "file_path": "/path/to/file"', file=sys.stderr)
+                print('     }', file=sys.stderr)
+                print('   }\n', file=sys.stderr)
+            return 1
+    
+    # Validate required fields for Bash tool
+    if tool_name == "Bash":
+        tool_input = json_data.get("tool_input", {})
+        if "command" not in tool_input:
+            logger.error(f"Missing required field 'command' for {tool_name} tool")
+            if not quiet:
+                print(f"\n{color.error('❌ Validation error:')} Missing required field 'command' for {tool_name} tool", file=sys.stderr)
+                print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
+                print("   The Bash tool requires a 'command' field:", file=sys.stderr)
+                print('   {', file=sys.stderr)
+                print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+                print('     "tool_name": "Bash",', file=sys.stderr)
+                print('     "tool_input": {', file=sys.stderr)
+                print('       "command": "ls -la"', file=sys.stderr)
+                print('     }', file=sys.stderr)
+                print('   }\n', file=sys.stderr)
+            return 1
+    
     # Provide feedback for non-code-editing tools
-    if tool_name not in CODE_EDITING_TOOLS:
+    if tool_name not in CODE_EDITING_TOOLS and tool_name not in SPECIAL_VALIDATION_TOOLS:
         if tool_name in SAFE_TOOLS:
             logger.info(f"Safe tool {tool_name} - no security validation needed")
             if verbose and not quiet:

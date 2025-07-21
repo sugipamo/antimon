@@ -15,11 +15,18 @@ class TestValidateHookData:
     - Properly ignores non-code-editing tools
     """
     def test_non_code_editing_tool(self):
-        json_data = {"tool_name": "Read", "tool_input": {"file_path": "/etc/passwd"}}
+        json_data = {"tool_name": "LS", "tool_input": {"path": "/home/user"}}
         has_issues, issues, stats = validate_hook_data(json_data)
         assert has_issues is False
         assert len(issues) == 0
         assert stats == {}
+    
+    def test_read_tool_with_sensitive_file(self):
+        json_data = {"tool_name": "Read", "tool_input": {"file_path": "/etc/passwd"}}
+        has_issues, issues, stats = validate_hook_data(json_data)
+        assert has_issues is True
+        assert len(issues) == 1
+        assert "sensitive file" in issues[0]
 
     def test_write_tool_with_dangerous_path(self):
         json_data = {
