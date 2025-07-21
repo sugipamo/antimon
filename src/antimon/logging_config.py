@@ -9,19 +9,25 @@ import logging
 import sys
 
 
-def setup_logging(verbose: bool = False) -> None:
+def setup_logging(verbose: bool = False, quiet: bool = False) -> None:
     """
     Configure logging for the application
 
     Args:
         verbose: Enable verbose (DEBUG) logging
+        quiet: Suppress all but ERROR level logging
     """
-    level = logging.DEBUG if verbose else logging.INFO
+    if quiet:
+        level = logging.ERROR
+    elif verbose:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
 
-    # Create formatter
+    # Create formatter with simplified timestamp for better readability
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+        datefmt="%H:%M:%S",
     )
 
     # Create console handler

@@ -6,6 +6,7 @@ Core validation logic for antimon
 """
 
 import json
+import logging
 import sys
 from typing import Any
 
@@ -22,7 +23,7 @@ from .logging_config import get_logger
 logger = get_logger(__name__)
 
 
-def validate_hook_data(json_data: dict[str, Any]) -> tuple[bool, list[str]]:
+def validate_hook_data(json_data: dict[str, Any]) -> tuple[bool, list[str], dict[str, int]]:
     """
     Validate hook data for security issues
 
@@ -30,7 +31,7 @@ def validate_hook_data(json_data: dict[str, Any]) -> tuple[bool, list[str]]:
         json_data: Hook data from AI assistant
 
     Returns:
-        Tuple of (has_issues, list_of_messages)
+        Tuple of (has_issues, list_of_messages, detector_stats)
     """
     # Define code-editing tools that need validation
     CODE_EDITING_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
@@ -51,7 +52,7 @@ def validate_hook_data(json_data: dict[str, Any]) -> tuple[bool, list[str]]:
             logger.debug(f"Skipping unknown tool: {tool_name}")
         else:
             logger.debug("No tool name provided")
-        return False, []
+        return False, [], {}
 
     detectors = [
         detect_filenames,
@@ -63,8 +64,16 @@ def validate_hook_data(json_data: dict[str, Any]) -> tuple[bool, list[str]]:
     ]
 
     issues = []
+    detector_stats = {
+        "total": len(detectors),
+        "passed": 0,
+        "failed": 0,
+        "errors": 0
+    }
+    detailed_results = []  # For structured logging
 
     for detector in detectors:
+        detector_name = detector.__name__.replace("detect_", "").replace("_", " ").title()
         logger.debug(f"Running detector: {detector.__name__}")
         try:
             result = detector(json_data)
@@ -73,16 +82,51 @@ def validate_hook_data(json_data: dict[str, Any]) -> tuple[bool, list[str]]:
                     f"Detector {detector.__name__} found issue: {result.message}"
                 )
                 issues.append(result.message)
+                detector_stats["failed"] += 1
+                detailed_results.append({
+                    "detector": detector_name,
+                    "status": "FAILED",
+                    "message": result.message,
+                    "file_path": json_data.get("tool_input", {}).get("file_path", "N/A")
+                })
+            else:
+                detector_stats["passed"] += 1
+                detailed_results.append({
+                    "detector": detector_name,
+                    "status": "PASSED",
+                    "message": None,
+                    "file_path": json_data.get("tool_input", {}).get("file_path", "N/A")
+                })
         except Exception as e:
             logger.error(f"Error in detector {detector.__name__}: {e}", exc_info=True)
             issues.append(f"Internal error in {detector.__name__} detector: {str(e)}")
+            detector_stats["errors"] += 1
+            detailed_results.append({
+                "detector": detector_name,
+                "status": "ERROR",
+                "message": str(e),
+                "file_path": json_data.get("tool_input", {}).get("file_path", "N/A")
+            })
 
-    return len(issues) > 0, issues
+    # Log structured results in verbose mode
+    if logger.isEnabledFor(logging.DEBUG):
+        for result in detailed_results:
+            logger.debug(
+                f"[{result['status']}] {result['detector']} - "
+                f"File: {result['file_path']} - "
+                f"{'Message: ' + result['message'] if result['message'] else 'No issues'}"
+            )
+    
+    return len(issues) > 0, issues, detector_stats
 
 
-def process_stdin(verbose: bool = False) -> int:
+def process_stdin(verbose: bool = False, quiet: bool = False) -> int:
     """
     Process JSON input from stdin and validate
+
+    Args:
+        verbose: Enable verbose output
+        quiet: Suppress all output except errors
 
     Returns:
         Exit code (0=success, 1=parse error, 2=security issues)
@@ -96,29 +140,31 @@ def process_stdin(verbose: bool = False) -> int:
         )
     except json.JSONDecodeError as e:
         logger.error(f"JSON parsing error: {e}")
-        print(f"\n❌ JSON parsing error: {e}", file=sys.stderr)
-        print("\n💡 How to fix:", file=sys.stderr)
-        print("   Ensure your input is valid JSON. Example of valid format:", file=sys.stderr)
-        print('   {', file=sys.stderr)
-        print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
-        print('     "tool_name": "Write",', file=sys.stderr)
-        print('     "tool_input": {', file=sys.stderr)
-        print('       "file_path": "example.py",', file=sys.stderr)
-        print('       "content": "print(\'Hello\')"}', file=sys.stderr)
-        print('   }', file=sys.stderr)
-        print("\n   Common issues:", file=sys.stderr)
-        print("   • Missing quotes around strings", file=sys.stderr)
-        print("   • Trailing commas after last item", file=sys.stderr)
-        print("   • Unescaped quotes in strings (use \\\") ", file=sys.stderr)
-        print("   • Missing brackets or braces\n", file=sys.stderr)
+        if not quiet:
+            print(f"\n❌ JSON parsing error: {e}", file=sys.stderr)
+            print("\n💡 How to fix:", file=sys.stderr)
+            print("   Ensure your input is valid JSON. Example of valid format:", file=sys.stderr)
+            print('   {', file=sys.stderr)
+            print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+            print('     "tool_name": "Write",', file=sys.stderr)
+            print('     "tool_input": {', file=sys.stderr)
+            print('       "file_path": "example.py",', file=sys.stderr)
+            print('       "content": "print(\'Hello\')"}', file=sys.stderr)
+            print('   }', file=sys.stderr)
+            print("\n   Common issues:", file=sys.stderr)
+            print("   • Missing quotes around strings", file=sys.stderr)
+            print("   • Trailing commas after last item", file=sys.stderr)
+            print("   • Unescaped quotes in strings (use \\\") ", file=sys.stderr)
+            print("   • Missing brackets or braces\n", file=sys.stderr)
         return 1
     except Exception as e:
         logger.error(f"Unexpected error reading input: {e}", exc_info=True)
-        print(f"\n❌ Error reading input: {e}", file=sys.stderr)
-        print("\n💡 How to fix:", file=sys.stderr)
-        print("   • Ensure data is being piped to stdin", file=sys.stderr)
-        print("   • Example: echo '{...}' | antimon", file=sys.stderr)
-        print("   • Or: cat hook_data.json | antimon\n", file=sys.stderr)
+        if not quiet:
+            print(f"\n❌ Error reading input: {e}", file=sys.stderr)
+            print("\n💡 How to fix:", file=sys.stderr)
+            print("   • Ensure data is being piped to stdin", file=sys.stderr)
+            print("   • Example: echo '{...}' | antimon", file=sys.stderr)
+            print("   • Or: cat hook_data.json | antimon\n", file=sys.stderr)
         return 1
 
     # Define tool categories for user feedback
@@ -134,39 +180,61 @@ def process_stdin(verbose: bool = False) -> int:
     if tool_name not in CODE_EDITING_TOOLS:
         if tool_name in SAFE_TOOLS:
             logger.info(f"Safe tool {tool_name} - no security validation needed")
-            if not verbose:
+            if not verbose and not quiet:
                 print(f"ℹ️  Tool '{tool_name}' is considered safe - no security validation performed", file=sys.stderr)
         elif tool_name:
             logger.info(f"Unknown tool {tool_name} - skipping validation")
-            if not verbose:
+            if not verbose and not quiet:
                 print(f"ℹ️  Unknown tool '{tool_name}' - no security validation performed", file=sys.stderr)
         else:
             logger.info("No tool name provided - skipping validation")
-            if not verbose:
+            if not verbose and not quiet:
                 print("ℹ️  No tool specified - no security validation performed", file=sys.stderr)
         return 0
     
     # Validate code-editing tools
-    has_issues, issues = validate_hook_data(json_data)
+    has_issues, issues, stats = validate_hook_data(json_data)
 
     if has_issues:
         logger.info(f"Security validation failed with {len(issues)} issue(s)")
-        print("\n⚠️  Security issues detected:", file=sys.stderr)
-        for issue in issues:
-            print(f"  • {issue}", file=sys.stderr)
-        print("\n💡 How to proceed:", file=sys.stderr)
-        print("   1. Review the detected issues above", file=sys.stderr)
-        print("   2. If false positive, consider:", file=sys.stderr)
-        print("      • Using environment variables instead of hardcoded values", file=sys.stderr)
-        print("      • Moving sensitive data to separate config files", file=sys.stderr)
-        print("      • Adding patterns to whitelist (config support coming in v0.3.0)", file=sys.stderr)
-        print("   3. For legitimate use cases, you can:", file=sys.stderr)
-        print("      • Temporarily disable the hook in Claude Code settings", file=sys.stderr)
-        print("      • Report false positives at: https://github.com/yourusername/antimon/issues\n", file=sys.stderr)
+        if not quiet:
+            print("\n⚠️  Security issues detected:", file=sys.stderr)
+            
+            # Structured output for issues
+            if verbose:
+                print(f"\n📊 Detection Results:", file=sys.stderr)
+                print(f"   File: {json_data.get('tool_input', {}).get('file_path', 'N/A')}", file=sys.stderr)
+                print(f"   Tool: {tool_name}", file=sys.stderr)
+                print(f"   Summary: {stats['failed']} failed, {stats['passed']} passed, {stats['errors']} errors\n", file=sys.stderr)
+                print("   Issues found:", file=sys.stderr)
+                for i, issue in enumerate(issues, 1):
+                    print(f"   [{i}] {issue}", file=sys.stderr)
+            else:
+                for issue in issues:
+                    print(f"  • {issue}", file=sys.stderr)
+            
+            print("\n💡 How to proceed:", file=sys.stderr)
+            print("   1. Review the detected issues above", file=sys.stderr)
+            print("   2. If false positive, consider:", file=sys.stderr)
+            print("      • Using environment variables instead of hardcoded values", file=sys.stderr)
+            print("      • Moving sensitive data to separate config files", file=sys.stderr)
+            print("      • Adding patterns to whitelist (config support coming in v0.3.0)", file=sys.stderr)
+            print("   3. For legitimate use cases, you can:", file=sys.stderr)
+            print("      • Temporarily disable the hook in Claude Code settings", file=sys.stderr)
+            print("      • Report false positives at: https://github.com/yourusername/antimon/issues\n", file=sys.stderr)
         return 2
 
     logger.info("Security validation passed")
-    if not verbose:
-        # In non-verbose mode, print success message
-        print("✅ No security issues detected", file=sys.stderr)
+    if not quiet:
+        if verbose:
+            # In verbose mode, show detailed summary
+            print(f"\n📊 Detection Summary:", file=sys.stderr)
+            print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
+            print(f"   • Passed: {stats['passed']}", file=sys.stderr)
+            print(f"   • Failed: {stats['failed']}", file=sys.stderr)
+            if stats['errors'] > 0:
+                print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+        else:
+            # In non-verbose/non-quiet mode, print success message with summary
+            print(f"✅ No security issues detected ({stats['total']} detectors passed)", file=sys.stderr)
     return 0

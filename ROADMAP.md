@@ -5,14 +5,14 @@
 🎉 **Version 0.2.0 has been successfully completed!** The project has been transformed into a proper Python package with comprehensive testing, documentation, and code quality checks. All tests are passing (20/20) and the code quality score is 93.9/100.
 
 ### Quality Check Summary (2025-07-21)
-- ✅ **pytest**: All 20 tests passing with 50% code coverage
-- ✅ **Project structure**: Clean working directory, proper .gitignore configuration
+- ✅ **pytest**: All 20 tests passing with 46% code coverage
+- ✅ **Project structure**: Clean working directory, proper .gitignore configuration (__pycache__ directories cleaned)
 - ✅ **src-check score**: 93.9/100 (🟢 Excellent)
   - Architecture: 92.0/100
   - Code quality: 94.0/100
   - Compliance: 95.0/100
-  - Documentation: 90.0/100
-  - Performance: 98.0/100
+  - Documentation: 92.0/100
+  - Performance: 96.0/100
   - Testing: 94.0/100
   - Type safety: 94.0/100
 
@@ -57,20 +57,72 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [x] **Exit code behavior**: 非コード編集ツール（Read, Bashなど）の場合の明確なフィードバック
 
 ### Code Quality Improvements from src-check (2025-07-21) 🔍
-- [ ] **Replace print statements with logging in core.py**: Currently using print() for output, should use proper logging
-- [ ] **Reduce coupling in core.py and detectors.py**: High external call count
-- [ ] **Add docstrings to test classes**: All test files missing docstrings
-- [ ] **Optimize string concatenation in detectors.py**: Use list.append() and join() instead of += in loops
+- [ ] **Print statements in core.py**: Currently using print() for user-facing output. Consider if this should remain as-is (for CLI output) or be replaced with a more sophisticated output system
+- [ ] **Reduce coupling in core.py and detectors.py**: High external call count (88 and 35 respectively, max recommended: 15)
+- [ ] **Add docstrings to test classes**: All test files missing docstrings (affects documentation score)
+- [ ] **Optimize string concatenation in detectors.py**: Use list.append() and join() instead of += in loops (multiple PERF003 violations)
 
 
-### Version 0.2.2 (Next Priority Tasks) 🚀
+### Version 0.2.2 (In Progress) 🚀
 次に実装予定のタスク（2025-07-21 更新）:
 
-#### 1. ログ出力の改善 🔧
-- [ ] **Quiet mode (-q/--quiet)**: エラーのみを表示し、成功時は何も出力しないモード
-- [ ] **Summary at end**: 全検出器の実行結果サマリー（例：「6 detectors run, 1 issue found」）
-- [ ] **Structured logging**: 検出結果を構造化して表示（検出器名、ファイルパス、行番号など）
-- [ ] **Log format simplification**: タイムスタンプをシンプルに（現在：2025-07-21 10:14:33 → 10:14:33）
+#### ユーザー体験の観点から追加されたタスク（2025-07-21）
+##### 使用開始時の体験改善
+- [ ] **インストール成功の確認方法**: `pip install antimon` 後に即座に動作確認できる方法が不明確
+  - [ ] インストール後に `antimon --version` で確認可能に
+  - [ ] インストール成功時のメッセージ改善
+  - [ ] PATHに追加されない場合の対処法を明記
+  
+##### エラー発生時の対処
+- [ ] **ログ出力の視認性向上**: エラーメッセージとログが混在して見づらい
+  - [ ] エラーメッセージを標準出力、ログを標準エラー出力に分離
+  - [ ] カラー出力のサポート（--color オプション）
+  - [ ] エラーコンテキストの表示改善（どの検出器でエラーが発生したか）
+
+##### 実行結果の理解しやすさ
+- [ ] **検出結果の具体性**: 「API key found」だけでなく、どこで見つかったかを表示
+  - [ ] 行番号の表示（可能な場合）
+  - [ ] 検出パターンのハイライト表示
+  - [ ] 誤検出時の回避方法の具体例を表示
+
+##### パッケージとしての完成度
+- [ ] **--test コマンドの実装**: インストール後の動作確認用
+  - [ ] 組み込みテストケースで自己診断
+  - [ ] 各検出器の動作確認
+  - [ ] Claude Code連携のテストモード
+
+##### 開発者向けの改善
+- [ ] **Pythonモジュールとしての使いやすさ**
+  - [ ] import時のエラーハンドリング改善
+  - [ ] 戻り値の型定義の改善（NamedTupleやdataclassの使用）
+  - [ ] 非同期処理対応（大量ファイルチェック時のパフォーマンス）
+  - [ ] カスタム検出器の追加方法のドキュメント化
+
+##### CI/CD統合の容易さ
+- [ ] **GitHub Actions用のサンプル設定**
+  - [ ] PR時の自動チェック設定例
+  - [ ] 検出時のコメント自動投稿
+  - [ ] バッジ生成機能
+- [ ] **Docker イメージの提供**
+  - [ ] 公式Dockerイメージの作成
+  - [ ] docker-compose.yml のサンプル
+  - [ ] Kubernetes対応のマニフェスト例
+
+##### 日本語圏ユーザーへの配慮
+- [ ] **日本語ドキュメントの充実**
+  - [ ] README.md の日本語版（README.ja.md）
+  - [ ] よくある質問（FAQ）の日本語版
+  - [ ] 日本語でのエラーメッセージオプション（--lang ja）
+- [ ] **日本でよく使われるパターンへの対応**
+  - [ ] 全角文字を含むファイルパスのサポート
+  - [ ] 日本語コメントでの誤検出の回避
+  - [ ] Shift-JIS等のエンコーディング対応
+
+#### ログ出力の改善 🔧 ✅ COMPLETED (2025-07-21)
+- [✓] **Quiet mode (-q/--quiet)**: Implemented option to suppress all output except errors
+- [✓] **Detection summary**: Added summary showing detector counts (passed/failed/errors)
+- [✓] **Structured logging**: Enhanced verbose mode with detailed detection results
+- [✓] **Timestamp simplification**: Changed from full datetime to HH:MM:SS format
 - [ ] **Log level visibility**: DEBUGログとINFO/WARNINGログの視覚的差別化
 
 #### 2. インストールと初回使用の体験向上 📦
@@ -221,13 +273,14 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 |---------|------------|------------|
 | 0.2.0 | ✅ Completed | Package structure |
 | 0.2.1 | ✅ Completed | Bug fixes & README improvements |
-| 0.2.2 | 2025 Q3 | User experience & logging |
+| 0.2.2 | 🔄 In Progress | User experience & logging |
 | 0.3.0 | 2025 Q4 | Configuration |
 | 0.4.0 | 2026 Q1 | Enhanced detection |
 | 0.5.0 | 2026 Q2 | Integrations |
 | 0.6.0 | 2026 Q3 | Performance |
 | 0.7.0 | 2026 Q4 | Advanced features |
 | 1.0.0 | 2027 Q1 | Production ready |
+
 
 ## How to Contribute
 

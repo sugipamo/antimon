@@ -67,12 +67,24 @@ For more information: https://github.com/yourusername/antimon
         help="Enable verbose output with detailed logging of each detector's execution",
     )
 
+    parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Suppress all output except errors. Only display security issues when detected.",
+    )
+
     args = parser.parse_args(argv)
 
-    # Setup logging
-    setup_logging(verbose=args.verbose)
+    # Check for conflicting options
+    if args.verbose and args.quiet:
+        print("\n⚠️  Cannot use --verbose and --quiet together", file=sys.stderr)
+        return 1
 
-    if args.config:
+    # Setup logging
+    setup_logging(verbose=args.verbose, quiet=args.quiet)
+
+    if args.config and not args.quiet:
         print("\n⚠️  Configuration file support coming in v0.3.0", file=sys.stderr)
         print("   This will allow you to:", file=sys.stderr)
         print("   • Define custom detection patterns", file=sys.stderr)
@@ -80,7 +92,7 @@ For more information: https://github.com/yourusername/antimon
         print("   • Customize detector sensitivity", file=sys.stderr)
         print("   • Add project-specific rules\n", file=sys.stderr)
 
-    return process_stdin(verbose=args.verbose)
+    return process_stdin(verbose=args.verbose, quiet=args.quiet)
 
 
 if __name__ == "__main__":
