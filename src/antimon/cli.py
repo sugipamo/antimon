@@ -23,6 +23,7 @@ from .first_run import (
 from .error_context import show_error_help
 from .runtime_config import RuntimeConfig, set_runtime_config
 from .last_error import explain_last_error
+from .demo import run_demo
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -143,6 +144,12 @@ For more information: https://github.com/yourusername/antimon
         help="Run the interactive setup wizard to configure antimon with your tools.",
     )
 
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Run interactive demo to see antimon's detection capabilities in action.",
+    )
+
     args = parser.parse_args(argv)
 
     # Check if this is the first run (before running test)
@@ -188,6 +195,13 @@ For more information: https://github.com/yourusername/antimon
         run_interactive_setup(no_color=args.no_color)
         if first_run:
             mark_first_run_complete()
+        return 0
+    
+    # Run demo if requested
+    if args.demo:
+        if first_run:
+            mark_first_run_complete()
+        run_demo()
         return 0
     
     # Run self-test if requested
