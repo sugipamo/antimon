@@ -112,7 +112,7 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
         "content_size": 0
     }
     detailed_results = []  # For structured logging
-    
+
     # Get content size if available
     tool_input = json_data.get("tool_input", {})
     if isinstance(tool_input, dict):
@@ -174,7 +174,7 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
                 f"File: {result['file_path']} - "
                 f"{'Message: ' + result['message'] if result['message'] else 'No issues'}"
             )
-    
+
     # Calculate total time
     detector_stats["total_time"] = time.time() - start_time
 
@@ -392,7 +392,7 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
             print("      • Report false positives at: https://github.com/antimon-security/antimon/issues\n", file=sys.stderr)
 
 
-def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = False) -> int:
+def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = False, output_format: str = "text") -> int:
     """
     Process JSON input from stdin and validate
 
@@ -498,19 +498,19 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
             print(f"   • Failed: {stats['failed']}", file=sys.stderr)
             if stats['errors'] > 0:
                 print(f"   • Errors: {stats['errors']}", file=sys.stderr)
-            
+
             # Show timing information if --stats is used
             if config.show_stats and 'total_time' in stats:
-                print(f"\n⏱️  Performance Metrics:", file=sys.stderr)
+                print("\n⏱️  Performance Metrics:", file=sys.stderr)
                 print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
                 if 'content_size' in stats and stats['content_size'] > 0:
                     print(f"   • Content size: {stats['content_size']:,} bytes", file=sys.stderr)
                 if 'patterns_checked' in stats:
                     print(f"   • Patterns checked: {stats['patterns_checked']}", file=sys.stderr)
-                
+
                 # Show individual detector times
-                if 'detector_times' in stats and stats['detector_times']:
-                    print(f"\n⚡ Detector Performance:", file=sys.stderr)
+                if stats.get('detector_times'):
+                    print("\n⚡ Detector Performance:", file=sys.stderr)
                     sorted_times = sorted(stats['detector_times'].items(), key=lambda x: x[1], reverse=True)
                     for detector_name, detector_time in sorted_times:
                         print(f"   • {detector_name}: {detector_time:.3f}s", file=sys.stderr)
@@ -527,7 +527,7 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
                 if "content" in tool_input and isinstance(tool_input["content"], str):
                     content_size = len(tool_input["content"])
                     operation_info.append(f"Content: {content_size:,} bytes")
-        
+
         print(f"\n✅ {color.success('Success:')} No security issues found", file=sys.stderr)
         if operation_info:
             for info in operation_info:
@@ -536,7 +536,100 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
     return 0
 
 
-def check_file_directly(file_path: str, verbose: bool = False, quiet: bool = False, no_color: bool = False) -> int:
+def check_files_batch(file_pattern: str, verbose: bool = False, quiet: bool = False, no_color: bool = False, output_format: str = "text") -> int:
+    """
+    Check multiple files matching a glob pattern.
+
+    Args:
+        file_pattern: Glob pattern to match files (e.g., 'src/**/*.py')
+        verbose: Enable verbose output
+        quiet: Suppress all output except errors
+        no_color: Disable colored output
+
+    Returns:
+        Exit code (0=success, 1=error, 2=security issues)
+    """
+    import glob
+    import os
+
+    # Initialize color formatter
+    color = ColorFormatter(use_color=not no_color)
+
+    # Find all files matching the pattern
+    files = glob.glob(file_pattern, recursive=True)
+    
+    if not files:
+        if not quiet:
+            print(f"\n{color.warning('⚠️  Warning:')} No files found matching pattern: {file_pattern}", file=sys.stderr)
+        return 0
+    
+    # Filter out directories
+    files = [f for f in files if os.path.isfile(f)]
+    
+    if not files:
+        if not quiet:
+            print(f"\n{color.warning('⚠️  Warning:')} No files found matching pattern: {file_pattern}", file=sys.stderr)
+        return 0
+    
+    if not quiet:
+        print(f"\n🔍 Checking {len(files)} file{'s' if len(files) != 1 else ''} matching pattern: {file_pattern}", file=sys.stderr)
+    
+    # Track overall results
+    total_issues = 0
+    files_with_issues = []
+    total_start_time = time.time()
+    
+    # Check each file
+    for i, file_path in enumerate(files, 1):
+        if not quiet:
+            print(f"\n[{i}/{len(files)}] Checking: {file_path}", file=sys.stderr)
+        
+        # Check the file
+        # For batch mode, always suppress individual file messages except errors
+        result = check_file_directly(file_path, verbose=verbose, quiet=not quiet, no_color=no_color)
+        
+        if result == 2:  # Security issues found
+            total_issues += 1
+            files_with_issues.append(file_path)
+        elif result == 1:  # Error
+            if not quiet:
+                print(f"   {color.error('⚠️  Error checking file')}", file=sys.stderr)
+    
+    # Show summary
+    total_time = time.time() - total_start_time
+    
+    if output_format == "json":
+        # JSON output
+        result = {
+            "pattern": file_pattern,
+            "files_checked": len(files),
+            "files_with_issues": len(files_with_issues),
+            "total_time": total_time,
+            "issues": files_with_issues,
+            "success": len(files_with_issues) == 0
+        }
+        print(json.dumps(result, indent=2))
+    elif not quiet:
+        # Text output
+        print(f"\n{'='*60}", file=sys.stderr)
+        print(f"📊 Batch Check Summary", file=sys.stderr)
+        print(f"{'='*60}", file=sys.stderr)
+        print(f"   • Files checked: {len(files)}", file=sys.stderr)
+        print(f"   • Files with issues: {len(files_with_issues)}", file=sys.stderr)
+        print(f"   • Total time: {total_time:.2f}s", file=sys.stderr)
+        
+        if files_with_issues:
+            print(f"\n{color.error('❌ Files with security issues:')}", file=sys.stderr)
+            for file_path in files_with_issues:
+                print(f"   • {file_path}", file=sys.stderr)
+        else:
+            print(f"\n{color.success('✅ All files passed security checks!')}", file=sys.stderr)
+    
+    # Return appropriate exit code
+    return 2 if total_issues > 0 else 0
+
+
+def check_file_directly(file_path: str, verbose: bool = False, quiet: bool = False, no_color: bool = False, output_format: str = "text") -> int:
     """
     Check a file directly without JSON input.
 
@@ -608,20 +701,20 @@ def check_file_directly(file_path: str, verbose: bool = False, quiet: bool = Fal
             print(f"   • Failed: {stats['failed']}", file=sys.stderr)
             if stats['errors'] > 0:
                 print(f"   • Errors: {stats['errors']}", file=sys.stderr)
-            
+
             # Show timing information if --stats is used
             if config.show_stats and 'total_time' in stats:
-                print(f"\n⏱️  Performance Metrics:", file=sys.stderr)
+                print("\n⏱️  Performance Metrics:", file=sys.stderr)
                 print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
                 print(f"   • File: {file_path}", file=sys.stderr)
                 if 'content_size' in stats and stats['content_size'] > 0:
                     print(f"   • Content size: {stats['content_size']:,} bytes", file=sys.stderr)
                 if 'patterns_checked' in stats:
                     print(f"   • Patterns checked: {stats['patterns_checked']}", file=sys.stderr)
-                
+
                 # Show individual detector times
-                if 'detector_times' in stats and stats['detector_times']:
-                    print(f"\n⚡ Detector Performance:", file=sys.stderr)
+                if stats.get('detector_times'):
+                    print("\n⚡ Detector Performance:", file=sys.stderr)
                     sorted_times = sorted(stats['detector_times'].items(), key=lambda x: x[1], reverse=True)
                     for detector_name, detector_time in sorted_times:
                         print(f"   • {detector_name}: {detector_time:.3f}s", file=sys.stderr)
@@ -638,7 +731,7 @@ def check_file_directly(file_path: str, verbose: bool = False, quiet: bool = Fal
     return 0
 
 
-def check_content_directly(content: str, file_name: str = "stdin", verbose: bool = False, quiet: bool = False, no_color: bool = False) -> int:
+def check_content_directly(content: str, file_name: str = "stdin", verbose: bool = False, quiet: bool = False, no_color: bool = False, output_format: str = "text") -> int:
     """
     Check content directly without JSON input.
 
@@ -694,19 +787,19 @@ def check_content_directly(content: str, file_name: str = "stdin", verbose: bool
             print(f"   • Failed: {stats['failed']}", file=sys.stderr)
             if stats['errors'] > 0:
                 print(f"   • Errors: {stats['errors']}", file=sys.stderr)
-            
+
             # Show timing information if --stats is used
             if config.show_stats and 'total_time' in stats:
-                print(f"\n⏱️  Performance Metrics:", file=sys.stderr)
+                print("\n⏱️  Performance Metrics:", file=sys.stderr)
                 print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
                 if 'content_size' in stats and stats['content_size'] > 0:
                     print(f"   • Content size: {stats['content_size']:,} bytes", file=sys.stderr)
                 if 'patterns_checked' in stats:
                     print(f"   • Patterns checked: {stats['patterns_checked']}", file=sys.stderr)
-                
+
                 # Show individual detector times
-                if 'detector_times' in stats and stats['detector_times']:
-                    print(f"\n⚡ Detector Performance:", file=sys.stderr)
+                if stats.get('detector_times'):
+                    print("\n⚡ Detector Performance:", file=sys.stderr)
                     sorted_times = sorted(stats['detector_times'].items(), key=lambda x: x[1], reverse=True)
                     for detector_name, detector_time in sorted_times:
                         print(f"   • {detector_name}: {detector_time:.3f}s", file=sys.stderr)

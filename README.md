@@ -1,6 +1,6 @@
 # antimon
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/antimon-security/antimon/releases)
+[![Version](https://img.shields.io/badge/version-0.2.13-blue.svg)](https://github.com/antimon-security/antimon/releases)
 
 A security validation tool for AI coding assistants that detects potentially dangerous operations and prohibited patterns in code modifications.
 

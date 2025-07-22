@@ -6,7 +6,6 @@ Logging configuration for antimon
 """
 
 import logging
-import sys
 
 
 def setup_logging(verbose: bool = False, quiet: bool = False) -> None:
@@ -27,16 +26,16 @@ def setup_logging(verbose: bool = False, quiet: bool = False) -> None:
     # Configure root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
-    
+
     # Important: Clear all existing handlers to prevent duplicates
     # This includes handlers set by logger.py
     root_logger.handlers.clear()
-    
+
     # Also clear handlers from antimon logger specifically
     antimon_logger = logging.getLogger("antimon")
     antimon_logger.handlers.clear()
     antimon_logger.setLevel(level)
-    
+
     # Don't add any handlers here - let logger.py handle formatting and output
     # This prevents duplicate messages in verbose mode
 

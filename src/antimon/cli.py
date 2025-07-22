@@ -9,7 +9,7 @@ import argparse
 import sys
 
 from . import __version__
-from .core import check_content_directly, check_file_directly, process_stdin
+from .core import check_content_directly, check_file_directly, check_files_batch, process_stdin
 from .demo import run_demo
 from .error_context import show_error_help
 from .first_run import (
@@ -189,6 +189,19 @@ For more information: https://github.com/antimon-security/antimon
     )
 
     parser.add_argument(
+        "--check-files",
+        type=str,
+        help="Check multiple files using glob pattern. Example: antimon --check-files 'src/**/*.py'",
+    )
+
+    parser.add_argument(
+        "--output-format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format for results (default: text). JSON format is useful for CI/CD integration.",
+    )
+
+    parser.add_argument(
         "--setup-claude-code",
         action="store_true",
         help="Interactive setup wizard to configure antimon with Claude Code. Automatically configures the PreToolUse hook.",
@@ -291,13 +304,19 @@ For more information: https://github.com/antimon-security/antimon
     if args.check_file:
         if first_run:
             mark_first_run_complete()
-        return check_file_directly(args.check_file, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color)
+        return check_file_directly(args.check_file, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color, output_format=args.output_format)
 
     # Handle direct content checking
     if args.check_content:
         if first_run:
             mark_first_run_complete()
-        return check_content_directly(args.check_content, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color)
+        return check_content_directly(args.check_content, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color, output_format=args.output_format)
+
+    # Handle batch file checking
+    if args.check_files:
+        if first_run:
+            mark_first_run_complete()
+        return check_files_batch(args.check_files, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color, output_format=args.output_format)
 
     # Handle Claude Code setup
     if args.setup_claude_code:
@@ -306,7 +325,7 @@ For more information: https://github.com/antimon-security/antimon
         success = setup_claude_code_integration(no_color=args.no_color)
         return 0 if success else 1
 
-    return process_stdin(verbose=args.verbose, quiet=args.quiet, no_color=args.no_color)
+    return process_stdin(verbose=args.verbose, quiet=args.quiet, no_color=args.no_color, output_format=args.output_format)
 
 
 if __name__ == "__main__":
