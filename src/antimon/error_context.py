@@ -7,6 +7,7 @@ Error context and helpful suggestions for antimon
 
 
 from .color_utils import Colors, apply_color
+from .runtime_config import get_runtime_config
 
 
 class ErrorContext:
@@ -127,19 +128,34 @@ class ErrorContext:
 
         return None
 
-    def format_error_with_context(self, message: str, hook_data: dict) -> str:
+    def format_error_with_context(self, message: str, hook_data: dict, exit_code: int = 2) -> str:
         """Format an error message with full context."""
         lines = []
+        config = get_runtime_config()
 
         # Main error message
         lines.append(apply_color("❌ Security issue detected:", Colors.FAIL, self.no_color))
         lines.append(f"   {message}")
+        
+        # In brief mode, just show the core error and recovery hint
+        if config.brief:
+            lines.append("")
+            lines.append(apply_color("💡 Run 'antimon --explain-last-error' for details", Colors.OKBLUE, self.no_color))
+        else:
+            lines.append("")
+            # Add context
+            context = self.get_context_for_error(message, hook_data)
+            if context:
+                lines.append(context)
+            
+            # Add error recovery hint
+            lines.append("")
+            lines.append(apply_color("💡 For more details and solutions:", Colors.OKBLUE, self.no_color))
+            lines.append(f"   Run: antimon --explain-last-error")
+        
+        # Add exit code documentation
         lines.append("")
-
-        # Add context
-        context = self.get_context_for_error(message, hook_data)
-        if context:
-            lines.append(context)
+        lines.append(apply_color(f"Exit code: {exit_code} (Security issue detected)", Colors.WARNING, self.no_color))
 
         return "\n".join(lines)
 

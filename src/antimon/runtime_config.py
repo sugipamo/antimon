@@ -29,6 +29,9 @@ class RuntimeConfig:
     # Show stats
     show_stats: bool = False
 
+    # Brief mode - concise output
+    brief: bool = False
+
     @classmethod
     def from_args(cls, args) -> "RuntimeConfig":
         """Create RuntimeConfig from command line arguments."""
@@ -53,6 +56,10 @@ class RuntimeConfig:
         # Set stats mode
         if hasattr(args, 'stats'):
             config.show_stats = args.stats
+
+        # Set brief mode
+        if hasattr(args, 'brief'):
+            config.brief = args.brief
 
         # Also check environment variables
         config._load_from_env()
@@ -146,6 +153,9 @@ class RuntimeConfig:
 
         if self.show_stats:
             summary.append("Stats: Enabled")
+
+        if self.brief:
+            summary.append("Output: Brief mode")
 
         return summary
 

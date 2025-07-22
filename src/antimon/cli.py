@@ -90,6 +90,13 @@ For more information: https://github.com/antimon-security/antimon
     )
 
     parser.add_argument(
+        "--brief",
+        "-b",
+        action="store_true",
+        help="Show concise security reports without detailed explanations. Useful for CI/CD pipelines.",
+    )
+
+    parser.add_argument(
         "--test",
         action="store_true",
         help="Run a self-test to verify antimon is working correctly. Useful after installation.",

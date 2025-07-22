@@ -337,6 +337,9 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
         dry_run: If True, show issues but don't block
     """
     logger.info(f"Security validation failed with {len(issues)} issue(s)")
+    
+    config = get_runtime_config()
+    brief = config.brief
 
     # Create error context handler
     error_context = ErrorContext(no_color=no_color)
@@ -348,7 +351,16 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
         print(f"\n{color.error('⚠️  Security issues detected:')}", file=sys.stderr)
 
     # Structured output for issues
-    if verbose and not quiet:
+    if brief:
+        # Brief mode: show only essential information
+        for issue in issues:
+            print(f"  • {issue}", file=sys.stderr)
+        print("", file=sys.stderr)
+        print(f"💡 Run 'antimon --explain-last-error' for details", file=sys.stderr)
+        # Show exit code documentation
+        exit_code = 0 if dry_run else 2
+        print(f"\nExit code: {exit_code} ({'Preview only' if dry_run else 'Security issue detected'})", file=sys.stderr)
+    elif verbose and not quiet:
         print("\n📊 Detection Results:", file=sys.stderr)
         print(f"   File: {json_data.get('tool_input', {}).get('file_path', 'N/A')}", file=sys.stderr)
         print(f"   Tool: {tool_name}", file=sys.stderr)
@@ -371,7 +383,7 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
             if context:
                 print(context, file=sys.stderr)
 
-    if not quiet:
+    if not quiet and not brief:
         if dry_run:
             print("\n💡 DRY RUN Summary:", file=sys.stderr)
             print("   • This is a preview of what would be blocked", file=sys.stderr)
@@ -390,6 +402,11 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
             print("   4. For legitimate use cases, you can:", file=sys.stderr)
             print("      • Temporarily disable the hook in Claude Code settings", file=sys.stderr)
             print("      • Report false positives at: https://github.com/antimon-security/antimon/issues\n", file=sys.stderr)
+            
+    # Always show error recovery hint for non-brief mode (Exit Code Documentation + Error Recovery Hints)
+    if not quiet and not brief and not dry_run:
+        print(f"Exit code: 2 (Security issues detected)", file=sys.stderr)
+        print(f"💡 For more information, run: antimon --explain-last-error\n", file=sys.stderr)
 
 
 def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = False, output_format: str = "text") -> int:
