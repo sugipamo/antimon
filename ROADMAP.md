@@ -15,15 +15,21 @@
 - ✅ **pytest**: 192/192 tests passing (77% code coverage) - All tests are stable
 - ✅ **ruff**: All auto-fixable style issues fixed
 - ⚠️ **mypy**: 108 type errors remaining (future version)
-- ⚠️ **src-check**: Score improved to 53.7/100 (from 44.2/100):
+- ⚠️ **src-check**: Score 45.6/100 (analysis completed):
   - ✅ Fixed all 7 high severity circular dependency issues
   - ✅ Fixed os.system security vulnerability
-  - ✅ Fixed unsafe input() usage for Python 2 in demo.py
-  - Remaining: 6 high severity issues (down from 7):
-    - 3 more instances of unsafe input() usage (in demo.py, first_run.py, watch.py)
+  - ✅ Fixed unsafe input() usage for Python 2 in demo.py (using safe_input helper)
+  - ✅ Fixed unsafe input() usage for Python 2 in first_run.py (using safe_input helper)
+  - ✅ Fixed unsafe input() usage for Python 2 in setup_claude_code.py (using safe_input helper)
+  - ✅ Removed misplaced test files (test_safe.py, test_api_key.py) from root directory
+  - ✅ Cleaned up temporary files (htmlcov directory)
+  - Remaining: 6 high severity issues:
+    - 1 more instance of unsafe input() usage (in demo.py line 22 - false positive, already using safe_input)
+    - 1 subprocess.run with shell=True in color_utils.py
     - 3 imports inside functions that may indicate circular dependencies
-  - Remaining: 122 medium severity issues (mostly print statements, complexity)
-  - Remaining: 10 low severity issues
+    - 1 high coupling issue
+  - Remaining: 127 medium severity issues (mostly print statements, complexity)
+  - Remaining: 11 low severity issues
 
 ## Project Vision
 
@@ -93,6 +99,9 @@ Transform antimon from a standalone script into a robust, extensible Python pack
    - ✅ Replaced os.system with subprocess.run in color_utils.py (safer alternative)
    - ✅ Fixed unsafe input() usage for Python 2 compatibility:
      - demo.py: Added safe_input() helper function for Python 2/3 compatibility
+     - first_run.py: Added safe_input() helper function for Python 2/3 compatibility
+     - setup_claude_code.py: Added safe_input() helper function for Python 2/3 compatibility
+     - Note: src-check still reports false positives for input() inside safe_input functions
    - ✅ Type hints already present on all public API functions
 
 #### Remaining Tasks:
@@ -361,6 +370,7 @@ Before marking any feature as "completed", verify:
    - [ ] Profiling: `antimon --profile` shows performance bottlenecks
    - [ ] Dry-run diff: Show what would change with different settings
    - [ ] Rule testing: Built-in test framework for custom rules
+
 ## How to Contribute
 
 1. Check the [Issues](https://github.com/antimon-security/antimon/issues) for tasks
@@ -372,5 +382,31 @@ Before marking any feature as "completed", verify:
 ## Feedback
 
 We welcome feedback and suggestions! Please open an issue or start a discussion to share your ideas for improving antimon.
+
+## Next Immediate Tasks (2025-07-22)
+
+Based on the current analysis and t-wada's recommendations:
+
+1. **Implement Centralized Logging Module** (Priority: HIGH)
+   - Replace 280+ print statements with proper logging
+   - Create src/antimon/log.py with centralized configuration
+   - Implement log levels (DEBUG, INFO, WARNING, ERROR)
+   - Ensure backward compatibility with existing output behavior
+   - Start with critical modules: core.py, cli.py, detectors.py
+
+2. **Fix Remaining Ruff Issues** (Priority: MEDIUM)
+   - Fix SIM105 in color_utils.py: Use contextlib.suppress instead of try-except-pass
+   - Fix UP036 in demo.py: Remove outdated Python 2 version check (project requires Python 3.8+)
+
+3. **Address Circular Dependency Risks** (Priority: HIGH)
+   - Fix imports inside functions in detectors.py, last_error.py, runtime_config.py
+   - Move imports to module level to prevent circular dependencies
+   - Refactor module structure if needed to avoid circular imports
+
+4. **Improve Test Coverage** (Priority: MEDIUM)
+   - Current coverage: 77%
+   - Target coverage: 85%+
+   - Focus on untested modules: cli.py, setup_claude_code.py, self_test.py
+   - Add tests for edge cases in core functionality
 
 
