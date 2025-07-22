@@ -5,8 +5,10 @@
 Tests for the demo module
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from antimon.demo import InteractiveDemo, run_demo
 
 
@@ -14,14 +16,14 @@ def test_demo_cases_structure():
     """Test that demo cases are properly structured."""
     demo = InteractiveDemo()
     assert len(demo.demo_cases) == 10  # We have 10 demo cases
-    
+
     for desc, hook_data, should_fail, explanation in demo.demo_cases:
         # Check structure
         assert isinstance(desc, str)
         assert isinstance(hook_data, dict)
         assert isinstance(should_fail, bool)
         assert isinstance(explanation, str)
-        
+
         # Check hook_data structure
         assert 'hook_event_name' in hook_data
         assert 'tool_name' in hook_data
@@ -33,7 +35,7 @@ def test_demo_cases_structure():
 def test_blocked_operations():
     """Test that dangerous operations are correctly marked as blocked."""
     demo = InteractiveDemo()
-    
+
     blocked_descriptions = [
         "Attempt to write to /etc/passwd",
         "Hardcoded API key in Python code",
@@ -44,7 +46,7 @@ def test_blocked_operations():
         "Writing to .env file",
         "Editing code to add API key"
     ]
-    
+
     for desc, _, should_fail, _ in demo.demo_cases:
         if desc in blocked_descriptions:
             assert should_fail, f"{desc} should be marked as blocked"
@@ -53,12 +55,12 @@ def test_blocked_operations():
 def test_allowed_operations():
     """Test that safe operations are correctly marked as allowed."""
     demo = InteractiveDemo()
-    
+
     allowed_descriptions = [
         "Writing a simple Python script",
         "Reading a README file"
     ]
-    
+
     for desc, _, should_fail, _ in demo.demo_cases:
         if desc in allowed_descriptions:
             assert not should_fail, f"{desc} should be marked as allowed"
@@ -69,10 +71,10 @@ def test_allowed_operations():
 def test_demo_exit(mock_print, mock_input):
     """Test that demo exits properly when user chooses '0'."""
     mock_input.return_value = '0'
-    
+
     demo = InteractiveDemo()
     demo.run()
-    
+
     # Check that success message was printed
     # The demo uses _print_success which adds color codes conditionally
     success_call = None
@@ -91,10 +93,10 @@ def test_single_demo_execution(mock_validate, mock_print, mock_input):
     # Choose demo 1, then exit
     mock_input.side_effect = ['1', '0']
     mock_validate.return_value = (True, ["Attempt to access sensitive file: /etc/passwd"])
-    
+
     demo = InteractiveDemo()
     demo.run()
-    
+
     # Verify validation was called with correct data
     mock_validate.assert_called_once()
     call_args = mock_validate.call_args[0][0]
@@ -107,10 +109,10 @@ def test_invalid_choice(mock_print, mock_input):
     """Test handling of invalid menu choices."""
     # Invalid choice, then exit
     mock_input.side_effect = ['invalid', '0']
-    
+
     demo = InteractiveDemo()
     demo.run()
-    
+
     # Check that error message was printed
     # The demo uses _print_error which adds color codes conditionally
     error_call = None
@@ -136,10 +138,10 @@ def test_custom_demo_write(mock_validate, mock_print, mock_input):
         '0'           # Exit
     ]
     mock_validate.return_value = (False, [])
-    
+
     demo = InteractiveDemo()
     demo.run()
-    
+
     # Verify validation was called with custom data
     assert mock_validate.called
     call_args = mock_validate.call_args[0][0]
@@ -158,10 +160,10 @@ def test_custom_demo_invalid_tool(mock_print, mock_input):
         'InvalidTool',# Invalid tool name
         '0'           # Exit
     ]
-    
+
     demo = InteractiveDemo()
     demo.run()
-    
+
     # Check that error message was printed
     # The demo uses _print_error which adds color codes conditionally
     error_call = None

@@ -7,7 +7,7 @@ from antimon.core import validate_hook_data
 
 class TestValidateHookData:
     """Test cases for the core validation hook functionality.
-    
+
     Tests the main validate_hook_data function which:
     - Orchestrates all detectors
     - Handles different tool types (Write, Edit, MultiEdit, etc.)
@@ -21,7 +21,7 @@ class TestValidateHookData:
         assert has_issues is False
         assert len(issues) == 0
         assert stats == {}
-    
+
     def test_read_tool_with_sensitive_file(self):
         """Test that Read tool detects access to sensitive system files."""
         json_data = {"tool_name": "Read", "tool_input": {"file_path": "/etc/passwd"}}

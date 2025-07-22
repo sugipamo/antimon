@@ -5,17 +5,12 @@
 Tests for last error tracking
 """
 
-import json
-from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from antimon.last_error import (
-    save_last_error,
-    load_last_error,
     explain_last_error,
-    get_error_file,
+    load_last_error,
+    save_last_error,
 )
 
 
@@ -31,13 +26,13 @@ def test_save_and_load_last_error(tmp_path):
                 "content": "api_key = 'sk-123'"
             }
         }
-        
+
         # Save error
         save_last_error(issues, hook_data)
-        
+
         # Load error
         loaded = load_last_error()
-        
+
         assert loaded is not None
         assert loaded["issues"] == issues
         assert loaded["tool_name"] == "Write"
@@ -56,7 +51,7 @@ def test_explain_last_error_no_error(tmp_path, capsys):
     """Test explaining when no error exists."""
     with patch("antimon.first_run.get_config_dir", return_value=tmp_path / "antimon"):
         explain_last_error(no_color=True)
-        
+
         captured = capsys.readouterr()
         assert "No recent errors found" in captured.out
         assert "Run it after antimon blocks an operation" in captured.out
@@ -75,10 +70,10 @@ def test_explain_last_error_with_error(tmp_path, capsys):
             }
         }
         save_last_error(issues, hook_data)
-        
+
         # Explain it
         explain_last_error(no_color=True)
-        
+
         captured = capsys.readouterr()
         assert "📋 Last Error Details" in captured.out
         assert "🔧 Tool: Write" in captured.out
@@ -86,19 +81,19 @@ def test_explain_last_error_with_error(tmp_path, capsys):
         assert "❌ Issues detected:" in captured.out
         assert "API key found in content" in captured.out
         assert "External LLM API usage detected" in captured.out
-        
+
         # Check for explanations - more specific patterns for new format
         assert "API Key Detection:" in captured.out
         assert "dangerous" in captured.out.lower()
         assert "LLM API Detection:" in captured.out or "External LLM API Detection:" in captured.out
         assert "leave" in captured.out.lower() or "control" in captured.out.lower()
-        
+
         # Check for solutions
         assert "For API Keys:" in captured.out
         assert "api_key = os.environ.get('API_KEY')" in captured.out
         assert "For LLM APIs:" in captured.out
         assert "Using Claude's built-in capabilities" in captured.out
-        
+
         # Check bypass instructions
         assert "If you need to bypass temporarily:" in captured.out
         assert "claude-code config unset hooks.PreToolUse" in captured.out

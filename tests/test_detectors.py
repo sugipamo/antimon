@@ -3,19 +3,19 @@ Tests for detection modules
 """
 
 from antimon.detectors import (
+    detect_api_key,
+    detect_bash_dangerous_commands,
+    detect_docker,
     detect_filenames,
     detect_llm_api,
-    detect_api_key,
-    detect_docker,
     detect_localhost,
     detect_read_sensitive_files,
-    detect_bash_dangerous_commands,
 )
 
 
 class TestFilenameDetection:
     """Test cases for dangerous file path detection.
-    
+
     Validates that the filename detector correctly identifies:
     - System files (/etc/passwd, /etc/shadow)
     - SSH keys and configuration files
@@ -44,7 +44,7 @@ class TestFilenameDetection:
 
 class TestLLMAPIDetection:
     """Test cases for external LLM API usage detection.
-    
+
     Ensures detection of:
     - OpenAI API imports and endpoints
     - Google Gemini API references
@@ -72,7 +72,7 @@ class TestLLMAPIDetection:
 
 class TestAPIKeyDetection:
     """Test cases for hardcoded API key detection.
-    
+
     Verifies detection of:
     - Direct API key assignments
     - Bearer tokens in headers
@@ -102,7 +102,7 @@ class TestAPIKeyDetection:
 
 class TestDockerDetection:
     """Test cases for Docker-related operations detection.
-    
+
     Tests identification of:
     - Docker CLI commands (run, build, etc.)
     - Dockerfile references
@@ -130,7 +130,7 @@ class TestDockerDetection:
 
 class TestLocalhostDetection:
     """Test cases for localhost and loopback address detection.
-    
+
     Validates detection of:
     - localhost URLs with various ports
     - 127.0.0.1 loopback addresses
@@ -158,7 +158,7 @@ class TestLocalhostDetection:
 
 class TestReadSensitiveFiles:
     """Test cases for Read tool sensitive file detection.
-    
+
     Validates detection of attempts to read:
     - System files (/etc/shadow, /etc/passwd)
     - SSH keys and configuration
@@ -224,7 +224,7 @@ class TestReadSensitiveFiles:
 
 class TestBashDangerousCommands:
     """Test cases for Bash tool dangerous command detection.
-    
+
     Validates detection of:
     - Destructive commands (rm -rf /, dd to devices)
     - Privilege escalation (sudo su, sudo -i)

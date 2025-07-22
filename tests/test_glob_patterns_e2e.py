@@ -21,7 +21,7 @@ def test_allow_file_glob_patterns():
             "content": "# Environment config"
         }
     }
-    
+
     # Should be blocked without --allow-file
     result = subprocess.run(
         [sys.executable, "-m", "antimon"],
@@ -31,7 +31,7 @@ def test_allow_file_glob_patterns():
     )
     assert result.returncode == 2
     assert "environment variables file" in result.stderr.lower()
-    
+
     # Should pass with --allow-file *.env
     result = subprocess.run(
         [sys.executable, "-m", "antimon", "--allow-file", "*.env"],
@@ -40,10 +40,10 @@ def test_allow_file_glob_patterns():
         capture_output=True
     )
     assert result.returncode == 0
-    
+
     # Test case 2: Directory glob pattern (config/*.json)
     hook_data["tool_input"]["file_path"] = "config/database.json"
-    
+
     # Should pass (no sensitive pattern match)
     result = subprocess.run(
         [sys.executable, "-m", "antimon"],
@@ -52,7 +52,7 @@ def test_allow_file_glob_patterns():
         capture_output=True
     )
     assert result.returncode == 0
-    
+
     # Should pass with --allow-file config/*.json
     result = subprocess.run(
         [sys.executable, "-m", "antimon", "--allow-file", "config/*.json"],
@@ -61,10 +61,10 @@ def test_allow_file_glob_patterns():
         capture_output=True
     )
     assert result.returncode == 0
-    
+
     # Test case 3: Recursive glob pattern (**/*.pem)
     hook_data["tool_input"]["file_path"] = "deep/nested/dir/server.pem"
-    
+
     # Should be blocked without --allow-file
     result = subprocess.run(
         [sys.executable, "-m", "antimon"],
@@ -74,7 +74,7 @@ def test_allow_file_glob_patterns():
     )
     assert result.returncode == 2
     assert "cryptographic key" in result.stderr.lower()
-    
+
     # Should pass with --allow-file **/*.pem
     result = subprocess.run(
         [sys.executable, "-m", "antimon", "--allow-file", "**/*.pem"],
@@ -83,10 +83,10 @@ def test_allow_file_glob_patterns():
         capture_output=True
     )
     assert result.returncode == 0
-    
+
     # Test case 4: Multiple patterns
     hook_data["tool_input"]["file_path"] = "deploy_key"
-    
+
     # Should pass with multiple --allow-file options
     result = subprocess.run(
         [sys.executable, "-m", "antimon", "--allow-file", "*.env", "--allow-file", "deploy_key"],
@@ -107,7 +107,7 @@ def test_allow_file_with_api_key_detection():
             "content": 'API_KEY="sk-1234567890abcdef"'
         }
     }
-    
+
     # Should still be blocked for API key even with --allow-file *.env
     result = subprocess.run(
         [sys.executable, "-m", "antimon", "--allow-file", "*.env"],

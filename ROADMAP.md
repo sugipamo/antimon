@@ -2,34 +2,27 @@
 
 ## Current Status (2025-07-22)
 
-🎉 **Version 0.2.7 Major Features Completed!** 
+### ⚠️ Critical Issues - MUST FIX IMMEDIATELY
 
-### Recent Achievements:
-- ✅ Transformed into a proper Python package with comprehensive testing
-- ✅ Fixed detector functions and added Edit/MultiEdit tool support
-- ✅ Enhanced UX with colors, test command, and better error messages
-- ✅ Added `--allow-file` option with glob pattern support
-- ✅ Implemented `--status`, `--dry-run`, and `--explain-last-error` commands
-- ✅ Created structured logging foundation and setup wizard
+1. **Exit Codes Are Broken** 🚨
+   - Security detections return exit code 0 (should be 2)
+   - This breaks CI/CD integration completely
+   - File: Likely in `src/antimon/core.py` or main entry point
 
-### Quality Check Summary (2025-07-22)
-- ✅ **pytest**: 119/119 tests passing! (75% code coverage)
-  - Fixed: UnboundLocalError in core.py:472 - properly initialized 'config' variable
-  - Fixed: AttributeError in core.py:153 - changed logger.isEnabledFor() to logger.is_enabled_for()
-  - All tests are now passing
-- ✅ **ruff**: All errors passed! No issues found
-  - Previously fixed: Whitespace issues (W293), bare except (E722), undefined names (F821)
-  - Previously fixed: Variable naming conventions (N806, N802)
-  - Previously fixed: Unused loop variables (B007)
-  - Added RUF001 and SIM102 to ignore list for better code readability
-- ⚠️ **mypy**: 81 type errors remaining (to be addressed)
-  - Main issues: Missing type parameters for generics, missing return type annotations
-  - AttributeError issues with ColorFormatter in setup_claude_code.py
-- ⚠️ **src-check**: Score 51.2/100 🟠 (105 issues: 10 high, 87 medium, 8 low)
-  - Main issues: High coupling, unused imports, print statements instead of logging
-  - Security concerns: Usage of input() and os.system()
-  - Architecture score: 40/100 (needs improvement)
-  - God classes detected: Colors (16 attributes), InteractiveDemo (336 lines)
+2. **Missing Documentation**
+   - `docs/faq.md` referenced but doesn't exist
+   - Error messages link to non-existent documentation
+
+### Recent Achievements (v0.2.10):
+- ✅ Verified `--quickstart` is working correctly
+- ✅ Confirmed `--stats` functionality is implemented
+- ✅ `--config` option shows appropriate v0.3.0 message
+
+### Quality Check Summary:
+- ✅ **pytest**: 119/119 tests passing (75% code coverage)
+- ✅ **ruff**: All style issues fixed (18 SIM117 warnings acceptable)
+- ⚠️ **mypy**: 81 type errors remaining (future version)
+- ⚠️ **src-check**: Score 53.0/100 (needs improvement)
 
 ## Project Vision
 
@@ -47,29 +40,24 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 
 
-### Version 0.2.10 (Critical Fixes & UX Polish) - NEXT RELEASE
+### Version 0.2.11 (Critical Fixes) - URGENT
 
-#### Critical Bug Fixes:
-- [ ] Fix `--quickstart` NotImplementedError
-- [ ] Implement `--stats` functionality
-- [ ] Fix exit codes (0=OK, 1=Error, 2=Security Issue)
-- [ ] Create docs/faq.md file with common questions
-- [ ] Remove or hide `--config` option until v0.3.0
+#### Must Fix Before Any New Features:
+- [ ] Fix exit codes (currently ALWAYS returns 0)
+  - Must return: 0=success, 1=error, 2=security issue detected
+- [ ] Create docs/faq.md file (referenced but missing)
 
-#### User Experience Improvements:
+### Version 0.2.12 (User Experience) - NEXT RELEASE
+
+#### High Priority Features (Based on User Testing):
 - [ ] Batch file checking with glob patterns (`antimon --check-files "*.py"`)
 - [ ] JSON output format (`--output-format json`)
-- [ ] Windows-specific Claude Code setup instructions
 - [ ] Success message improvements (show what was checked)
 - [ ] Quiet mode fixes (truly silent except errors)
-- [ ] Progress bar for large file checks
-- [ ] Simple caching for repeated checks
-- [ ] Pipeline-friendly output options
+- [ ] Progress indicators for multiple operations
 
-#### Documentation Improvements:
-- [ ] Create comprehensive FAQ document
-- [ ] Add `--verbose` output examples to help
-- [ ] Windows installation guide
+#### Documentation:
+- [ ] Windows-specific Claude Code setup instructions
 - [ ] CI/CD integration examples
 - [ ] Common false positive scenarios and solutions
 
@@ -128,7 +116,8 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 | Version | Target Date | Focus Area |
 |---------|------------|------------|
-| 0.2.10 | 2025 Q3 | Critical Fixes & UX Polish |
+| 0.2.11 | Immediate | Critical Fixes (Exit codes & docs) |
+| 0.2.12 | 2025 Q3 | User Experience |
 | 0.3.0 | 2025 Q4 | Configuration |
 | 0.4.0 | 2026 Q1 | Enhanced detection |
 | 0.5.0 | 2026 Q2 | Integrations |
@@ -136,62 +125,37 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 
 
-## Project Maintenance Notes (2025-07-22)
+## User Testing Insights (2025-07-22)
 
-### Current Project Health:
-- ✅ All tests passing (119/119) with 75% coverage
-- ✅ No ruff issues - all checks passing
-- ⚠️ 81 mypy type errors remaining
-- ⚠️ src-check score: 51.2/100
+### 🌟 What's Working Well
+- Excellent demo mode with practical examples
+- Clear security detection messages
+- Good visual design with colors and icons
+- `--quickstart` and `--stats` work correctly
 
-### Next Priority Tasks:
-1. **Type Safety**: Fix 81 mypy errors
-2. **Code Quality**: Address src-check issues (unused imports, print statements)
-3. **Architecture**: Refactor god classes (Colors, InteractiveDemo)
+### 📊 Key Usage Patterns
+- Direct file checking (`--check-file`) is primary use case
+- JSON input rarely used in practice
+- Users expect proper exit codes for CI/CD automation
+- Dry-run mode helpful for debugging false positives
 
+## Testing Checklist for Contributors
 
-
-## User Feedback Summary (2025-07-22)
-
-Based on comprehensive user testing, the following improvements would significantly enhance the user experience:
-
-### 🌟 Strengths (What's Working Well)
-- Excellent demo mode with clear, practical examples
-- Comprehensive help documentation
-- Clear security detection messages with actionable fixes
-- Good use of colors and icons for visual clarity
-- Simple and intuitive command-line interface
-
-### 🔧 Critical Issues (Must Fix for v0.2.10)
-1. **Broken Features**: 
-   - `--quickstart` option throws NotImplementedError
-   - `--stats` option is not implemented
-   - `--config` option is shown but not implemented (planned for v0.3.0)
-2. **Exit Codes**: Always returns 0, breaking CI/CD integration
-   - Should return: 0=success, 1=error, 2=security issue detected
-3. **Documentation**: Referenced docs/faq.md file doesn't exist
-4. **Cross-Platform**: Windows setup instructions missing for Claude Code integration
-
-### 💡 Top User Requests
-1. **Batch Operations**: Check multiple files with wildcards (`antimon --check-files "*.py"`)
-2. **Machine-Readable Output**: JSON format for automation (`--output-format json`)
-3. **Better Success Feedback**: Show what was actually checked
-4. **Performance**: Progress bars and caching for large operations
-5. **Integration**: Examples for CI/CD pipelines
-
-### 📊 Usage Patterns Observed
-- Users primarily use direct file checking (`--check-file`) over JSON input
-- Dry-run mode is popular for understanding detections
-- Many users struggle with initial Claude Code integration
-- False positives in documentation/example code are common pain points
+Before marking any feature as "completed", verify:
+- [ ] Exit codes work correctly (echo $? after running)
+- [ ] Documentation referenced in error messages exists
+- [ ] Feature works in both Linux and Windows
+- [ ] --quiet mode is actually quiet
+- [ ] Error output goes to stderr, not stdout
 
 ## How to Contribute
 
-1. Check the [Issues](https://github.com/antimon-security/antimon/issues) for tasks
-2. Fork the repository
-3. Create a feature branch
-4. Submit a pull request
-5. Join our discussions
+1. **Fix critical bugs first** - Check exit code issue
+2. Check the [Issues](https://github.com/antimon-security/antimon/issues) for tasks
+3. Fork the repository
+4. Create a feature branch
+5. Submit a pull request
+6. Join our discussions
 
 ## Feedback
 
