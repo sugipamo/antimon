@@ -672,3 +672,97 @@ def detect_bash_dangerous_commands(json_data: HookData) -> DetectionResult:
             )
 
     return DetectionResult(detected=False)
+
+
+def detect_dangerous_python_code(json_data: HookData) -> DetectionResult:
+    """
+    Detect dangerous Python code patterns that could lead to security vulnerabilities.
+    
+    Detects:
+    - os.system() with dangerous commands
+    - subprocess calls with shell=True
+    - eval() and exec() usage
+    - __import__() dynamic imports
+    - compile() with user input
+    - os.popen() usage
+    
+    Args:
+        json_data: Hook data containing tool input
+        
+    Returns:
+        DetectionResult indicating if dangerous Python code was detected
+    """
+    content = json_data.get("tool_input", {}).get("content", "")
+    if not content:
+        return DetectionResult(detected=False)
+    
+    # Pattern definitions with descriptions
+    dangerous_patterns = [
+        # os.system with dangerous commands
+        (r"os\.system\s*\(\s*['\"]([^'\"]*rm\s+-rf[^'\"]*|[^'\"]*dd\s+if=[^'\"]*|[^'\"]*mkfs[^'\"]*)['\"]", 
+         "os.system() with dangerous command", 
+         "os.system() executes shell commands directly and is vulnerable to command injection"),
+        
+        # Any os.system usage (less specific but still dangerous)
+        (r"os\.system\s*\(", 
+         "os.system() usage detected", 
+         "os.system() is dangerous and deprecated. Use subprocess.run() with shell=False instead"),
+         
+        # os.popen usage
+        (r"os\.popen\s*\(", 
+         "os.popen() usage detected", 
+         "os.popen() is deprecated and unsafe. Use subprocess.Popen() with shell=False instead"),
+        
+        # subprocess with shell=True
+        (r"subprocess\.(run|call|check_output|check_call|Popen)\s*\([^)]*shell\s*=\s*True",
+         "subprocess with shell=True", 
+         "shell=True is dangerous as it can lead to command injection vulnerabilities"),
+         
+        # eval() usage
+        (r"\beval\s*\(",
+         "eval() usage detected",
+         "eval() executes arbitrary Python code and is extremely dangerous with user input"),
+         
+        # exec() usage
+        (r"\bexec\s*\(",
+         "exec() usage detected",
+         "exec() executes arbitrary Python code and poses significant security risks"),
+         
+        # __import__() usage
+        (r"__import__\s*\(",
+         "__import__() usage detected",
+         "Dynamic imports with __import__() can be used to import dangerous modules"),
+         
+        # compile() usage
+        (r"\bcompile\s*\(",
+         "compile() usage detected",
+         "compile() can create executable code objects from strings, which is dangerous with user input"),
+    ]
+    
+    # Check each pattern
+    for pattern, description, explanation in dangerous_patterns:
+        match = re.search(pattern, content, re.MULTILINE | re.IGNORECASE)
+        if match:
+            # Find line number
+            line_num = find_line_number(content, match)
+            
+            message_parts = [
+                f"Dangerous Python code detected: {description}",
+                f"      Line {line_num}: {match.group(0)}",
+                f"      Why: {explanation}",
+                "      Fix: Use safer alternatives like subprocess.run() with shell=False,",
+                "           ast.literal_eval() for safe evaluation, or proper input validation"
+            ]
+            
+            return DetectionResult(
+                detected=True,
+                message="\n".join(message_parts),
+                details={
+                    "pattern": pattern,
+                    "match": match.group(0),
+                    "line_number": line_num,
+                    "description": description
+                }
+            )
+    
+    return DetectionResult(detected=False)

@@ -43,7 +43,7 @@ class TestValidateHookData:
         assert any(
             "access" in issue.lower() or "file" in issue.lower() for issue in issues
         )
-        assert stats["total"] == 6
+        assert stats["total"] == 7
         assert stats["failed"] >= 1
 
     def test_edit_tool_with_api_key(self):
@@ -58,7 +58,7 @@ class TestValidateHookData:
         has_issues, issues, stats = validate_hook_data(json_data)
         assert has_issues is True
         assert any("API key" in issue for issue in issues)
-        assert stats["total"] == 6
+        assert stats["total"] == 7
         assert stats["failed"] >= 1
 
     def test_multiedit_tool_with_llm_api(self):
@@ -78,7 +78,7 @@ class TestValidateHookData:
             or "openai" in issue.lower()
             for issue in issues
         )
-        assert stats["total"] == 6
+        assert stats["total"] == 7
         assert stats["failed"] >= 1
 
     def test_safe_write(self):
@@ -93,6 +93,6 @@ class TestValidateHookData:
         has_issues, issues, stats = validate_hook_data(json_data)
         assert has_issues is False
         assert len(issues) == 0
-        assert stats["total"] == 6
-        assert stats["passed"] == 6
+        assert stats["total"] == 7
+        assert stats["passed"] == 7
         assert stats["failed"] == 0

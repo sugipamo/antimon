@@ -19,6 +19,7 @@ from .detectors import (
     detect_api_key,
     detect_bash_dangerous_commands,
     detect_claude_antipatterns,
+    detect_dangerous_python_code,
     detect_docker,
     detect_filenames,
     detect_llm_api,
@@ -96,6 +97,7 @@ def validate_hook_data(
             detect_docker,
             detect_localhost,
             detect_claude_antipatterns,
+            detect_dangerous_python_code,
         ]
     elif tool_name == "Read":
         detectors = [detect_read_sensitive_files]
@@ -112,6 +114,7 @@ def validate_hook_data(
             detect_claude_antipatterns,
             detect_read_sensitive_files,
             detect_bash_dangerous_commands,
+            detect_dangerous_python_code,
         ]
 
     issues = []
