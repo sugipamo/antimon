@@ -7,6 +7,7 @@ Runtime configuration management for antimon
 
 import fnmatch
 import os
+import re
 from dataclasses import dataclass, field
 
 
@@ -116,8 +117,6 @@ class RuntimeConfig:
                 if "**" in pattern:
                     # Convert ** to match any directory depth
                     # e.g., **/*.txt matches any .txt file in any subdirectory
-                    import re
-
                     # First, escape special regex characters except * and ?
                     regex_pattern = re.escape(pattern)
                     # Then convert glob patterns to regex

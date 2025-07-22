@@ -132,6 +132,43 @@ class AntimonLogger:
         )
         record.success = True
         self.logger.handle(record)
+    
+    def print(self, message: str = "", end: str = "\n", file=None):
+        """Print-compatible method for backward compatibility.
+        
+        This method mimics the behavior of the built-in print() function
+        to ensure seamless migration from print statements.
+        
+        Args:
+            message: The message to print
+            end: String appended after the message (default: newline)
+            file: File object to write to (default: sys.stderr)
+        """
+        if file is None:
+            file = sys.stderr
+            
+        # For stdout, use a different handler temporarily
+        if file == sys.stdout:
+            # Create a temporary stdout handler
+            stdout_handler = logging.StreamHandler(sys.stdout)
+            stdout_handler.setFormatter(ColoredFormatter(no_color=self.no_color))
+            self.logger.addHandler(stdout_handler)
+            
+            # Log the message
+            if end == "\n":
+                self.logger.info(message)
+            else:
+                # For non-newline endings, we need to handle it specially
+                self.logger.info(message + end.rstrip("\n"))
+                
+            # Remove the temporary handler
+            self.logger.removeHandler(stdout_handler)
+        else:
+            # Default to stderr
+            if end == "\n":
+                self.logger.info(message)
+            else:
+                self.logger.info(message + end.rstrip("\n"))
 
 
 # Global logger instance
@@ -161,3 +198,43 @@ def setup_logger(
         _logger.set_level(LogLevel.INFO)
 
     return _logger
+
+
+# Convenience functions that mimic print() for easy migration
+def log_print(message: str = "", end: str = "\n", file=None):
+    """Print replacement that uses the logging system.
+    
+    This function can be used as a drop-in replacement for print()
+    statements throughout the codebase.
+    
+    Args:
+        message: The message to print
+        end: String appended after the message (default: newline)
+        file: File object to write to (default: sys.stderr)
+    """
+    logger = get_logger()
+    logger.print(message, end=end, file=file)
+
+
+def log_debug(message: str):
+    """Log a debug message."""
+    logger = get_logger()
+    logger.debug(message)
+
+
+def log_info(message: str):
+    """Log an info message."""
+    logger = get_logger()
+    logger.info(message)
+
+
+def log_warning(message: str):
+    """Log a warning message."""
+    logger = get_logger()
+    logger.warning(message)
+
+
+def log_error(message: str):
+    """Log an error message."""
+    logger = get_logger()
+    logger.error(message)

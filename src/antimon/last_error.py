@@ -11,12 +11,11 @@ from pathlib import Path
 from typing import Any
 
 from .color_utils import Colors, apply_color
+from .first_run import get_config_dir
 
 
 def get_error_file() -> Path:
     """Get the path to the last error file."""
-    from .first_run import get_config_dir
-
     config_dir = get_config_dir()
     return config_dir / "last_error.json"
 

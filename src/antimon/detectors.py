@@ -484,8 +484,6 @@ def detect_read_sensitive_files(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if sensitive file read was attempted
     """
-    from .runtime_config import get_runtime_config
-
     # Only check Read tool
     if json_data.get("tool_name") != "Read":
         return DetectionResult(detected=False)

@@ -15,13 +15,9 @@ from .color_utils import Colors, apply_color
 
 
 def safe_input(prompt):
-    """Safe input function that works with both Python 2 and 3."""
-    if sys.version_info[0] < 3:
-        # In Python 2, use raw_input to avoid eval
-        return raw_input(prompt)  # noqa: F821
-    else:
-        # In Python 3, input is safe
-        return input(prompt)
+    """Safe input function for user prompts."""
+    # Python 3.11+ only, input is always safe
+    return input(prompt)
 
 
 def get_config_dir() -> Path:
