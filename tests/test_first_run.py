@@ -34,11 +34,16 @@ def test_get_config_dir_linux():
 
 def test_get_config_dir_windows():
     """Test getting config directory on Windows."""
-    with patch.dict(os.environ, {"APPDATA": "C:\\Users\\Test\\AppData\\Roaming"}, clear=True):
+    with patch.dict(
+        os.environ, {"APPDATA": "C:\\Users\\Test\\AppData\\Roaming"}, clear=True
+    ):
         with patch("sys.platform", "win32"):
             config_dir = get_config_dir()
             # Path uses forward slashes even on Windows with pathlib
-            assert str(config_dir).replace("\\", "/") == "C:/Users/Test/AppData/Roaming/antimon"
+            assert (
+                str(config_dir).replace("\\", "/")
+                == "C:/Users/Test/AppData/Roaming/antimon"
+            )
 
 
 def test_first_run_detection(tmp_path):
@@ -91,7 +96,9 @@ def test_check_claude_code_setup():
 def test_suggest_claude_code_setup(capsys):
     """Test suggesting Claude Code setup."""
     # Test when not configured
-    with patch("antimon.first_run.check_claude_code_setup", return_value="not_configured"):
+    with patch(
+        "antimon.first_run.check_claude_code_setup", return_value="not_configured"
+    ):
         suggest_claude_code_setup(no_color=True)
         captured = capsys.readouterr()
         assert "Claude Code detected but antimon not configured!" in captured.out
@@ -169,7 +176,9 @@ def test_setup_claude_code_automatically(capsys):
         assert "Successfully configured Claude Code!" in captured.out
 
     # Test failed setup
-    with patch("antimon.first_run.run_command", return_value=(False, "", "Permission denied")):
+    with patch(
+        "antimon.first_run.run_command", return_value=(False, "", "Permission denied")
+    ):
         result = setup_claude_code_automatically(no_color=True)
         assert result is False
         captured = capsys.readouterr()
@@ -181,8 +190,13 @@ def test_verify_setup(capsys):
     """Test setup verification."""
     # Test successful verification
     with patch("shutil.which", return_value="/usr/local/bin/antimon"):
-        with patch("antimon.first_run.check_claude_code_setup", return_value="configured"):
-            with patch("antimon.first_run.run_command", return_value=(False, "", "Security issue detected")):
+        with patch(
+            "antimon.first_run.check_claude_code_setup", return_value="configured"
+        ):
+            with patch(
+                "antimon.first_run.run_command",
+                return_value=(False, "", "Security issue detected"),
+            ):
                 result = verify_setup(no_color=True)
                 assert result is True
                 captured = capsys.readouterr()
@@ -201,9 +215,13 @@ def test_verify_setup(capsys):
 def test_run_interactive_setup(capsys):
     """Test interactive setup wizard."""
     # Test with Claude Code not configured
-    with patch("antimon.first_run.check_claude_code_setup", return_value="not_configured"):
+    with patch(
+        "antimon.first_run.check_claude_code_setup", return_value="not_configured"
+    ):
         with patch("antimon.first_run.prompt_yes_no", side_effect=[True, True]):
-            with patch("antimon.first_run.setup_claude_code_automatically", return_value=True):
+            with patch(
+                "antimon.first_run.setup_claude_code_automatically", return_value=True
+            ):
                 with patch("antimon.first_run.verify_setup", return_value=True):
                     run_interactive_setup(no_color=True)
                     captured = capsys.readouterr()
@@ -224,7 +242,9 @@ def test_show_first_run_guide_interactive(capsys):
     """Test interactive first-run guide."""
     # Test in non-interactive mode (piped)
     with patch("sys.stdin.isatty", return_value=False):
-        with patch("antimon.first_run.check_claude_code_setup", return_value="not_configured"):
+        with patch(
+            "antimon.first_run.check_claude_code_setup", return_value="not_configured"
+        ):
             show_first_run_guide_interactive(no_color=True)
             captured = capsys.readouterr()
             # Should show regular guide

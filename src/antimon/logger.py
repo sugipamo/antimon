@@ -14,6 +14,7 @@ from .color_utils import Colors, apply_color, supports_color
 
 class LogLevel(Enum):
     """Log levels for antimon"""
+
     DEBUG = logging.DEBUG
     INFO = logging.INFO
     WARNING = logging.WARNING
@@ -39,20 +40,20 @@ class ColoredFormatter(logging.Formatter):
 
         # Define format strings for different message types
         self.formats = {
-            'default': '%(message)s',
-            'verbose': '[%(levelname)s] %(message)s',
-            'debug': '[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s'
+            "default": "%(message)s",
+            "verbose": "[%(levelname)s] %(message)s",
+            "debug": "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s",
         }
 
     def format(self, record: logging.LogRecord) -> str:
         """Format the log record with appropriate colors"""
         # Get the base format
         if record.levelno == logging.DEBUG:
-            fmt = self.formats['debug']
-        elif hasattr(record, 'verbose') and record.verbose:
-            fmt = self.formats['verbose']
+            fmt = self.formats["debug"]
+        elif hasattr(record, "verbose") and record.verbose:
+            fmt = self.formats["verbose"]
         else:
-            fmt = self.formats['default']
+            fmt = self.formats["default"]
 
         # Create a formatter with the selected format
         formatter = logging.Formatter(fmt)
@@ -120,20 +121,14 @@ class AntimonLogger:
         self.logger.log(
             level.value,
             f"Security issue detected: {message}",
-            extra={'detector': detector, 'detection': True}
+            extra={"detector": detector, "detection": True},
         )
 
     def success(self, message: str):
         """Log a success message (shown as info with green color if available)"""
         # Create a custom record with success flag
         record = self.logger.makeRecord(
-            self.logger.name,
-            logging.INFO,
-            "(unknown file)",
-            0,
-            message,
-            (),
-            None
+            self.logger.name, logging.INFO, "(unknown file)", 0, message, (), None
         )
         record.success = True
         self.logger.handle(record)
@@ -151,7 +146,9 @@ def get_logger() -> AntimonLogger:
     return _logger
 
 
-def setup_logger(verbose: bool = False, quiet: bool = False, no_color: bool = False) -> AntimonLogger:
+def setup_logger(
+    verbose: bool = False, quiet: bool = False, no_color: bool = False
+) -> AntimonLogger:
     """Set up the global logger with the specified configuration"""
     global _logger
     _logger = AntimonLogger(no_color=no_color)

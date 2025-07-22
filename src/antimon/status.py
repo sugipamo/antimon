@@ -93,10 +93,20 @@ def show_status(no_color: bool = False) -> None:
             print(f"  • {var_name}: {var_value}")
 
     if not env_found:
-        print(apply_color("  • No environment variables set", Colors.WHITE, no_color=no_color))
+        print(
+            apply_color(
+                "  • No environment variables set", Colors.WHITE, no_color=no_color
+            )
+        )
 
     # Check for config file (future feature)
-    print(apply_color("  • Config file: Not supported yet (coming in v0.3.0)", Colors.WHITE, no_color=no_color))
+    print(
+        apply_color(
+            "  • Config file: Not supported yet (coming in v0.3.0)",
+            Colors.WHITE,
+            no_color=no_color,
+        )
+    )
 
     print()
 
@@ -112,9 +122,21 @@ def show_status(no_color: bool = False) -> None:
     else:
         print(apply_color(f"  ✗ {status_message}", Colors.YELLOW, no_color=no_color))
         if "not installed" in status_message:
-            print(apply_color("  → Install Claude Code: npm install -g @anthropic/claude-code", Colors.WHITE, no_color=no_color))
+            print(
+                apply_color(
+                    "  → Install Claude Code: npm install -g @anthropic/claude-code",
+                    Colors.WHITE,
+                    no_color=no_color,
+                )
+            )
         else:
-            print(apply_color("  → Run 'antimon --setup-claude-code' to configure", Colors.WHITE, no_color=no_color))
+            print(
+                apply_color(
+                    "  → Run 'antimon --setup-claude-code' to configure",
+                    Colors.WHITE,
+                    no_color=no_color,
+                )
+            )
 
     print()
 

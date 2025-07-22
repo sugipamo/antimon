@@ -15,6 +15,7 @@ from .color_utils import Colors, apply_color
 def get_error_file() -> Path:
     """Get the path to the last error file."""
     from .first_run import get_config_dir
+
     config_dir = get_config_dir()
     return config_dir / "last_error.json"
 
@@ -29,7 +30,7 @@ def save_last_error(issues: list[str], hook_data: dict) -> None:
         "issues": issues,
         "hook_data": hook_data,
         "tool_name": hook_data.get("tool_name", ""),
-        "file_path": hook_data.get("tool_input", {}).get("file_path", "")
+        "file_path": hook_data.get("tool_input", {}).get("file_path", ""),
     }
 
     try:
@@ -98,7 +99,9 @@ def explain_last_error(no_color: bool = False) -> None:
     _suggest_solutions(issues, hook_data, no_color)
 
 
-def _provide_detailed_explanations(issues: list[str], hook_data: dict, no_color: bool) -> None:
+def _provide_detailed_explanations(
+    issues: list[str], hook_data: dict, no_color: bool
+) -> None:
     """Provide detailed explanations for each issue type."""
     print(apply_color("📚 Why these are blocked:", Colors.OKBLUE, no_color))
     print()
@@ -117,14 +120,18 @@ def _provide_detailed_explanations(issues: list[str], hook_data: dict, no_color:
             print("    - Exposed in version control history forever")
             print("    - Visible in logs, error messages, and stack traces")
             print("    - Can be scraped by automated tools")
-            print("  " + apply_color("How detection works:", Colors.UNDERLINE, no_color))
+            print(
+                "  " + apply_color("How detection works:", Colors.UNDERLINE, no_color)
+            )
             print("    - Regular expressions match common key patterns")
             print("    - Case-insensitive matching for flexibility")
             print()
 
         elif "sensitive file" in issue and "sensitive_file" not in explained_types:
             explained_types.add("sensitive_file")
-            print("• " + apply_color("Sensitive File Detection:", Colors.BOLD, no_color))
+            print(
+                "• " + apply_color("Sensitive File Detection:", Colors.BOLD, no_color)
+            )
             print("  " + apply_color("What we look for:", Colors.UNDERLINE, no_color))
             print("    - System files: /etc/passwd, /etc/shadow")
             print("    - SSH keys: ~/.ssh/id_rsa, ~/.ssh/id_ed25519")
@@ -134,14 +141,20 @@ def _provide_detailed_explanations(issues: list[str], hook_data: dict, no_color:
             print("    - Contains authentication credentials")
             print("    - Can compromise entire systems")
             print("    - Often have strict permissions for a reason")
-            print("  " + apply_color("How detection works:", Colors.UNDERLINE, no_color))
+            print(
+                "  " + apply_color("How detection works:", Colors.UNDERLINE, no_color)
+            )
             print("    - Path pattern matching against known sensitive locations")
             print("    - File extension checking for key/cert files")
             print()
 
-        elif ("LLM API" in issue or "external AI" in issue) and "llm_api" not in explained_types:
+        elif (
+            "LLM API" in issue or "external AI" in issue
+        ) and "llm_api" not in explained_types:
             explained_types.add("llm_api")
-            print("• " + apply_color("External LLM API Detection:", Colors.BOLD, no_color))
+            print(
+                "• " + apply_color("External LLM API Detection:", Colors.BOLD, no_color)
+            )
             print("  " + apply_color("What we look for:", Colors.UNDERLINE, no_color))
             print("    - Import statements: from openai import ...")
             print("    - API endpoints: api.openai.com, gemini.google.com")
@@ -150,14 +163,18 @@ def _provide_detailed_explanations(issues: list[str], hook_data: dict, no_color:
             print("    - Your code/data leaves your control")
             print("    - Unexpected costs from API usage")
             print("    - Requires managing API keys")
-            print("  " + apply_color("How detection works:", Colors.UNDERLINE, no_color))
+            print(
+                "  " + apply_color("How detection works:", Colors.UNDERLINE, no_color)
+            )
             print("    - Import statement pattern matching")
             print("    - URL and domain detection")
             print()
 
         elif "Docker" in issue and "docker" not in explained_types:
             explained_types.add("docker")
-            print("• " + apply_color("Docker Operation Detection:", Colors.BOLD, no_color))
+            print(
+                "• " + apply_color("Docker Operation Detection:", Colors.BOLD, no_color)
+            )
             print("  " + apply_color("What we look for:", Colors.UNDERLINE, no_color))
             print("    - Commands: docker run, docker exec, docker build")
             print("    - Files: Dockerfile, docker-compose.yml")
@@ -165,14 +182,19 @@ def _provide_detailed_explanations(issues: list[str], hook_data: dict, no_color:
             print("    - Potential container escapes")
             print("    - Resource consumption issues")
             print("    - Security misconfigurations")
-            print("  " + apply_color("How detection works:", Colors.UNDERLINE, no_color))
+            print(
+                "  " + apply_color("How detection works:", Colors.UNDERLINE, no_color)
+            )
             print("    - Command pattern matching")
             print("    - Dockerfile keyword detection")
             print()
 
         elif "localhost" in issue and "localhost" not in explained_types:
             explained_types.add("localhost")
-            print("• " + apply_color("Localhost Connection Detection:", Colors.BOLD, no_color))
+            print(
+                "• "
+                + apply_color("Localhost Connection Detection:", Colors.BOLD, no_color)
+            )
             print("  " + apply_color("What we look for:", Colors.UNDERLINE, no_color))
             print("    - URLs: localhost:PORT, 127.0.0.1:PORT")
             print("    - Common ports: 3000, 8000, 8080, 5432, 3306")
@@ -180,7 +202,9 @@ def _provide_detailed_explanations(issues: list[str], hook_data: dict, no_color:
             print("    - Environment-specific configurations")
             print("    - May expose local services")
             print("    - Breaks in production environments")
-            print("  " + apply_color("How detection works:", Colors.UNDERLINE, no_color))
+            print(
+                "  " + apply_color("How detection works:", Colors.UNDERLINE, no_color)
+            )
             print("    - URL pattern matching with port numbers")
             print("    - Common development port detection")
             print()
@@ -227,7 +251,9 @@ def _suggest_solutions(issues: list[str], hook_data: dict, no_color: bool) -> No
         print()
 
     # Always show bypass option
-    print(apply_color("🚨 If you need to bypass temporarily:", Colors.WARNING, no_color))
+    print(
+        apply_color("🚨 If you need to bypass temporarily:", Colors.WARNING, no_color)
+    )
     print("   # Disable antimon:")
     print("   claude-code config unset hooks.PreToolUse")
     print()

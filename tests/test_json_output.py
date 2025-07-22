@@ -7,7 +7,6 @@ Tests for JSON output format functionality
 
 import json
 import subprocess
-import tempfile
 
 import pytest
 
@@ -21,19 +20,27 @@ class TestJSONOutput:
         (tmp_path / "file1.py").write_text('api_key = "sk-1234567890abcdef"')
         (tmp_path / "file2.py").write_text('print("hello world")')
         (tmp_path / "file3.py").write_text('openai.api_key = "sk-test"')
-        
+
         # Run batch check with JSON output
         result = subprocess.run(
-            ["python3", "-m", "antimon", "--check-files", f"{tmp_path}/*.py", "--output-format", "json"],
+            [
+                "python3",
+                "-m",
+                "antimon",
+                "--check-files",
+                f"{tmp_path}/*.py",
+                "--output-format",
+                "json",
+            ],
             capture_output=True,
             text=True,
         )
-        
+
         assert result.returncode == 2  # Security issues found
-        
+
         # Parse JSON output
         output = json.loads(result.stdout)
-        
+
         assert output["files_checked"] == 3
         assert output["files_with_issues"] == 2
         assert not output["success"]
@@ -47,20 +54,28 @@ class TestJSONOutput:
         """Test --check-files with JSON output when all files are safe"""
         # Create safe test files
         (tmp_path / "safe1.py").write_text('print("hello")')
-        (tmp_path / "safe2.py").write_text('def foo(): return 42')
-        
+        (tmp_path / "safe2.py").write_text("def foo(): return 42")
+
         # Run batch check with JSON output
         result = subprocess.run(
-            ["python3", "-m", "antimon", "--check-files", f"{tmp_path}/*.py", "--output-format", "json"],
+            [
+                "python3",
+                "-m",
+                "antimon",
+                "--check-files",
+                f"{tmp_path}/*.py",
+                "--output-format",
+                "json",
+            ],
             capture_output=True,
             text=True,
         )
-        
+
         assert result.returncode == 0
-        
+
         # Parse JSON output
         output = json.loads(result.stdout)
-        
+
         assert output["files_checked"] == 2
         assert output["files_with_issues"] == 0
         assert output["success"]
@@ -72,14 +87,22 @@ class TestJSONOutput:
         # Create test file
         test_file = tmp_path / "test.py"
         test_file.write_text('api_key = "sk-secret"')
-        
+
         # Run file check with JSON output
         result = subprocess.run(
-            ["python3", "-m", "antimon", "--check-file", str(test_file), "--output-format", "json"],
+            [
+                "python3",
+                "-m",
+                "antimon",
+                "--check-file",
+                str(test_file),
+                "--output-format",
+                "json",
+            ],
             capture_output=True,
             text=True,
         )
-        
+
         # For single file check, JSON output might need to be implemented
         # This test documents expected behavior
         assert result.returncode == 2
@@ -88,11 +111,19 @@ class TestJSONOutput:
         """Test --check-content with JSON output format"""
         # Run content check with JSON output
         result = subprocess.run(
-            ["python3", "-m", "antimon", "--check-content", 'api_key = "sk-123"', "--output-format", "json"],
+            [
+                "python3",
+                "-m",
+                "antimon",
+                "--check-content",
+                'api_key = "sk-123"',
+                "--output-format",
+                "json",
+            ],
             capture_output=True,
             text=True,
         )
-        
+
         # For content check, JSON output might need to be implemented
         # This test documents expected behavior
         assert result.returncode == 2
@@ -101,16 +132,25 @@ class TestJSONOutput:
         """Test JSON output with quiet mode"""
         # Create test file
         (tmp_path / "bad.py").write_text('api_key = "sk-test123"')
-        
+
         # Run with both JSON output and quiet mode
         result = subprocess.run(
-            ["python3", "-m", "antimon", "--check-files", f"{tmp_path}/*.py", "--output-format", "json", "--quiet"],
+            [
+                "python3",
+                "-m",
+                "antimon",
+                "--check-files",
+                f"{tmp_path}/*.py",
+                "--output-format",
+                "json",
+                "--quiet",
+            ],
             capture_output=True,
             text=True,
         )
-        
+
         assert result.returncode == 2
-        
+
         # JSON output should still work in quiet mode
         output = json.loads(result.stdout)
         assert output["files_with_issues"] == 1
@@ -121,20 +161,28 @@ class TestJSONOutput:
         for i in range(5):
             content = 'api_key = "sk-test"' if i % 2 == 0 else 'print("safe")'
             (tmp_path / f"file{i}.py").write_text(content)
-        
+
         # Run batch check
         result = subprocess.run(
-            ["python3", "-m", "antimon", "--check-files", f"{tmp_path}/*.py", "--output-format", "json"],
+            [
+                "python3",
+                "-m",
+                "antimon",
+                "--check-files",
+                f"{tmp_path}/*.py",
+                "--output-format",
+                "json",
+            ],
             capture_output=True,
             text=True,
         )
-        
+
         # Verify JSON is valid
         try:
             output = json.loads(result.stdout)
         except json.JSONDecodeError:
             pytest.fail("Output is not valid JSON")
-        
+
         # Verify structure
         assert isinstance(output, dict)
         assert isinstance(output["files_checked"], int)

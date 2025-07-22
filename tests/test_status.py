@@ -40,15 +40,22 @@ def test_status_with_runtime_config():
 
     with patch("sys.stdout", captured_output), patch("sys.stderr", io.StringIO()):
         # Pass configuration via command line arguments
-        result = main([
-            "--status",
-            "--no-color",
-            "--allow-file", "test.env",
-            "--allow-file", "*.secret",
-            "--ignore-pattern", "*.test.py",
-            "--disable-detector", "docker",
-            "--disable-detector", "localhost"
-        ])
+        result = main(
+            [
+                "--status",
+                "--no-color",
+                "--allow-file",
+                "test.env",
+                "--allow-file",
+                "*.secret",
+                "--ignore-pattern",
+                "*.test.py",
+                "--disable-detector",
+                "docker",
+                "--disable-detector",
+                "localhost",
+            ]
+        )
 
     assert result == 0
     output = captured_output.getvalue()
@@ -72,7 +79,7 @@ def test_status_with_environment_variables():
     env_patch = {
         "ANTIMON_ALLOW_FILES": "config.yaml,secrets.json",
         "ANTIMON_IGNORE_PATTERNS": "test_*,*_test.py",
-        "ANTIMON_DISABLE_DETECTORS": "api_key,llm_api"
+        "ANTIMON_DISABLE_DETECTORS": "api_key,llm_api",
     }
 
     # Reset runtime config to ensure env vars are loaded

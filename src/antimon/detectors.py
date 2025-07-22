@@ -12,6 +12,7 @@ from typing import Any, TypedDict
 
 class ToolInput(TypedDict, total=False):
     """Type definition for tool input data."""
+
     file_path: str
     content: str
     new_string: str
@@ -21,6 +22,7 @@ class ToolInput(TypedDict, total=False):
 
 class HookData(TypedDict, total=False):
     """Type definition for hook data structure."""
+
     hook_event_name: str
     tool_name: str
     tool_input: ToolInput
@@ -48,7 +50,7 @@ def find_line_number(text: str, pattern_match: re.Match[str]) -> int:
         Line number (1-indexed)
     """
     start_pos = pattern_match.start()
-    return text[:start_pos].count('\n') + 1
+    return text[:start_pos].count("\n") + 1
 
 
 def detect_filenames(json_data: HookData) -> DetectionResult:
@@ -91,7 +93,9 @@ def detect_filenames(json_data: HookData) -> DetectionResult:
             if "/etc/" in pattern:
                 file_type = "system configuration file"
                 risk = "could expose system settings or user credentials"
-                suggestion = "Use application-specific config files in your project directory"
+                suggestion = (
+                    "Use application-specific config files in your project directory"
+                )
             elif ".ssh" in pattern:
                 file_type = "SSH key file"
                 risk = "could compromise server access and authentication"
@@ -107,7 +111,9 @@ def detect_filenames(json_data: HookData) -> DetectionResult:
             elif "credentials" in pattern or "secrets" in pattern:
                 file_type = "credentials file"
                 risk = "likely contains authentication tokens or passwords"
-                suggestion = "Use secure secret management solutions or environment variables"
+                suggestion = (
+                    "Use secure secret management solutions or environment variables"
+                )
             else:
                 file_type = "sensitive file"
                 risk = "may contain confidential information"
@@ -118,7 +124,7 @@ def detect_filenames(json_data: HookData) -> DetectionResult:
                 f"      Type: {file_type}",
                 f"      Risk: {risk}",
                 f"      Suggestion: {suggestion}",
-                f"      To allow this specific file: antimon --allow-file '{file_path}'"
+                f"      To allow this specific file: antimon --allow-file '{file_path}'",
             ]
             return DetectionResult(
                 detected=True,
@@ -193,14 +199,21 @@ def detect_llm_api(json_data: HookData) -> DetectionResult:
                     service = "OpenAI"
                     local_alt = "ollama with llama2 or mistral models"
                     import_alt = "# Instead of: from openai import OpenAI\n            # Use: import ollama"
-                elif "gemini" in matched_text.lower() or "google" in matched_text.lower():
+                elif (
+                    "gemini" in matched_text.lower() or "google" in matched_text.lower()
+                ):
                     service = "Google Gemini"
                     local_alt = "llama.cpp with gemma models"
                     import_alt = "# Consider using local models instead"
-                elif "anthropic" in matched_text.lower() or "claude" in matched_text.lower():
+                elif (
+                    "anthropic" in matched_text.lower()
+                    or "claude" in matched_text.lower()
+                ):
                     service = "Anthropic Claude"
                     local_alt = "the current AI assistant's capabilities"
-                    import_alt = "# You're already using Claude - no external API needed"
+                    import_alt = (
+                        "# You're already using Claude - no external API needed"
+                    )
                 elif "cohere" in matched_text.lower():
                     service = "Cohere"
                     local_alt = "sentence-transformers for embeddings"
@@ -216,12 +229,16 @@ def detect_llm_api(json_data: HookData) -> DetectionResult:
                     "      Risk: Data leaves your system, costs can accumulate, requires API keys",
                     f"      Local alternative: {local_alt}",
                     f"      {import_alt}",
-                    "      To allow external APIs: antimon --disable-detector llm_api"
+                    "      To allow external APIs: antimon --disable-detector llm_api",
                 ]
                 return DetectionResult(
                     detected=True,
                     message="\n".join(message_parts),
-                    details={"pattern": pattern, "line": line_num, "match": matched_text},
+                    details={
+                        "pattern": pattern,
+                        "line": line_num,
+                        "match": matched_text,
+                    },
                 )
 
     return DetectionResult(detected=False)
@@ -298,12 +315,16 @@ def detect_api_key(json_data: HookData) -> DetectionResult:
                     "      Risk: Exposed credentials can be stolen from code repositories",
                     f"      Quick fix: {example_fix}",
                     "      Best practice: Use .env files or secret management services",
-                    f"      For examples: Use placeholders like '{key_name} = \"your-{key_name}-here\"'"
+                    f"      For examples: Use placeholders like '{key_name} = \"your-{key_name}-here\"'",
                 ]
                 return DetectionResult(
                     detected=True,
                     message="\n".join(message_parts),
-                    details={"pattern": pattern, "line": line_num, "match": matched_text},
+                    details={
+                        "pattern": pattern,
+                        "line": line_num,
+                        "match": matched_text,
+                    },
                 )
 
     return DetectionResult(detected=False)
@@ -362,12 +383,16 @@ def detect_docker(json_data: HookData) -> DetectionResult:
                     f"      Line {line_num}: {matched_text}",
                     f"      Pattern matched: {pattern}",
                     "      Why: Docker operations can pose security risks if not properly configured",
-                    "      Suggestion: Review Docker commands for security best practices"
+                    "      Suggestion: Review Docker commands for security best practices",
                 ]
                 return DetectionResult(
                     detected=True,
                     message="\n".join(message_parts),
-                    details={"pattern": pattern, "line": line_num, "match": matched_text},
+                    details={
+                        "pattern": pattern,
+                        "line": line_num,
+                        "match": matched_text,
+                    },
                 )
 
     return DetectionResult(detected=False)
@@ -422,12 +447,16 @@ def detect_localhost(json_data: HookData) -> DetectionResult:
                     f"      Line {line_num}: {matched_text}",
                     f"      Pattern matched: {pattern}",
                     "      Why: Hardcoded localhost references may not work in production",
-                    "      Suggestion: Use configuration files or environment variables for host/port settings"
+                    "      Suggestion: Use configuration files or environment variables for host/port settings",
                 ]
                 return DetectionResult(
                     detected=True,
                     message="\n".join(message_parts),
-                    details={"pattern": pattern, "line": line_num, "match": matched_text},
+                    details={
+                        "pattern": pattern,
+                        "line": line_num,
+                        "match": matched_text,
+                    },
                 )
 
     return DetectionResult(detected=False)
@@ -505,8 +534,8 @@ def detect_read_sensitive_files(json_data: HookData) -> DetectionResult:
         r"private[_-]?key",
         r"deploy[_-]?key",
         r"/proc/",  # Process information
-        r"/sys/",   # System information
-        r"/dev/",   # Device files
+        r"/sys/",  # System information
+        r"/dev/",  # Device files
         r"\.history$",  # Shell history files
         r"\.bash_history",
         r"\.zsh_history",
@@ -526,7 +555,7 @@ def detect_read_sensitive_files(json_data: HookData) -> DetectionResult:
                 f"Attempt to read sensitive file: {file_path}",
                 f"      Pattern matched: {pattern}",
                 "      Why: This file may contain sensitive credentials or system information",
-                "      Suggestion: Consider if this access is necessary and handle with appropriate security measures"
+                "      Suggestion: Consider if this access is necessary and handle with appropriate security measures",
             ]
             return DetectionResult(
                 detected=True,
@@ -561,18 +590,15 @@ def detect_bash_dangerous_commands(json_data: HookData) -> DetectionResult:
         (r">\s*/dev/sda", "Direct disk write operation"),
         (r"dd\s+.*of=/dev/[^/\s]+", "Direct disk write with dd"),
         (r"mkfs\.", "Filesystem formatting command"),
-
         # System modification
         (r"chmod\s+777", "Overly permissive file permissions"),
         (r"chmod\s+-R\s+777", "Recursive overly permissive permissions"),
         (r"chown\s+-R\s+root", "Recursive root ownership change"),
-
         # Privilege escalation
         (r"sudo\s+su", "Privilege escalation to root"),
         (r"sudo\s+-i", "Interactive root shell"),
         (r"sudo\s+bash", "Root shell execution"),
         (r"sudo\s+sh", "Root shell execution"),
-
         # Remote code execution
         (r"curl\s+[^|]+\|\s*bash", "Remote script execution via curl"),
         (r"wget\s+[^|]+\|\s*bash", "Remote script execution via wget"),
@@ -580,29 +606,24 @@ def detect_bash_dangerous_commands(json_data: HookData) -> DetectionResult:
         (r"wget\s+[^|]+\|\s*sh", "Remote script execution via wget"),
         (r"eval\s*\(", "Dynamic code execution with eval"),
         (r"exec\s*\(", "Dynamic code execution with exec"),
-
         # System file modification
         (r">\s*/etc/", "Writing to system configuration directory"),
         (r">>\s*/etc/", "Appending to system configuration directory"),
         (r"echo\s+.*>\s*/etc/", "Writing to system configuration"),
         (r"echo\s+.*>>\s*/etc/", "Appending to system configuration"),
-
         # Network operations
         (r"nc\s+-l", "Netcat listener (potential backdoor)"),
         (r"ncat\s+-l", "Ncat listener (potential backdoor)"),
         (r"socat\s+.*LISTEN", "Socat listener (potential backdoor)"),
-
         # Package management (potentially dangerous)
         (r"pip\s+install\s+--force", "Force pip installation"),
         (r"npm\s+install\s+--force", "Force npm installation"),
         (r"apt-get\s+install\s+-y", "Unattended package installation"),
         (r"yum\s+install\s+-y", "Unattended package installation"),
-
         # Cryptocurrency mining
         (r"xmrig", "Cryptocurrency miner"),
         (r"minergate", "Cryptocurrency miner"),
         (r"nicehash", "Cryptocurrency miner"),
-
         # Information disclosure
         (r"cat\s+/etc/shadow", "Attempting to read password hashes"),
         (r"cat\s+.*\.ssh/id_", "Attempting to read SSH private keys"),
@@ -617,12 +638,16 @@ def detect_bash_dangerous_commands(json_data: HookData) -> DetectionResult:
                 f"      Command: {command}",
                 f"      Pattern matched: {pattern}",
                 "      Why: This command could damage the system or expose sensitive data",
-                "      Suggestion: Review if this operation is necessary and consider safer alternatives"
+                "      Suggestion: Review if this operation is necessary and consider safer alternatives",
             ]
             return DetectionResult(
                 detected=True,
                 message="\n".join(message_parts),
-                details={"pattern": pattern, "command": command, "description": description},
+                details={
+                    "pattern": pattern,
+                    "command": command,
+                    "description": description,
+                },
             )
 
     # Check for attempts to read sensitive files via common commands
@@ -644,12 +669,16 @@ def detect_bash_dangerous_commands(json_data: HookData) -> DetectionResult:
                 f"      Command: {command}",
                 f"      Pattern matched: {pattern}",
                 "      Why: This may expose sensitive credentials or configuration",
-                "      Suggestion: Use appropriate security measures when handling sensitive files"
+                "      Suggestion: Use appropriate security measures when handling sensitive files",
             ]
             return DetectionResult(
                 detected=True,
                 message="\n".join(message_parts),
-                details={"pattern": pattern, "command": command, "description": description},
+                details={
+                    "pattern": pattern,
+                    "command": command,
+                    "description": description,
+                },
             )
 
     return DetectionResult(detected=False)

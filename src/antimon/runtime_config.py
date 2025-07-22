@@ -32,6 +32,9 @@ class RuntimeConfig:
     # Brief mode - concise output
     brief: bool = False
 
+    # Show auto-fix suggestions
+    show_autofix: bool = False
+
     @classmethod
     def from_args(cls, args) -> "RuntimeConfig":
         """Create RuntimeConfig from command line arguments."""
@@ -50,16 +53,20 @@ class RuntimeConfig:
             config.disabled_detectors.update(args.disable_detector)
 
         # Set dry run mode
-        if hasattr(args, 'dry_run'):
+        if hasattr(args, "dry_run"):
             config.dry_run = args.dry_run
 
         # Set stats mode
-        if hasattr(args, 'stats'):
+        if hasattr(args, "stats"):
             config.show_stats = args.stats
 
         # Set brief mode
-        if hasattr(args, 'brief'):
+        if hasattr(args, "brief"):
             config.brief = args.brief
+
+        # Set auto-fix mode
+        if hasattr(args, "autofix"):
+            config.show_autofix = args.autofix
 
         # Also check environment variables
         config._load_from_env()
@@ -104,20 +111,29 @@ class RuntimeConfig:
         # Check glob patterns
         for pattern in self.allowed_files:
             # If pattern contains glob characters, use fnmatch
-            if any(char in pattern for char in ['*', '?', '[', ']']):
+            if any(char in pattern for char in ["*", "?", "[", "]"]):
                 # Handle ** for recursive matching
-                if '**' in pattern:
+                if "**" in pattern:
                     # Convert ** to match any directory depth
                     # e.g., **/*.txt matches any .txt file in any subdirectory
                     import re
+
                     # First, escape special regex characters except * and ?
                     regex_pattern = re.escape(pattern)
                     # Then convert glob patterns to regex
-                    regex_pattern = regex_pattern.replace(r'\*\*/', '(.*/)?')  # **/ matches any depth including none
-                    regex_pattern = regex_pattern.replace(r'\*\*', '.*')  # ** matches anything
-                    regex_pattern = regex_pattern.replace(r'\*', '[^/]*')  # * matches anything except /
-                    regex_pattern = regex_pattern.replace(r'\?', '[^/]')  # ? matches single char except /
-                    regex_pattern = '^' + regex_pattern + '$'
+                    regex_pattern = regex_pattern.replace(
+                        r"\*\*/", "(.*/)?"
+                    )  # **/ matches any depth including none
+                    regex_pattern = regex_pattern.replace(
+                        r"\*\*", ".*"
+                    )  # ** matches anything
+                    regex_pattern = regex_pattern.replace(
+                        r"\*", "[^/]*"
+                    )  # * matches anything except /
+                    regex_pattern = regex_pattern.replace(
+                        r"\?", "[^/]"
+                    )  # ? matches single char except /
+                    regex_pattern = "^" + regex_pattern + "$"
                     if re.match(regex_pattern, file_path):
                         return True
                 else:

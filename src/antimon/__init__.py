@@ -10,7 +10,12 @@ prohibited patterns in code modifications.
 
 __version__ = "0.2.13"
 
-from .core import check_content_directly, check_file_directly, check_files_batch, validate_hook_data
+from .core import (
+    check_content_directly,
+    check_file_directly,
+    check_files_batch,
+    validate_hook_data,
+)
 from .detectors import (
     DetectionResult,
     detect_api_key,

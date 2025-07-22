@@ -21,10 +21,7 @@ def test_save_and_load_last_error(tmp_path):
         issues = ["API key found in content", "Sensitive file access detected"]
         hook_data = {
             "tool_name": "Write",
-            "tool_input": {
-                "file_path": "config.py",
-                "content": "api_key = 'sk-123'"
-            }
+            "tool_input": {"file_path": "config.py", "content": "api_key = 'sk-123'"},
         }
 
         # Save error
@@ -64,10 +61,7 @@ def test_explain_last_error_with_error(tmp_path, capsys):
         issues = ["API key found in content", "External LLM API usage detected"]
         hook_data = {
             "tool_name": "Write",
-            "tool_input": {
-                "file_path": "bot.py",
-                "content": "openai_key = 'sk-123'"
-            }
+            "tool_input": {"file_path": "bot.py", "content": "openai_key = 'sk-123'"},
         }
         save_last_error(issues, hook_data)
 
@@ -85,7 +79,10 @@ def test_explain_last_error_with_error(tmp_path, capsys):
         # Check for explanations - more specific patterns for new format
         assert "API Key Detection:" in captured.out
         assert "dangerous" in captured.out.lower()
-        assert "LLM API Detection:" in captured.out or "External LLM API Detection:" in captured.out
+        assert (
+            "LLM API Detection:" in captured.out
+            or "External LLM API Detection:" in captured.out
+        )
         assert "leave" in captured.out.lower() or "control" in captured.out.lower()
 
         # Check for solutions

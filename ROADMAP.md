@@ -9,13 +9,13 @@
 - ✅ **v0.2.1-v0.2.8**: Core features including detector fixes, direct file checking, Claude Code integration, and structured logging
 
 ### Quality Check Summary (2025-07-22):
-- ✅ **pytest**: 140/140 tests passing (74% code coverage) - All tests are stable
-- ✅ **ruff**: All style issues fixed
-- ⚠️ **mypy**: 81 type errors remaining (future version)
-- ⚠️ **src-check**: Score 49.9/100 - Critical issues identified:
+- ✅ **pytest**: 192/192 tests passing (77% code coverage) - All tests are stable
+- ✅ **ruff**: All auto-fixable style issues fixed
+- ⚠️ **mypy**: 108 type errors remaining (future version)
+- ⚠️ **src-check**: Score 44.2/100 - Critical issues identified:
   - 10 high severity issues (circular dependencies, security concerns)
-  - 93 medium severity issues (print statements, complexity, documentation)
-  - 9 low severity issues
+  - 117 medium severity issues (print statements, complexity, documentation)
+  - 10 low severity issues
 
 ## Project Vision
 
@@ -41,39 +41,72 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [x] **Exit Code Documentation**: Show meaning in error messages (e.g., "Exit code: 2 (Security issue detected)")
 - [x] **Error Recovery Hints**: Always show `--explain-last-error` hint on security detections
 
-#### Moved to Next Version:
-- [ ] **Watch Mode**: `antimon --watch <directory>` for continuous monitoring (→ v0.2.14)
-- [ ] **Pattern Testing**: `antimon --test-pattern <pattern>` to test detection patterns (→ v0.2.14)
-- [ ] **Auto-fix Suggestions**: Provide code snippets for common security fixes (→ v0.2.14)
-- [ ] **Setup Status on First Run**: Show Claude Code integration status on initial execution (→ v0.2.14)
+### Version 0.2.14 (Developer Tools) - COMPLETED (2025-07-22)
+
+#### Completed:
+- [x] **Watch Mode**: `antimon --watch <directory>` for continuous monitoring
+  - Monitor files for changes
+  - Re-check modified files automatically  
+  - Show real-time status with color-coded output
+  - Display statistics (files monitored, checks performed, issues found)
+  
+- [x] **Pattern Testing**: `antimon --test-pattern <pattern>` to test detection patterns
+  - Test patterns against all or specific detectors
+  - Show which detectors would trigger
+  - Display example patterns with `--pattern-examples`
+  - Filter by detector type with `--detector <type>`
+  
+- [x] **Auto-fix Suggestions**: `antimon --autofix` provides code snippets for common security fixes
+  - Environment variable replacements for API keys
+  - Local model alternatives for LLM APIs
+  - Security improvements for Docker configurations
+  - Configuration-based alternatives for hardcoded localhost
+  
+- [x] **Setup Status on First Run**: Show Claude Code integration status on initial execution
+  - Auto-detect Claude Code installation
+  - Show hook configuration status  
+  - Offer interactive setup wizard
+  - Display appropriate guidance based on detected configuration
 
 #### Documentation:
 - [ ] Windows-specific Claude Code setup instructions
 - [ ] CI/CD integration examples
 - [ ] Common false positive scenarios and solutions
 
-### Version 0.2.14 (Developer Tools) - NEXT
+### Version 0.2.15 (Code Quality & Performance) - NEXT
 
-#### TODO:
-1. **Watch Mode**: `antimon --watch <directory>` for continuous monitoring
-   - Monitor files for changes
-   - Re-check modified files automatically
-   - Show real-time status
+#### Priority Tasks:
+1. **Fix Critical Code Quality Issues**:
+   - Fix circular dependency risks in 7 files (imports inside functions):
+     - color_utils.py: line 64
+     - core.py: lines 752, 753, 865, 968
+     - detectors.py: lines 66, 148, 257, 343, 411, 495
+     - first_run.py: line 85
+   - Replace os.system in color_utils.py (line 72) with safer alternative
+   - Fix unsafe input() usage for Python 2 compatibility:
+     - demo.py: lines 228, 241, 306, 313, 322, 329, 332
+     - first_run.py: line 125
+   - Add basic type hints to public API functions
+   - Start converting print statements to logging (280+ occurrences)
    
-2. **Pattern Testing**: `antimon --test-pattern <pattern>` to test detection patterns
-   - Test custom patterns before adding them
-   - Show what would match
-   - Help debug false positives
+2. **Performance Improvements**:
+   - Optimize file scanning for large codebases
+   - Add caching for repeated pattern checks
+   - Parallel processing for batch file checking
    
-3. **Auto-fix Suggestions**: Provide code snippets for common security fixes
-   - Generate safe alternatives for detected issues
-   - Copy-paste ready solutions
-   - Language-specific fixes
+3. **Code Quality Improvements**:
+   - Add missing type hints (60+ functions need type hints)
+   - Reduce module coupling (split large modules, reduce imports)
+   - Fix high complexity functions (11 functions exceed complexity limit of 10)
+   - Improve test coverage from 77% to 85%+
    
-4. **Setup Status on First Run**: Show Claude Code integration status on initial execution
-   - Auto-detect Claude Code installation
-   - Show hook configuration status
-   - Offer setup if not configured
+4. **Documentation Updates**:
+   - Windows-specific Claude Code setup instructions
+   - CI/CD integration examples (GitHub Actions, GitLab CI)
+   - Common false positive scenarios and solutions
+   - Add missing parameter/return documentation for functions
+   - Add API documentation
+   - Create contributor's guide
 
 ## Version 0.3.0 (Configuration Support)
 - [ ] TOML configuration file support (`antimon.toml`)
@@ -124,102 +157,6 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 - [ ] Stable API guarantee with LTS commitment
 - [ ] Migration guides & professional support
 
-## User Experience Improvement Priorities
-
-### 🎯 Based on Comprehensive User Testing (2025-07-22)
-
-#### Phase 1: Immediate UX Improvements (v0.2.14)
-- [ ] **First-run Experience Enhancement**: Show Claude Code integration status automatically on first execution
-- [ ] **Error Recovery Guidance**: Always append "Run 'antimon --explain-last-error' for details" to security detection messages
-- [ ] **Pattern Transparency**: Add `--list-patterns` command to show all active detection patterns
-- [ ] **False Positive Reporting**: Add `--report-false-positive` to generate GitHub issue template with context
-
-#### Phase 2: Configuration & Persistence (v0.3.0) 
-- [ ] **Project Configuration**: Support `.antimonignore` file for project-specific exclusions
-- [ ] **Config Generation**: Add `--generate-config` to create antimon.toml template with all options
-- [ ] **Config Discovery**: Show configuration file locations in `--status` output
-- [ ] **Team Sharing**: Support config inheritance (global → project → local → CLI args)
-
-#### Phase 3: Developer Workflow (v0.4.0)
-- [ ] **Watch Mode**: Implement `antimon --watch <dir>` for real-time monitoring during development
-- [ ] **Pattern Testing**: Add `--test-pattern <pattern>` to validate custom detection patterns
-- [ ] **IDE Status Bar**: Provide simple API endpoint for IDE extensions to show status
-- [ ] **Quick Fix Snippets**: Generate copy-paste ready fixes for common issues
-
-#### Phase 4: Enterprise & Team Features (v0.5.0)
-- [ ] **CI/CD Templates**: Provide ready-to-use configs for GitHub Actions, GitLab CI, Jenkins
-- [ ] **Audit Trail**: Store detection history locally with `--history` command
-- [ ] **Team Dashboards**: Export detection statistics in various formats (JSON, CSV, HTML)
-- [ ] **Policy Templates**: Provide industry-specific security policy templates
-
-#### Phase 5: Internationalization (v0.6.0)
-- [ ] **Japanese Support**: Full translation of error messages, help text, and documentation
-- [ ] **Language Detection**: Auto-detect system locale and use appropriate language
-- [ ] **Community Translations**: Framework for community-contributed translations
-- [ ] **RTL Support**: Proper support for right-to-left languages
-
-## Next Immediate Tasks
-
-### Version 0.2.14 (Developer Tools) - Priority Tasks:
-1. **Watch Mode**: `antimon --watch <directory>` for continuous monitoring
-2. **Pattern Testing**: `antimon --test-pattern <pattern>` to test detection patterns
-3. **Auto-fix Suggestions**: Provide code snippets for common security fixes
-4. **Setup Status on First Run**: Show Claude Code integration status on initial execution
-
-### Documentation Improvements:
-1. **Windows Setup Guide**: Create detailed Windows-specific Claude Code setup instructions
-2. **CI/CD Examples**: Add GitHub Actions, GitLab CI, Jenkins examples
-3. **False Positive Guide**: Document common false positive scenarios and solutions
-
-### Critical Code Quality Issues (Must address before v0.3.0):
-- [ ] Fix circular dependency risks in 7 files (imports inside functions):
-  - color_utils.py: line 63
-  - core.py: lines 569, 570, 662, 740
-  - detectors.py: lines 64, 142, 240, 322, 386, 466
-  - first_run.py: line 85
-- [ ] Replace os.system in color_utils.py (line 70) with safer alternative
-- [ ] Fix unsafe input() usage for Python 2 compatibility:
-  - demo.py: lines 236, 246, 306, 313, 322, 329, 330
-  - first_run.py: line 125
-- [ ] Add basic type hints to public API functions
-- [ ] Start converting print statements to logging (280+ occurrences)
-
-### Code Quality Improvements (Priority for v0.3.0+):
-- [ ] Replace print statements with proper logging throughout codebase (280+ occurrences)
-- [ ] Add missing type hints (60+ functions need type hints)
-- [ ] Reduce module coupling (split large modules, reduce imports)
-  - Refactor modules with >15 external calls:
-    - cli.py: 94 external calls
-    - color_utils.py: 52 external calls
-    - core.py: 286 external calls
-    - demo.py: 98 external calls
-    - detectors.py: 78 external calls
-    - error_context.py: 58 external calls
-    - first_run.py: 60 external calls
-- [ ] Fix high complexity functions (functions exceeding complexity limit of 10):
-  - cli.py: main() - complexity 33
-  - core.py: process_stdin() - complexity 46
-  - core.py: _display_security_issues() - complexity 18
-  - core.py: check_file_directly() - complexity 19
-  - core.py: validate_hook_data() - complexity 16
-  - core.py: _validate_required_fields() - complexity 14
-  - core.py: check_files_batch() - complexity 16
-  - core.py: check_content_directly() - complexity 15
-  - detectors.py: detect_filenames() - complexity 11
-  - detectors.py: detect_llm_api() - complexity 14
-  - detectors.py: detect_api_key() - complexity 11
-  - error_context.py: _get_suggestions() - complexity 11
-- [ ] Improve test coverage from 74% to 85%+
-- [ ] Address security concerns:
-  - Handle input() safely for Python 2 compatibility (already listed in critical issues)
-
-### Documentation Enhancement:
-- [ ] Add missing parameter/return documentation for functions
-- [ ] Add API documentation
-- [ ] Create contributor's guide
-- [ ] Add more examples in the examples/ directory
-
-
 ## Long-term Goals
 
 - **Developer Experience**: IDE plugins, debugging tools, plugin API, i18n support
@@ -234,7 +171,8 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 | 0.2.11 | Released | Critical Fixes (Exit codes & docs) | ✅ Completed |
 | 0.2.12 | Released | User Experience | ✅ Completed |
 | 0.2.13 | Released | Batch Processing & JSON | ✅ Completed |
-| 0.2.14 | 2025-08-15 | Developer Tools | 🚧 Next Release |
+| 0.2.14 | Released | Developer Tools | ✅ Completed |
+| 0.2.15 | 2025-08-01 | Code Quality & Performance | 🚧 Next Release |
 | 0.3.0 | 2025-10-01 | Configuration | 📋 Planned |
 | 0.4.0 | 2026-01-15 | Enhanced detection | 📋 Planned |
 | 0.5.0 | 2026-04-01 | Integrations | 📋 Planned |
@@ -278,6 +216,8 @@ Before marking any feature as "completed", verify:
 - Well-organized help system
 - Enhanced success feedback (v0.2.12)
 - Flexible input modes (files, content, JSON)
+- Comprehensive `--explain-last-error` with detailed explanations
+- Auto-fix suggestions with concrete code examples
 
 ### 📊 Key Usage Patterns
 - 80% use direct file checking (`--check-file`)
@@ -285,6 +225,52 @@ Before marking any feature as "completed", verify:
 - 5% use JSON mode (mainly CI/CD)
 - Exit codes critical for automation
 - Verbose mode essential for debugging
+
+### 🚀 User Experience Improvements Needed (Priority)
+
+#### 1. **Onboarding & Discovery** (v0.2.15)
+- [ ] **Interactive Tutorial**: Add `antimon --tutorial` for hands-on learning
+- [ ] **Smart Suggestions**: Detect common usage errors and suggest correct commands
+- [ ] **Context-Aware Help**: Show relevant help based on detected file types
+- [ ] **Setup Validation**: Add `antimon --validate-setup` to check configuration
+
+#### 2. **Error Messages & Recovery** (v0.2.15) 
+- [ ] **Contextual Solutions**: Provide file-type specific solutions (e.g., Python vs JS)
+- [ ] **Quick Fix Commands**: Generate ready-to-copy fix commands
+- [ ] **Error History**: Add `antimon --history` to review past detections
+- [ ] **Batch Fix Mode**: Support fixing multiple similar issues at once
+
+#### 3. **Pattern Management** (v0.3.0)
+- [ ] **Pattern Explorer**: Interactive mode to explore and test patterns
+- [ ] **Custom Pattern Builder**: Wizard to create custom detection patterns
+- [ ] **Pattern Sharing**: Export/import pattern configurations
+- [ ] **Pattern Documentation**: Built-in docs for each detection pattern
+
+#### 4. **Integration & Workflow** (v0.3.0)
+- [ ] **Git Integration**: Auto-detect git hooks and offer setup
+- [ ] **Pre-commit Templates**: Ready-to-use pre-commit configurations
+- [ ] **Editor Plugins**: Official VS Code and IntelliJ plugins
+- [ ] **Continuous Monitoring**: Background daemon mode for real-time checks
+
+#### 5. **Performance & Scalability** (v0.4.0)
+- [ ] **Incremental Scanning**: Only check changed files in watch mode
+- [ ] **Parallel Processing**: Multi-threaded scanning for large codebases
+- [ ] **Result Caching**: Cache results for unchanged files
+- [ ] **Progress Indicators**: Better progress bars for large scans
+
+### 📝 Documentation Gaps to Address
+
+#### User Documentation:
+- [ ] **Quick Reference Card**: One-page PDF with common commands
+- [ ] **Video Tutorials**: 5-minute videos for common scenarios
+- [ ] **Troubleshooting Guide**: Common issues and solutions
+- [ ] **Integration Cookbook**: Step-by-step guides for various tools
+
+#### Developer Documentation:
+- [ ] **Plugin Development Guide**: How to create custom detectors
+- [ ] **API Reference**: Complete API documentation
+- [ ] **Architecture Overview**: System design documentation
+- [ ] **Contributing Guide**: How to contribute effectively
 ## How to Contribute
 
 1. Check the [Issues](https://github.com/antimon-security/antimon/issues) for tasks

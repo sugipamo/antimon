@@ -18,8 +18,8 @@ def test_allow_file_glob_patterns():
         "tool_name": "Write",
         "tool_input": {
             "file_path": "production.env",
-            "content": "# Environment config"
-        }
+            "content": "# Environment config",
+        },
     }
 
     # Should be blocked without --allow-file
@@ -27,7 +27,7 @@ def test_allow_file_glob_patterns():
         [sys.executable, "-m", "antimon"],
         input=json.dumps(hook_data),
         text=True,
-        capture_output=True
+        capture_output=True,
     )
     assert result.returncode == 2
     assert "environment variables file" in result.stderr.lower()
@@ -37,7 +37,7 @@ def test_allow_file_glob_patterns():
         [sys.executable, "-m", "antimon", "--allow-file", "*.env"],
         input=json.dumps(hook_data),
         text=True,
-        capture_output=True
+        capture_output=True,
     )
     assert result.returncode == 0
 
@@ -49,7 +49,7 @@ def test_allow_file_glob_patterns():
         [sys.executable, "-m", "antimon"],
         input=json.dumps(hook_data),
         text=True,
-        capture_output=True
+        capture_output=True,
     )
     assert result.returncode == 0
 
@@ -58,7 +58,7 @@ def test_allow_file_glob_patterns():
         [sys.executable, "-m", "antimon", "--allow-file", "config/*.json"],
         input=json.dumps(hook_data),
         text=True,
-        capture_output=True
+        capture_output=True,
     )
     assert result.returncode == 0
 
@@ -70,7 +70,7 @@ def test_allow_file_glob_patterns():
         [sys.executable, "-m", "antimon"],
         input=json.dumps(hook_data),
         text=True,
-        capture_output=True
+        capture_output=True,
     )
     assert result.returncode == 2
     assert "cryptographic key" in result.stderr.lower()
@@ -80,7 +80,7 @@ def test_allow_file_glob_patterns():
         [sys.executable, "-m", "antimon", "--allow-file", "**/*.pem"],
         input=json.dumps(hook_data),
         text=True,
-        capture_output=True
+        capture_output=True,
     )
     assert result.returncode == 0
 
@@ -89,10 +89,18 @@ def test_allow_file_glob_patterns():
 
     # Should pass with multiple --allow-file options
     result = subprocess.run(
-        [sys.executable, "-m", "antimon", "--allow-file", "*.env", "--allow-file", "deploy_key"],
+        [
+            sys.executable,
+            "-m",
+            "antimon",
+            "--allow-file",
+            "*.env",
+            "--allow-file",
+            "deploy_key",
+        ],
         input=json.dumps(hook_data),
         text=True,
-        capture_output=True
+        capture_output=True,
     )
     assert result.returncode == 0
 
@@ -104,8 +112,8 @@ def test_allow_file_with_api_key_detection():
         "tool_name": "Write",
         "tool_input": {
             "file_path": "config.env",
-            "content": 'API_KEY="sk-1234567890abcdef"'
-        }
+            "content": 'API_KEY="sk-1234567890abcdef"',
+        },
     }
 
     # Should still be blocked for API key even with --allow-file *.env
@@ -113,7 +121,7 @@ def test_allow_file_with_api_key_detection():
         [sys.executable, "-m", "antimon", "--allow-file", "*.env"],
         input=json.dumps(hook_data),
         text=True,
-        capture_output=True
+        capture_output=True,
     )
     assert result.returncode == 2
     assert "api key" in result.stderr.lower()

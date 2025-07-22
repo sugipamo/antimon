@@ -9,7 +9,12 @@ import argparse
 import sys
 
 from . import __version__
-from .core import check_content_directly, check_file_directly, check_files_batch, process_stdin
+from .core import (
+    check_content_directly,
+    check_file_directly,
+    check_files_batch,
+    process_stdin,
+)
 from .demo import run_demo
 from .error_context import show_error_help
 from .first_run import (
@@ -22,10 +27,12 @@ from .first_run import (
 )
 from .last_error import explain_last_error
 from .logging_config import setup_logging
+from .pattern_test import run_pattern_test
 from .runtime_config import RuntimeConfig, set_runtime_config
 from .self_test import run_self_test
 from .setup_claude_code import setup_claude_code_integration
 from .status import show_status
+from .watch import watch_directory
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -62,7 +69,7 @@ Exit codes:
 
 For more information: https://github.com/antimon-security/antimon
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     parser.add_argument(
@@ -94,6 +101,12 @@ For more information: https://github.com/antimon-security/antimon
         "-b",
         action="store_true",
         help="Show concise security reports without detailed explanations. Useful for CI/CD pipelines.",
+    )
+
+    parser.add_argument(
+        "--autofix",
+        action="store_true",
+        help="Show auto-fix suggestions for detected security issues. Provides code snippets to fix common problems.",
     )
 
     parser.add_argument(
@@ -130,14 +143,23 @@ For more information: https://github.com/antimon-security/antimon
         "--allow-file",
         action="append",
         help="Allow specific file path or glob pattern (can be used multiple times). "
-             "Examples: --allow-file /home/user/.config/app.conf, --allow-file '*.env', "
-             "--allow-file 'config/*.json', --allow-file '**/*.secret'",
+        "Examples: --allow-file /home/user/.config/app.conf, --allow-file '*.env', "
+        "--allow-file 'config/*.json', --allow-file '**/*.secret'",
     )
 
     parser.add_argument(
         "--disable-detector",
         action="append",
-        choices=["filenames", "llm_api", "api_key", "docker", "localhost", "claude_antipatterns", "bash", "read"],
+        choices=[
+            "filenames",
+            "llm_api",
+            "api_key",
+            "docker",
+            "localhost",
+            "claude_antipatterns",
+            "bash",
+            "read",
+        ],
         help="Disable specific detector (can be used multiple times). Example: --disable-detector api_key --disable-detector localhost",
     )
 
@@ -212,6 +234,33 @@ For more information: https://github.com/antimon-security/antimon
         "--setup-claude-code",
         action="store_true",
         help="Interactive setup wizard to configure antimon with Claude Code. Automatically configures the PreToolUse hook.",
+    )
+
+    parser.add_argument(
+        "--watch",
+        type=str,
+        metavar="DIRECTORY",
+        help="Watch a directory for file changes and re-check modified files automatically. Example: antimon --watch src/",
+    )
+
+    parser.add_argument(
+        "--test-pattern",
+        type=str,
+        metavar="PATTERN",
+        help="Test a pattern against antimon detectors to see if it would be blocked. Example: antimon --test-pattern 'api_key = \"sk-123\"'",
+    )
+
+    parser.add_argument(
+        "--pattern-examples",
+        action="store_true",
+        help="Show example patterns that would trigger each detector. Useful for understanding what antimon blocks.",
+    )
+
+    parser.add_argument(
+        "--detector",
+        type=str,
+        choices=["api_key", "llm_api", "docker", "localhost", "filenames"],
+        help="When used with --test-pattern, test against a specific detector only.",
     )
 
     args = parser.parse_args(argv)
@@ -296,7 +345,9 @@ For more information: https://github.com/antimon-security/antimon
 
     if args.config and not args.quiet:
         print("\n⚠️  Configuration file support is not yet available", file=sys.stderr)
-        print("   This feature is planned for v0.3.0 and will include:", file=sys.stderr)
+        print(
+            "   This feature is planned for v0.3.0 and will include:", file=sys.stderr
+        )
         print("   • Custom detection patterns", file=sys.stderr)
         print("   • Project-specific whitelists", file=sys.stderr)
         print("   • Detector sensitivity tuning", file=sys.stderr)
@@ -305,25 +356,46 @@ For more information: https://github.com/antimon-security/antimon
         print("   • --allow-file: Allow specific files or patterns", file=sys.stderr)
         print("   • --disable-detector: Disable specific detectors", file=sys.stderr)
         print("   • --ignore-pattern: Ignore files matching patterns", file=sys.stderr)
-        print("\n💡 Example: antimon --allow-file '*.env' --disable-detector api_key\n", file=sys.stderr)
+        print(
+            "\n💡 Example: antimon --allow-file '*.env' --disable-detector api_key\n",
+            file=sys.stderr,
+        )
 
     # Handle direct file checking
     if args.check_file:
         if first_run:
             mark_first_run_complete()
-        return check_file_directly(args.check_file, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color, output_format=args.output_format)
+        return check_file_directly(
+            args.check_file,
+            verbose=args.verbose,
+            quiet=args.quiet,
+            no_color=args.no_color,
+            output_format=args.output_format,
+        )
 
     # Handle direct content checking
     if args.check_content:
         if first_run:
             mark_first_run_complete()
-        return check_content_directly(args.check_content, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color, output_format=args.output_format)
+        return check_content_directly(
+            args.check_content,
+            verbose=args.verbose,
+            quiet=args.quiet,
+            no_color=args.no_color,
+            output_format=args.output_format,
+        )
 
     # Handle batch file checking
     if args.check_files:
         if first_run:
             mark_first_run_complete()
-        return check_files_batch(args.check_files, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color, output_format=args.output_format)
+        return check_files_batch(
+            args.check_files,
+            verbose=args.verbose,
+            quiet=args.quiet,
+            no_color=args.no_color,
+            output_format=args.output_format,
+        )
 
     # Handle Claude Code setup
     if args.setup_claude_code:
@@ -332,7 +404,36 @@ For more information: https://github.com/antimon-security/antimon
         success = setup_claude_code_integration(no_color=args.no_color)
         return 0 if success else 1
 
-    return process_stdin(verbose=args.verbose, quiet=args.quiet, no_color=args.no_color, output_format=args.output_format)
+    # Handle watch mode
+    if args.watch:
+        if first_run:
+            mark_first_run_complete()
+        return watch_directory(
+            args.watch,
+            verbose=args.verbose,
+            quiet=args.quiet,
+            no_color=args.no_color,
+            output_format=args.output_format,
+        )
+
+    # Handle pattern testing
+    if args.test_pattern or args.pattern_examples:
+        if first_run:
+            mark_first_run_complete()
+        return run_pattern_test(
+            pattern=args.test_pattern,
+            detector_type=args.detector,
+            show_examples=args.pattern_examples,
+            verbose=args.verbose,
+            no_color=args.no_color,
+        )
+
+    return process_stdin(
+        verbose=args.verbose,
+        quiet=args.quiet,
+        no_color=args.no_color,
+        output_format=args.output_format,
+    )
 
 
 if __name__ == "__main__":

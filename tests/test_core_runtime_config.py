@@ -23,8 +23,8 @@ def test_validate_with_ignored_file():
         "tool_name": "Write",
         "tool_input": {
             "file_path": "test_api.test.py",
-            "content": "api_key = 'sk-1234567890'"
-        }
+            "content": "api_key = 'sk-1234567890'",
+        },
     }
 
     has_issues, issues, stats = validate_hook_data(json_data)
@@ -47,8 +47,8 @@ def test_validate_with_allowed_file():
         "tool_name": "Write",
         "tool_input": {
             "file_path": "/etc/myapp.conf",
-            "content": "api_key = 'sk-1234567890'"
-        }
+            "content": "api_key = 'sk-1234567890'",
+        },
     }
 
     has_issues, issues, stats = validate_hook_data(json_data)
@@ -72,8 +72,8 @@ def test_validate_with_disabled_detector():
         "tool_name": "Write",
         "tool_input": {
             "file_path": "bot.py",
-            "content": "from openai import OpenAI\napi_key = 'sk-1234567890'"
-        }
+            "content": "from openai import OpenAI\napi_key = 'sk-1234567890'",
+        },
     }
 
     has_issues, issues, stats = validate_hook_data(json_data)
@@ -97,10 +97,7 @@ def test_validate_allowed_file_skips_filename_detection_only():
     json_data = {
         "hook_event_name": "PreToolUse",
         "tool_name": "Write",
-        "tool_input": {
-            "file_path": "/etc/passwd",
-            "content": "safe content"
-        }
+        "tool_input": {"file_path": "/etc/passwd", "content": "safe content"},
     }
 
     has_issues, issues, stats = validate_hook_data(json_data)

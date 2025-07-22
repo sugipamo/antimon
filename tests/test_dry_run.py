@@ -18,10 +18,7 @@ def test_dry_run_basic():
     test_data = {
         "hook_event_name": "PreToolUse",
         "tool_name": "Write",
-        "tool_input": {
-            "file_path": "/etc/passwd",
-            "content": "malicious content"
-        }
+        "tool_input": {"file_path": "/etc/passwd", "content": "malicious content"},
     }
 
     # Mock stdin with test data
@@ -51,8 +48,8 @@ def test_dry_run_with_api_key():
         "tool_name": "Write",
         "tool_input": {
             "file_path": "config.py",
-            "content": 'OPENAI_API_KEY = "sk-1234567890abcdef"'
-        }
+            "content": 'OPENAI_API_KEY = "sk-1234567890abcdef"',
+        },
     }
 
     with patch("sys.stdin", io.StringIO(json.dumps(test_data))):
@@ -73,10 +70,7 @@ def test_dry_run_no_issues():
     test_data = {
         "hook_event_name": "PreToolUse",
         "tool_name": "Write",
-        "tool_input": {
-            "file_path": "hello.py",
-            "content": 'print("Hello World")'
-        }
+        "tool_input": {"file_path": "hello.py", "content": 'print("Hello World")'},
     }
 
     with patch("sys.stdin", io.StringIO(json.dumps(test_data))):
@@ -99,8 +93,8 @@ def test_dry_run_with_verbose():
         "tool_name": "Write",
         "tool_input": {
             "file_path": "/home/user/.ssh/id_rsa",
-            "content": "ssh key content"
-        }
+            "content": "ssh key content",
+        },
     }
 
     with patch("sys.stdin", io.StringIO(json.dumps(test_data))):
@@ -124,10 +118,7 @@ def test_dry_run_combined_with_allow_file():
     test_data = {
         "hook_event_name": "PreToolUse",
         "tool_name": "Write",
-        "tool_input": {
-            "file_path": "/etc/hosts",
-            "content": "127.0.0.1 localhost"
-        }
+        "tool_input": {"file_path": "/etc/hosts", "content": "127.0.0.1 localhost"},
     }
 
     with patch("sys.stdin", io.StringIO(json.dumps(test_data))):

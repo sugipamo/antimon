@@ -16,10 +16,7 @@ def find_claude_code_command() -> str | None:
     """
     try:
         result = subprocess.run(
-            ["which", "claude-code"],
-            capture_output=True,
-            text=True,
-            check=False
+            ["which", "claude-code"], capture_output=True, text=True, check=False
         )
         if result.returncode == 0:
             return result.stdout.strip()
@@ -40,7 +37,7 @@ def get_claude_code_config() -> dict | None:
             ["claude-code", "config", "get"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
         if result.returncode == 0:
             return json.loads(result.stdout)
@@ -65,7 +62,7 @@ def set_claude_code_hook(hook_name: str, command: str) -> bool:
             ["claude-code", "config", "set", f"hooks.{hook_name}", command],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
         return result.returncode == 0
     except Exception:
@@ -81,10 +78,7 @@ def verify_antimon_in_path() -> str | None:
     """
     try:
         result = subprocess.run(
-            ["which", "antimon"],
-            capture_output=True,
-            text=True,
-            check=False
+            ["which", "antimon"], capture_output=True, text=True, check=False
         )
         if result.returncode == 0:
             return result.stdout.strip()
@@ -125,7 +119,9 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
         print(f"      {color.code('antimon --setup-claude-code')}")
         print("\n📚 For more help, see:")
         print("   • Claude Code docs: https://claude.ai/docs/code")
-        print("   • antimon setup guide: https://github.com/antimon-security/antimon#claude-code-hook")
+        print(
+            "   • antimon setup guide: https://github.com/antimon-security/antimon#claude-code-hook"
+        )
         return False
 
     print(f"{color.success('✅ Claude Code found:')} {claude_code_path}")
@@ -157,11 +153,17 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
 
             if current_hook == "antimon":
                 print(f"\n{color.success('✅ antimon is already configured!')}")
-                print("\n🎉 You're all set! antimon is protecting your Claude Code sessions.")
+                print(
+                    "\n🎉 You're all set! antimon is protecting your Claude Code sessions."
+                )
                 return True
 
-            response = input(f"\n{color.info('Replace with antimon? [Y/n]:')} ").strip().lower()
-            if response == 'n':
+            response = (
+                input(f"\n{color.info('Replace with antimon? [Y/n]:')} ")
+                .strip()
+                .lower()
+            )
+            if response == "n":
                 print("\n❌ Setup cancelled.")
                 return False
 
@@ -169,7 +171,9 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
     print(f"\n{color.info('Step 4: Configuring Claude Code hook...')}")
 
     if set_claude_code_hook("PreToolUse", "antimon"):
-        print(f"{color.success('✅ Successfully configured antimon as PreToolUse hook!')}")
+        print(
+            f"{color.success('✅ Successfully configured antimon as PreToolUse hook!')}"
+        )
 
         # Step 5: Verify configuration
         print(f"\n{color.info('Step 5: Verifying configuration...')}")
@@ -179,7 +183,7 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
             ["claude-code", "config", "get", "hooks.PreToolUse"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
 
         if verify_result.returncode == 0 and verify_result.stdout.strip() == "antimon":
@@ -188,14 +192,17 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
             print(f"\n{color.header('🎉 Setup Complete!')}")
             print("\nantimon is now protecting your Claude Code sessions.")
             print("\n📝 What happens now:")
-            print("   • antimon will check all code modifications before they're applied")
+            print(
+                "   • antimon will check all code modifications before they're applied"
+            )
             print("   • Dangerous operations will be blocked automatically")
             print("   • You'll see clear explanations when something is blocked")
 
             print("\n💡 Test it out:")
             print("   1. Open a new Claude Code session")
             print("   2. Try to write a file with an API key:")
-            print(f'      {color.code("echo \'api_key = \"sk-123\"\' > test.py")}')
+            command = "echo 'api_key = \"sk-123\"' > test.py"
+            print(f"      {color.code(command)}")
             print("   3. antimon should block this operation")
 
             print("\n🔧 To disable temporarily:")
@@ -235,7 +242,7 @@ def check_claude_code_setup() -> tuple[bool, str]:
             ["claude-code", "config", "get", "hooks.PreToolUse"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
         if result.returncode == 0:
             hook_value = result.stdout.strip()

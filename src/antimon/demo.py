@@ -45,13 +45,12 @@ class InteractiveDemo:
                     "tool_name": "Write",
                     "tool_input": {
                         "file_path": "/etc/passwd",
-                        "content": "root:x:0:0:root:/root:/bin/bash"
-                    }
+                        "content": "root:x:0:0:root:/root:/bin/bash",
+                    },
                 },
                 True,
-                "This is blocked because /etc/passwd is a critical system file containing user account information."
+                "This is blocked because /etc/passwd is a critical system file containing user account information.",
             ),
-
             # Case 2: API key detection
             (
                 "Hardcoded API key in Python code",
@@ -60,27 +59,23 @@ class InteractiveDemo:
                     "tool_name": "Write",
                     "tool_input": {
                         "file_path": "config.py",
-                        "content": 'API_KEY = "sk-1234567890abcdef123456"'
-                    }
+                        "content": 'API_KEY = "sk-1234567890abcdef123456"',
+                    },
                 },
                 True,
-                "API keys should never be hardcoded. Use environment variables or secure vaults instead."
+                "API keys should never be hardcoded. Use environment variables or secure vaults instead.",
             ),
-
             # Case 3: SSH key access
             (
                 "Reading SSH private key",
                 {
                     "hook_event_name": "PreToolUse",
                     "tool_name": "Read",
-                    "tool_input": {
-                        "file_path": "/home/user/.ssh/id_rsa"
-                    }
+                    "tool_input": {"file_path": "/home/user/.ssh/id_rsa"},
                 },
                 True,
-                "SSH private keys contain sensitive authentication credentials and should not be accessed."
+                "SSH private keys contain sensitive authentication credentials and should not be accessed.",
             ),
-
             # Case 4: External LLM API usage
             (
                 "Using OpenAI API in code",
@@ -89,13 +84,12 @@ class InteractiveDemo:
                     "tool_name": "Write",
                     "tool_input": {
                         "file_path": "chat.py",
-                        "content": "from openai import OpenAI\nclient = OpenAI()\nresponse = client.chat.completions.create(model='gpt-4')"
-                    }
+                        "content": "from openai import OpenAI\nclient = OpenAI()\nresponse = client.chat.completions.create(model='gpt-4')",
+                    },
                 },
                 True,
-                "External LLM APIs should be avoided. Consider using local models like llama.cpp or ollama."
+                "External LLM APIs should be avoided. Consider using local models like llama.cpp or ollama.",
             ),
-
             # Case 5: Docker operation
             (
                 "Creating a Dockerfile",
@@ -104,13 +98,12 @@ class InteractiveDemo:
                     "tool_name": "Write",
                     "tool_input": {
                         "file_path": "Dockerfile",
-                        "content": "FROM python:3.9\nRUN pip install flask\nCMD ['python', 'app.py']"
-                    }
+                        "content": "FROM python:3.9\nRUN pip install flask\nCMD ['python', 'app.py']",
+                    },
                 },
                 True,
-                "Docker operations are restricted for security reasons."
+                "Docker operations are restricted for security reasons.",
             ),
-
             # Case 6: Localhost connection
             (
                 "Connecting to localhost service",
@@ -119,13 +112,12 @@ class InteractiveDemo:
                     "tool_name": "Write",
                     "tool_input": {
                         "file_path": "client.py",
-                        "content": "import requests\nresponse = requests.get('http://localhost:8080/api')"
-                    }
+                        "content": "import requests\nresponse = requests.get('http://localhost:8080/api')",
+                    },
                 },
                 True,
-                "Localhost connections to specific ports (like 8080) are monitored for security."
+                "Localhost connections to specific ports (like 8080) are monitored for security.",
             ),
-
             # Case 7: Environment file
             (
                 "Writing to .env file",
@@ -134,13 +126,12 @@ class InteractiveDemo:
                     "tool_name": "Write",
                     "tool_input": {
                         "file_path": ".env",
-                        "content": "DATABASE_URL=postgresql://user:pass@localhost/db"
-                    }
+                        "content": "DATABASE_URL=postgresql://user:pass@localhost/db",
+                    },
                 },
                 True,
-                "Environment files often contain sensitive configuration and should be handled carefully."
+                "Environment files often contain sensitive configuration and should be handled carefully.",
             ),
-
             # Case 8: Safe operation - regular Python file
             (
                 "Writing a simple Python script",
@@ -149,27 +140,23 @@ class InteractiveDemo:
                     "tool_name": "Write",
                     "tool_input": {
                         "file_path": "hello.py",
-                        "content": "def greet(name):\n    return f'Hello, {name}!'\n\nprint(greet('World'))"
-                    }
+                        "content": "def greet(name):\n    return f'Hello, {name}!'\n\nprint(greet('World'))",
+                    },
                 },
                 False,
-                "This is a safe operation - writing normal Python code without sensitive content."
+                "This is a safe operation - writing normal Python code without sensitive content.",
             ),
-
             # Case 9: Safe operation - reading documentation
             (
                 "Reading a README file",
                 {
                     "hook_event_name": "PreToolUse",
                     "tool_name": "Read",
-                    "tool_input": {
-                        "file_path": "README.md"
-                    }
+                    "tool_input": {"file_path": "README.md"},
                 },
                 False,
-                "Reading documentation files is perfectly safe."
+                "Reading documentation files is perfectly safe.",
             ),
-
             # Case 10: Edit operation with API key
             (
                 "Editing code to add API key",
@@ -179,12 +166,12 @@ class InteractiveDemo:
                     "tool_input": {
                         "file_path": "app.py",
                         "old_string": "# Configuration",
-                        "new_string": "# Configuration\nAPI_KEY = 'sk-proj-abcdef123456'"
-                    }
+                        "new_string": "# Configuration\nAPI_KEY = 'sk-proj-abcdef123456'",
+                    },
                 },
                 True,
-                "Edit operations are also checked for sensitive content like API keys."
-            )
+                "Edit operations are also checked for sensitive content like API keys.",
+            ),
         ]
 
     def run(self):
@@ -195,23 +182,23 @@ class InteractiveDemo:
         while True:
             choice = self._show_menu()
 
-            if choice == '0':
+            if choice == "0":
                 self._print_success("\nThank you for trying antimon!")
                 break
-            elif choice == 'a':
+            elif choice == "a":
                 self._run_all_demos()
             elif choice.isdigit() and 1 <= int(choice) <= len(self.demo_cases):
                 self._run_single_demo(int(choice) - 1)
-            elif choice == 'c':
+            elif choice == "c":
                 self._custom_demo()
             else:
                 self._print_error("Invalid choice. Please try again.")
 
     def _print_header(self):
         """Print the demo header."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print(self.colors.BOLD + "ANTIMON INTERACTIVE DEMO" + self.colors.RESET)
-        print("="*60)
+        print("=" * 60)
 
     def _print_introduction(self):
         """Print introduction text."""
@@ -225,7 +212,11 @@ class InteractiveDemo:
         print("-" * 40)
 
         for i, (desc, _, should_fail, _) in enumerate(self.demo_cases, 1):
-            status = self.colors.RED + "[BLOCKED]" + self.colors.RESET if should_fail else self.colors.GREEN + "[ALLOWED]" + self.colors.RESET
+            status = (
+                self.colors.RED + "[BLOCKED]" + self.colors.RESET
+                if should_fail
+                else self.colors.GREEN + "[ALLOWED]" + self.colors.RESET
+            )
             print(f"{i}. {desc} {status}")
 
         print("\n" + self.colors.BOLD + "Options:" + self.colors.RESET)
@@ -233,17 +224,26 @@ class InteractiveDemo:
         print("c. Try custom input")
         print("0. Exit demo")
 
-        return input("\n" + self.colors.CYAN + "Choose an option: " + self.colors.RESET).strip().lower()
+        return (
+            input("\n" + self.colors.CYAN + "Choose an option: " + self.colors.RESET)
+            .strip()
+            .lower()
+        )
 
     def _run_all_demos(self):
         """Run all demo cases."""
         print("\n" + self.colors.BOLD + "Running all demos..." + self.colors.RESET)
-        print("="*60)
+        print("=" * 60)
 
         for i, _demo in enumerate(self.demo_cases):
             self._run_single_demo(i)
             if i < len(self.demo_cases) - 1:
-                input("\n" + self.colors.CYAN + "Press Enter to continue..." + self.colors.RESET)
+                input(
+                    "\n"
+                    + self.colors.CYAN
+                    + "Press Enter to continue..."
+                    + self.colors.RESET
+                )
 
     def _run_single_demo(self, index: int):
         """Run a single demo case."""
@@ -256,19 +256,19 @@ class InteractiveDemo:
         print(self.colors.CYAN + "Operation:" + self.colors.RESET)
         print(f"  Tool: {hook_data['tool_name']}")
 
-        tool_input = hook_data['tool_input']
-        if 'file_path' in tool_input:
+        tool_input = hook_data["tool_input"]
+        if "file_path" in tool_input:
             print(f"  File: {tool_input['file_path']}")
 
-        if 'content' in tool_input:
+        if "content" in tool_input:
             print("  Content Preview:")
-            content_lines = tool_input['content'].split('\n')
+            content_lines = tool_input["content"].split("\n")
             for line in content_lines[:3]:  # Show first 3 lines
                 print(f"    {line}")
             if len(content_lines) > 3:
                 print(f"    ... ({len(content_lines) - 3} more lines)")
 
-        if 'old_string' in tool_input and 'new_string' in tool_input:
+        if "old_string" in tool_input and "new_string" in tool_input:
             print(f"  Replacing: {tool_input['old_string']!r}")
             print(f"  With: {tool_input['new_string']!r}")
 
@@ -326,7 +326,9 @@ class InteractiveDemo:
             tool_input["content"] = "\n".join(lines)
 
         elif tool_name == "Edit":
-            old_string = input(self.colors.CYAN + "Text to replace: " + self.colors.RESET)
+            old_string = input(
+                self.colors.CYAN + "Text to replace: " + self.colors.RESET
+            )
             new_string = input(self.colors.CYAN + "Replace with: " + self.colors.RESET)
             tool_input["old_string"] = old_string
             tool_input["new_string"] = new_string
@@ -335,7 +337,7 @@ class InteractiveDemo:
         hook_data = {
             "hook_event_name": "PreToolUse",
             "tool_name": tool_name,
-            "tool_input": tool_input
+            "tool_input": tool_input,
         }
 
         # Run validation
@@ -378,17 +380,25 @@ class NonInteractiveDemo(InteractiveDemo):
         print("This demo shows what antimon can detect and block.\n")
 
         # Run through all demo cases
-        for i, (description, hook_data, should_fail, explanation) in enumerate(self.demo_cases):
-            print(f"{self.colors.BOLD}[{i+1}/{len(self.demo_cases)}] {description}{self.colors.RESET}")
+        for i, (description, hook_data, should_fail, explanation) in enumerate(
+            self.demo_cases
+        ):
+            print(
+                f"{self.colors.BOLD}[{i+1}/{len(self.demo_cases)}] {description}{self.colors.RESET}"
+            )
             print("-" * 50)
 
             # Show the operation being tested
-            print(f"{self.colors.CYAN}Tool:{self.colors.RESET} {hook_data['tool_name']}")
-            if 'file_path' in hook_data['tool_input']:
-                print(f"{self.colors.CYAN}File:{self.colors.RESET} {hook_data['tool_input']['file_path']}")
+            print(
+                f"{self.colors.CYAN}Tool:{self.colors.RESET} {hook_data['tool_name']}"
+            )
+            if "file_path" in hook_data["tool_input"]:
+                print(
+                    f"{self.colors.CYAN}File:{self.colors.RESET} {hook_data['tool_input']['file_path']}"
+                )
 
             # Show a snippet of content
-            content = hook_data['tool_input'].get('content', '')
+            content = hook_data["tool_input"].get("content", "")
             if content:
                 snippet = content[:100] + "..." if len(content) > 100 else content
                 print(f"{self.colors.CYAN}Content:{self.colors.RESET} {snippet}")
@@ -403,7 +413,10 @@ class NonInteractiveDemo(InteractiveDemo):
             if has_issues:
                 self._print_error("✗ BLOCKED")
                 if messages:
-                    print(f"{self.colors.YELLOW}Reason:{self.colors.RESET} {messages[0].split('\n')[0]}")
+                    first_line = messages[0].split("\n")[0]
+                    print(
+                        f"{self.colors.YELLOW}Reason:{self.colors.RESET} {first_line}"
+                    )
             else:
                 self._print_success("✓ ALLOWED")
 

@@ -41,7 +41,9 @@ class ErrorContext:
         suggestions = self._get_suggestions(message, hook_data)
         if suggestions:
             context_lines.append("")  # Empty line
-            context_lines.append(apply_color("💡 Suggestions:", Colors.OKBLUE, self.no_color))
+            context_lines.append(
+                apply_color("💡 Suggestions:", Colors.OKBLUE, self.no_color)
+            )
             for suggestion in suggestions:
                 context_lines.append(f"   • {suggestion}")
 
@@ -61,57 +63,71 @@ class ErrorContext:
 
         # API key detection
         if "API key" in message:
-            suggestions.extend([
-                "Use environment variables instead: os.environ.get('API_KEY')",
-                "Store secrets in a .env file (add to .gitignore)",
-                "For examples/docs, use placeholders like 'your-api-key-here'"
-            ])
+            suggestions.extend(
+                [
+                    "Use environment variables instead: os.environ.get('API_KEY')",
+                    "Store secrets in a .env file (add to .gitignore)",
+                    "For examples/docs, use placeholders like 'your-api-key-here'",
+                ]
+            )
 
         # Sensitive file access
         elif "sensitive file" in message:
             file_path = hook_data.get("tool_input", {}).get("file_path", "")
             if "/etc/" in file_path:
-                suggestions.extend([
-                    "Use user-specific config files instead (e.g., ~/.config/)",
-                    "Read from project-local configuration files",
-                ])
+                suggestions.extend(
+                    [
+                        "Use user-specific config files instead (e.g., ~/.config/)",
+                        "Read from project-local configuration files",
+                    ]
+                )
             elif ".ssh" in file_path:
-                suggestions.extend([
-                    "SSH keys should not be modified by AI tools",
-                    "Consider using SSH agent or key management tools",
-                ])
+                suggestions.extend(
+                    [
+                        "SSH keys should not be modified by AI tools",
+                        "Consider using SSH agent or key management tools",
+                    ]
+                )
 
         # LLM API usage
         elif "LLM API" in message or "external AI" in message:
-            suggestions.extend([
-                "Consider using local models (llama.cpp, ollama)",
-                "Use the AI assistant's built-in capabilities instead",
-                "For demos, use mock responses instead of real API calls"
-            ])
+            suggestions.extend(
+                [
+                    "Consider using local models (llama.cpp, ollama)",
+                    "Use the AI assistant's built-in capabilities instead",
+                    "For demos, use mock responses instead of real API calls",
+                ]
+            )
 
         # Docker operations
         elif "Docker" in message:
-            suggestions.extend([
-                "Use docker-compose for container management",
-                "Consider using development containers instead",
-                "Review Docker security best practices"
-            ])
+            suggestions.extend(
+                [
+                    "Use docker-compose for container management",
+                    "Consider using development containers instead",
+                    "Review Docker security best practices",
+                ]
+            )
 
         # Localhost connections
         elif "localhost" in message:
-            suggestions.extend([
-                "Use environment-specific configuration",
-                "Consider using service discovery instead of hardcoded URLs",
-                "Use reverse proxies for local development"
-            ])
+            suggestions.extend(
+                [
+                    "Use environment-specific configuration",
+                    "Consider using service discovery instead of hardcoded URLs",
+                    "Use reverse proxies for local development",
+                ]
+            )
 
         # Dangerous bash commands
         elif "dangerous command" in message or "bash" in message.lower():
-            suggestions.extend([
-                "Use safer alternatives or built-in tools",
-                "Consider using Python/Node.js scripts instead of shell commands",
-                "Always validate and sanitize inputs"
-            ])
+            suggestions.extend(
+                [
+                    "Use safer alternatives or built-in tools",
+                    "Consider using Python/Node.js scripts instead of shell commands",
+                    "Always validate and sanitize inputs",
+                ]
+            )
 
         return suggestions
 
@@ -128,34 +144,54 @@ class ErrorContext:
 
         return None
 
-    def format_error_with_context(self, message: str, hook_data: dict, exit_code: int = 2) -> str:
+    def format_error_with_context(
+        self, message: str, hook_data: dict, exit_code: int = 2
+    ) -> str:
         """Format an error message with full context."""
         lines = []
         config = get_runtime_config()
 
         # Main error message
-        lines.append(apply_color("❌ Security issue detected:", Colors.FAIL, self.no_color))
+        lines.append(
+            apply_color("❌ Security issue detected:", Colors.FAIL, self.no_color)
+        )
         lines.append(f"   {message}")
-        
+
         # In brief mode, just show the core error and recovery hint
         if config.brief:
             lines.append("")
-            lines.append(apply_color("💡 Run 'antimon --explain-last-error' for details", Colors.OKBLUE, self.no_color))
+            lines.append(
+                apply_color(
+                    "💡 Run 'antimon --explain-last-error' for details",
+                    Colors.OKBLUE,
+                    self.no_color,
+                )
+            )
         else:
             lines.append("")
             # Add context
             context = self.get_context_for_error(message, hook_data)
             if context:
                 lines.append(context)
-            
+
             # Add error recovery hint
             lines.append("")
-            lines.append(apply_color("💡 For more details and solutions:", Colors.OKBLUE, self.no_color))
-            lines.append(f"   Run: antimon --explain-last-error")
-        
+            lines.append(
+                apply_color(
+                    "💡 For more details and solutions:", Colors.OKBLUE, self.no_color
+                )
+            )
+            lines.append("   Run: antimon --explain-last-error")
+
         # Add exit code documentation
         lines.append("")
-        lines.append(apply_color(f"Exit code: {exit_code} (Security issue detected)", Colors.WARNING, self.no_color))
+        lines.append(
+            apply_color(
+                f"Exit code: {exit_code} (Security issue detected)",
+                Colors.WARNING,
+                self.no_color,
+            )
+        )
 
         return "\n".join(lines)
 
@@ -168,7 +204,9 @@ def show_error_help(no_color: bool = False) -> None:
     print()
     print("If antimon blocked your operation:")
     print()
-    print("1. " + apply_color("Read the error message carefully", Colors.BOLD, no_color))
+    print(
+        "1. " + apply_color("Read the error message carefully", Colors.BOLD, no_color)
+    )
     print("   It explains what was detected and why it's dangerous")
     print()
     print("2. " + apply_color("Check the suggestions", Colors.BOLD, no_color))

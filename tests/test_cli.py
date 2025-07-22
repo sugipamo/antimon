@@ -10,17 +10,16 @@ import sys
 class TestCLIExitCodes:
     """Test cases for CLI exit codes and output behavior."""
 
-    def run_antimon(self, input_data: dict, args: list[str] | None = None) -> tuple[int, str, str]:
+    def run_antimon(
+        self, input_data: dict, args: list[str] | None = None
+    ) -> tuple[int, str, str]:
         """Helper to run antimon with JSON input and capture output."""
         cmd = [sys.executable, "-m", "antimon"]
         if args:
             cmd.extend(args)
 
         result = subprocess.run(
-            cmd,
-            input=json.dumps(input_data),
-            text=True,
-            capture_output=True
+            cmd, input=json.dumps(input_data), text=True, capture_output=True
         )
         return result.returncode, result.stdout, result.stderr
 
@@ -29,10 +28,7 @@ class TestCLIExitCodes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "Write",
-            "tool_input": {
-                "file_path": "hello.py",
-                "content": "print('Hello World')"
-            }
+            "tool_input": {"file_path": "hello.py", "content": "print('Hello World')"},
         }
         # Use quiet mode to suppress first-run guide
         exit_code, stdout, stderr = self.run_antimon(data, ["--quiet"])
@@ -46,9 +42,7 @@ class TestCLIExitCodes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "LS",
-            "tool_input": {
-                "path": "/home/user"
-            }
+            "tool_input": {"path": "/home/user"},
         }
         exit_code, stdout, stderr = self.run_antimon(data)
         assert exit_code == 0
@@ -61,9 +55,7 @@ class TestCLIExitCodes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "Read",
-            "tool_input": {
-                "file_path": "/etc/shadow"
-            }
+            "tool_input": {"file_path": "/etc/shadow"},
         }
         exit_code, stdout, stderr = self.run_antimon(data)
         assert exit_code == 2
@@ -75,9 +67,7 @@ class TestCLIExitCodes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "Read",
-            "tool_input": {
-                "file_path": "/home/user/project/README.md"
-            }
+            "tool_input": {"file_path": "/home/user/project/README.md"},
         }
         exit_code, stdout, stderr = self.run_antimon(data)
         assert exit_code == 0
@@ -88,9 +78,7 @@ class TestCLIExitCodes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "Bash",
-            "tool_input": {
-                "command": "rm -rf /"
-            }
+            "tool_input": {"command": "rm -rf /"},
         }
         exit_code, stdout, stderr = self.run_antimon(data)
         assert exit_code == 2
@@ -102,9 +90,7 @@ class TestCLIExitCodes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "Bash",
-            "tool_input": {
-                "command": "ls -la"
-            }
+            "tool_input": {"command": "ls -la"},
         }
         exit_code, stdout, stderr = self.run_antimon(data)
         assert exit_code == 0
@@ -112,11 +98,7 @@ class TestCLIExitCodes:
 
     def test_exit_code_1_for_read_missing_file_path(self):
         """Test that Read tool with missing file_path returns exit code 1."""
-        data = {
-            "hook_event_name": "PreToolUse",
-            "tool_name": "Read",
-            "tool_input": {}
-        }
+        data = {"hook_event_name": "PreToolUse", "tool_name": "Read", "tool_input": {}}
         exit_code, stdout, stderr = self.run_antimon(data)
         assert exit_code == 1
         assert "Missing required field 'file_path'" in stderr
@@ -124,11 +106,7 @@ class TestCLIExitCodes:
 
     def test_exit_code_1_for_bash_missing_command(self):
         """Test that Bash tool with missing command returns exit code 1."""
-        data = {
-            "hook_event_name": "PreToolUse",
-            "tool_name": "Bash",
-            "tool_input": {}
-        }
+        data = {"hook_event_name": "PreToolUse", "tool_name": "Bash", "tool_input": {}}
         exit_code, stdout, stderr = self.run_antimon(data)
         assert exit_code == 1
         assert "Missing required field 'command'" in stderr
@@ -138,10 +116,7 @@ class TestCLIExitCodes:
         """Test that JSON parse errors return exit code 1."""
         cmd = [sys.executable, "-m", "antimon"]
         result = subprocess.run(
-            cmd,
-            input="not valid json",
-            text=True,
-            capture_output=True
+            cmd, input="not valid json", text=True, capture_output=True
         )
         assert result.returncode == 1
         assert "JSON parsing error" in result.stderr
@@ -152,10 +127,7 @@ class TestCLIExitCodes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "Write",
-            "tool_input": {
-                "file_path": "/etc/passwd",
-                "content": "malicious"
-            }
+            "tool_input": {"file_path": "/etc/passwd", "content": "malicious"},
         }
         exit_code, stdout, stderr = self.run_antimon(data)
         assert exit_code == 2
@@ -170,7 +142,7 @@ class TestCLIExitCodes:
             "tool_input": {
                 "file_path": "test.py"
                 # Missing 'content' field
-            }
+            },
         }
         exit_code, stdout, stderr = self.run_antimon(data)
         assert exit_code == 1
@@ -184,9 +156,9 @@ class TestCLIExitCodes:
             "tool_name": "Edit",
             "tool_input": {
                 "file_path": "test.py",
-                "old_string": "foo"
+                "old_string": "foo",
                 # Missing 'new_string' field
-            }
+            },
         }
         exit_code, stdout, stderr = self.run_antimon(data)
         assert exit_code == 1
@@ -197,17 +169,16 @@ class TestCLIExitCodes:
 class TestCLIOutputModes:
     """Test cases for different output modes (normal, verbose, quiet)."""
 
-    def run_antimon(self, input_data: dict, args: list[str] | None = None) -> tuple[int, str, str]:
+    def run_antimon(
+        self, input_data: dict, args: list[str] | None = None
+    ) -> tuple[int, str, str]:
         """Helper to run antimon with JSON input and capture output."""
         cmd = [sys.executable, "-m", "antimon"]
         if args:
             cmd.extend(args)
 
         result = subprocess.run(
-            cmd,
-            input=json.dumps(input_data),
-            text=True,
-            capture_output=True
+            cmd, input=json.dumps(input_data), text=True, capture_output=True
         )
         return result.returncode, result.stdout, result.stderr
 
@@ -216,10 +187,7 @@ class TestCLIOutputModes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "Write",
-            "tool_input": {
-                "file_path": "/etc/passwd",
-                "content": "test"
-            }
+            "tool_input": {"file_path": "/etc/passwd", "content": "test"},
         }
         exit_code, stdout, stderr = self.run_antimon(data, ["-q"])
         assert exit_code == 2
@@ -233,10 +201,7 @@ class TestCLIOutputModes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "Write",
-            "tool_input": {
-                "file_path": "hello.py",
-                "content": "print('Hello')"
-            }
+            "tool_input": {"file_path": "hello.py", "content": "print('Hello')"},
         }
         exit_code, stdout, stderr = self.run_antimon(data, ["-q"])
         assert exit_code == 0
@@ -248,10 +213,7 @@ class TestCLIOutputModes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "Write",
-            "tool_input": {
-                "file_path": "hello.py",
-                "content": "print('Hello')"
-            }
+            "tool_input": {"file_path": "hello.py", "content": "print('Hello')"},
         }
         exit_code, stdout, stderr = self.run_antimon(data, ["-v"])
         assert exit_code == 0
@@ -265,10 +227,7 @@ class TestCLIOutputModes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "Write",
-            "tool_input": {
-                "file_path": "/etc/passwd",
-                "content": "test"
-            }
+            "tool_input": {"file_path": "/etc/passwd", "content": "test"},
         }
         exit_code, stdout, stderr = self.run_antimon(data, ["--verbose"])
         assert exit_code == 2
@@ -283,9 +242,7 @@ class TestCLIOutputModes:
         data = {
             "hook_event_name": "PreToolUse",
             "tool_name": "LS",
-            "tool_input": {
-                "path": "/home/user"
-            }
+            "tool_input": {"path": "/home/user"},
         }
         exit_code, stdout, stderr = self.run_antimon(data, ["-v"])
         assert exit_code == 0
@@ -295,11 +252,12 @@ class TestCLIOutputModes:
         """Test that --setup flag runs the interactive setup wizard."""
         # Since we can't interact with the wizard in tests, just verify it runs
         result = subprocess.run(
-            [sys.executable, "-m", "antimon", "--setup"],
-            capture_output=True,
-            text=True
+            [sys.executable, "-m", "antimon", "--setup"], capture_output=True, text=True
         )
         # Should exit successfully
         assert result.returncode == 0
         # Should show setup wizard header
-        assert "antimon Setup Wizard" in result.stdout or "antimon Setup Wizard" in result.stderr
+        assert (
+            "antimon Setup Wizard" in result.stdout
+            or "antimon Setup Wizard" in result.stderr
+        )

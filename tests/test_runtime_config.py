@@ -33,11 +33,14 @@ def test_runtime_config_from_env():
     args.allow_file = None
     args.disable_detector = None
 
-    with patch.dict(os.environ, {
-        "ANTIMON_IGNORE_PATTERNS": "*.log,tmp/*",
-        "ANTIMON_ALLOW_FILES": "/etc/hosts,/etc/resolv.conf",
-        "ANTIMON_DISABLE_DETECTORS": "docker,claude_antipatterns"
-    }):
+    with patch.dict(
+        os.environ,
+        {
+            "ANTIMON_IGNORE_PATTERNS": "*.log,tmp/*",
+            "ANTIMON_ALLOW_FILES": "/etc/hosts,/etc/resolv.conf",
+            "ANTIMON_DISABLE_DETECTORS": "docker,claude_antipatterns",
+        },
+    ):
         config = RuntimeConfig.from_args(args)
 
     assert "*.log" in config.ignore_patterns

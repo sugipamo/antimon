@@ -25,11 +25,11 @@ def test_demo_cases_structure():
         assert isinstance(explanation, str)
 
         # Check hook_data structure
-        assert 'hook_event_name' in hook_data
-        assert 'tool_name' in hook_data
-        assert 'tool_input' in hook_data
-        assert hook_data['hook_event_name'] == 'PreToolUse'
-        assert hook_data['tool_name'] in ['Write', 'Read', 'Edit']
+        assert "hook_event_name" in hook_data
+        assert "tool_name" in hook_data
+        assert "tool_input" in hook_data
+        assert hook_data["hook_event_name"] == "PreToolUse"
+        assert hook_data["tool_name"] in ["Write", "Read", "Edit"]
 
 
 def test_blocked_operations():
@@ -44,7 +44,7 @@ def test_blocked_operations():
         "Creating a Dockerfile",
         "Connecting to localhost service",
         "Writing to .env file",
-        "Editing code to add API key"
+        "Editing code to add API key",
     ]
 
     for desc, _, should_fail, _ in demo.demo_cases:
@@ -56,21 +56,18 @@ def test_allowed_operations():
     """Test that safe operations are correctly marked as allowed."""
     demo = InteractiveDemo()
 
-    allowed_descriptions = [
-        "Writing a simple Python script",
-        "Reading a README file"
-    ]
+    allowed_descriptions = ["Writing a simple Python script", "Reading a README file"]
 
     for desc, _, should_fail, _ in demo.demo_cases:
         if desc in allowed_descriptions:
             assert not should_fail, f"{desc} should be marked as allowed"
 
 
-@patch('antimon.demo.input')
-@patch('antimon.demo.print')
+@patch("antimon.demo.input")
+@patch("antimon.demo.print")
 def test_demo_exit(mock_print, mock_input):
     """Test that demo exits properly when user chooses '0'."""
-    mock_input.return_value = '0'
+    mock_input.return_value = "0"
 
     demo = InteractiveDemo()
     demo.run()
@@ -85,14 +82,17 @@ def test_demo_exit(mock_print, mock_input):
     assert success_call is not None, "Success message not found in print calls"
 
 
-@patch('antimon.demo.input')
-@patch('antimon.demo.print')
-@patch('antimon.demo.validate_hook_data')
+@patch("antimon.demo.input")
+@patch("antimon.demo.print")
+@patch("antimon.demo.validate_hook_data")
 def test_single_demo_execution(mock_validate, mock_print, mock_input):
     """Test running a single demo case."""
     # Choose demo 1, then exit
-    mock_input.side_effect = ['1', '0']
-    mock_validate.return_value = (True, ["Attempt to access sensitive file: /etc/passwd"])
+    mock_input.side_effect = ["1", "0"]
+    mock_validate.return_value = (
+        True,
+        ["Attempt to access sensitive file: /etc/passwd"],
+    )
 
     demo = InteractiveDemo()
     demo.run()
@@ -100,15 +100,15 @@ def test_single_demo_execution(mock_validate, mock_print, mock_input):
     # Verify validation was called with correct data
     mock_validate.assert_called_once()
     call_args = mock_validate.call_args[0][0]
-    assert call_args['tool_input']['file_path'] == '/etc/passwd'
+    assert call_args["tool_input"]["file_path"] == "/etc/passwd"
 
 
-@patch('antimon.demo.input')
-@patch('antimon.demo.print')
+@patch("antimon.demo.input")
+@patch("antimon.demo.print")
 def test_invalid_choice(mock_print, mock_input):
     """Test handling of invalid menu choices."""
     # Invalid choice, then exit
-    mock_input.side_effect = ['invalid', '0']
+    mock_input.side_effect = ["invalid", "0"]
 
     demo = InteractiveDemo()
     demo.run()
@@ -123,19 +123,19 @@ def test_invalid_choice(mock_print, mock_input):
     assert error_call is not None, "Error message not found in print calls"
 
 
-@patch('antimon.demo.input')
-@patch('antimon.demo.print')
-@patch('antimon.demo.validate_hook_data')
+@patch("antimon.demo.input")
+@patch("antimon.demo.print")
+@patch("antimon.demo.validate_hook_data")
 def test_custom_demo_write(mock_validate, mock_print, mock_input):
     """Test custom demo mode with Write tool."""
     # Choose custom demo, provide inputs, then exit
     mock_input.side_effect = [
-        'c',          # Choose custom demo
-        'Write',      # Tool name
-        'test.py',    # File path
-        'print()',    # Content line 1
-        'END',        # End content
-        '0'           # Exit
+        "c",  # Choose custom demo
+        "Write",  # Tool name
+        "test.py",  # File path
+        "print()",  # Content line 1
+        "END",  # End content
+        "0",  # Exit
     ]
     mock_validate.return_value = (False, [])
 
@@ -145,20 +145,20 @@ def test_custom_demo_write(mock_validate, mock_print, mock_input):
     # Verify validation was called with custom data
     assert mock_validate.called
     call_args = mock_validate.call_args[0][0]
-    assert call_args['tool_name'] == 'Write'
-    assert call_args['tool_input']['file_path'] == 'test.py'
-    assert call_args['tool_input']['content'] == 'print()'
+    assert call_args["tool_name"] == "Write"
+    assert call_args["tool_input"]["file_path"] == "test.py"
+    assert call_args["tool_input"]["content"] == "print()"
 
 
-@patch('antimon.demo.input')
-@patch('antimon.demo.print')
+@patch("antimon.demo.input")
+@patch("antimon.demo.print")
 def test_custom_demo_invalid_tool(mock_print, mock_input):
     """Test custom demo mode with invalid tool name."""
     # Choose custom demo, provide invalid tool, then exit
     mock_input.side_effect = [
-        'c',          # Choose custom demo
-        'InvalidTool',# Invalid tool name
-        '0'           # Exit
+        "c",  # Choose custom demo
+        "InvalidTool",  # Invalid tool name
+        "0",  # Exit
     ]
 
     demo = InteractiveDemo()
@@ -176,14 +176,14 @@ def test_custom_demo_invalid_tool(mock_print, mock_input):
 
 def test_run_demo_function():
     """Test the run_demo entry point function."""
-    with patch.object(InteractiveDemo, 'run') as mock_run:
+    with patch.object(InteractiveDemo, "run") as mock_run:
         run_demo()
         mock_run.assert_called_once()
 
 
 def test_keyboard_interrupt():
     """Test handling of keyboard interrupt."""
-    with patch.object(InteractiveDemo, 'run', side_effect=KeyboardInterrupt):
+    with patch.object(InteractiveDemo, "run", side_effect=KeyboardInterrupt):
         with pytest.raises(SystemExit) as exc_info:
             run_demo()
         assert exc_info.value.code == 0

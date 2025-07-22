@@ -16,10 +16,7 @@ def test_error_context_api_key():
     message = "API key found in content"
     hook_data = {
         "tool_name": "Write",
-        "tool_input": {
-            "file_path": "config.py",
-            "content": "api_key = 'sk-123'"
-        }
+        "tool_input": {"file_path": "config.py", "content": "api_key = 'sk-123'"},
     }
 
     result = context.get_context_for_error(message, hook_data)
@@ -36,12 +33,7 @@ def test_error_context_sensitive_file():
     context = ErrorContext(no_color=True)
 
     message = "Attempt to access sensitive file: /etc/passwd"
-    hook_data = {
-        "tool_name": "Read",
-        "tool_input": {
-            "file_path": "/etc/passwd"
-        }
-    }
+    hook_data = {"tool_name": "Read", "tool_input": {"file_path": "/etc/passwd"}}
 
     result = context.get_context_for_error(message, hook_data)
 
@@ -57,10 +49,7 @@ def test_error_context_llm_api():
     message = "External LLM API usage detected"
     hook_data = {
         "tool_name": "Write",
-        "tool_input": {
-            "file_path": "chat.py",
-            "content": "from openai import OpenAI"
-        }
+        "tool_input": {"file_path": "chat.py", "content": "from openai import OpenAI"},
     }
 
     result = context.get_context_for_error(message, hook_data)
@@ -77,10 +66,7 @@ def test_format_error_with_context():
     message = "API key found in content"
     hook_data = {
         "tool_name": "Write",
-        "tool_input": {
-            "file_path": "config.py",
-            "content": "key = 'secret'"
-        }
+        "tool_input": {"file_path": "config.py", "content": "key = 'secret'"},
     }
 
     result = context.format_error_with_context(message, hook_data)
