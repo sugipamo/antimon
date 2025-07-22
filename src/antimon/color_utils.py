@@ -7,7 +7,6 @@ Color utilities for antimon terminal output
 
 import os
 import sys
-from typing import Optional
 
 
 class Colors:
@@ -20,14 +19,14 @@ class Colors:
     MAGENTA = '\033[95m'
     CYAN = '\033[96m'
     WHITE = '\033[97m'
-    
+
     # Styles
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-    
+
     # Reset
     RESET = '\033[0m'
-    
+
     # Semantic aliases
     HEADER = BOLD
     OKBLUE = BLUE
@@ -47,16 +46,16 @@ def supports_color() -> bool:
     # Check if output is a TTY
     if not hasattr(sys.stdout, 'isatty') or not sys.stdout.isatty():
         return False
-    
+
     # Check for NO_COLOR environment variable
     if os.environ.get('NO_COLOR'):
         return False
-    
+
     # Check for TERM environment variable
     term = os.environ.get('TERM', '')
     if term == 'dumb':
         return False
-    
+
     # Check platform
     if sys.platform == 'win32':
         # Windows 10+ supports ANSI colors
@@ -73,14 +72,14 @@ def supports_color() -> bool:
         except:
             pass
         return False
-    
+
     return True
 
 
 class ColorFormatter:
     """Format text with colors for terminal output"""
-    
-    def __init__(self, use_color: Optional[bool] = None):
+
+    def __init__(self, use_color: bool | None = None):
         """
         Initialize color formatter
         
@@ -91,42 +90,42 @@ class ColorFormatter:
             self.use_color = supports_color()
         else:
             self.use_color = use_color
-    
+
     def _colorize(self, text: str, color: str, bold: bool = False) -> str:
         """Apply color to text if colors are enabled"""
         if not self.use_color:
             return text
-        
+
         if bold:
             return f"{Colors.BOLD}{color}{text}{Colors.RESET}"
         return f"{color}{text}{Colors.RESET}"
-    
+
     def error(self, text: str, bold: bool = True) -> str:
         """Format error messages in red"""
         return self._colorize(text, Colors.RED, bold)
-    
+
     def success(self, text: str, bold: bool = True) -> str:
         """Format success messages in green"""
         return self._colorize(text, Colors.GREEN, bold)
-    
+
     def warning(self, text: str, bold: bool = True) -> str:
         """Format warning messages in yellow"""
         return self._colorize(text, Colors.YELLOW, bold)
-    
+
     def info(self, text: str, bold: bool = False) -> str:
         """Format info messages in blue"""
         return self._colorize(text, Colors.BLUE, bold)
-    
+
     def highlight(self, text: str, bold: bool = True) -> str:
         """Format highlighted text in cyan"""
         return self._colorize(text, Colors.CYAN, bold)
-    
+
     def bold(self, text: str) -> str:
         """Format text in bold"""
         if not self.use_color:
             return text
         return f"{Colors.BOLD}{text}{Colors.RESET}"
-    
+
     def format_security_issue(self, message: str) -> str:
         """
         Format security issue messages with appropriate colors
@@ -139,7 +138,7 @@ class ColorFormatter:
         """
         lines = message.split('\n')
         formatted_lines = []
-        
+
         for line in lines:
             line = line.strip()
             if not line:
@@ -163,7 +162,7 @@ class ColorFormatter:
             else:
                 # Main error message
                 formatted_lines.append(self.error(line))
-        
+
         return '\n'.join(formatted_lines)
 
 
@@ -181,9 +180,9 @@ def apply_color(text: str, color: str, no_color: bool = False) -> str:
     """
     if no_color or not supports_color():
         return text
-    
+
     # Enable ANSI colors on Windows
     if sys.platform == "win32":
         enable_windows_ansi_support()
-    
+
     return f"{color}{text}{Colors.RESET}"

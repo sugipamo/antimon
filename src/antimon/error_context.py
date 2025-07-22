@@ -5,39 +5,37 @@
 Error context and helpful suggestions for antimon
 """
 
-from typing import Optional, Dict, List
-import re
 
-from .color_utils import apply_color, Colors
+from .color_utils import Colors, apply_color
 
 
 class ErrorContext:
     """Provides context and suggestions for security violations."""
-    
+
     def __init__(self, no_color: bool = False):
         self.no_color = no_color
-    
-    def get_context_for_error(self, message: str, hook_data: Dict) -> str:
+
+    def get_context_for_error(self, message: str, hook_data: dict) -> str:
         """Get contextual information and suggestions for an error."""
         context_lines = []
-        
+
         # Extract key information from hook data
         tool_name = hook_data.get("tool_name", "")
         tool_input = hook_data.get("tool_input", {})
         file_path = tool_input.get("file_path", "")
-        
+
         # Add file context if available
         if file_path:
             context_lines.append(
                 apply_color(f"📄 File: {file_path}", Colors.BOLD, self.no_color)
             )
-        
+
         # Add tool context
         if tool_name:
             context_lines.append(
                 apply_color(f"🔧 Tool: {tool_name}", Colors.BOLD, self.no_color)
             )
-        
+
         # Get specific suggestions based on error type
         suggestions = self._get_suggestions(message, hook_data)
         if suggestions:
@@ -45,7 +43,7 @@ class ErrorContext:
             context_lines.append(apply_color("💡 Suggestions:", Colors.OKBLUE, self.no_color))
             for suggestion in suggestions:
                 context_lines.append(f"   • {suggestion}")
-        
+
         # Add FAQ link for common errors
         faq_link = self._get_faq_link(message)
         if faq_link:
@@ -53,13 +51,13 @@ class ErrorContext:
             context_lines.append(
                 apply_color(f"📚 Learn more: {faq_link}", Colors.OKBLUE, self.no_color)
             )
-        
+
         return "\n".join(context_lines)
-    
-    def _get_suggestions(self, message: str, hook_data: Dict) -> List[str]:
+
+    def _get_suggestions(self, message: str, hook_data: dict) -> list[str]:
         """Get specific suggestions based on the error message."""
         suggestions = []
-        
+
         # API key detection
         if "API key" in message:
             suggestions.extend([
@@ -67,7 +65,7 @@ class ErrorContext:
                 "Store secrets in a .env file (add to .gitignore)",
                 "For examples/docs, use placeholders like 'your-api-key-here'"
             ])
-        
+
         # Sensitive file access
         elif "sensitive file" in message:
             file_path = hook_data.get("tool_input", {}).get("file_path", "")
@@ -81,7 +79,7 @@ class ErrorContext:
                     "SSH keys should not be modified by AI tools",
                     "Consider using SSH agent or key management tools",
                 ])
-        
+
         # LLM API usage
         elif "LLM API" in message or "external AI" in message:
             suggestions.extend([
@@ -89,7 +87,7 @@ class ErrorContext:
                 "Use the AI assistant's built-in capabilities instead",
                 "For demos, use mock responses instead of real API calls"
             ])
-        
+
         # Docker operations
         elif "Docker" in message:
             suggestions.extend([
@@ -97,7 +95,7 @@ class ErrorContext:
                 "Consider using development containers instead",
                 "Review Docker security best practices"
             ])
-        
+
         # Localhost connections
         elif "localhost" in message:
             suggestions.extend([
@@ -105,7 +103,7 @@ class ErrorContext:
                 "Consider using service discovery instead of hardcoded URLs",
                 "Use reverse proxies for local development"
             ])
-        
+
         # Dangerous bash commands
         elif "dangerous command" in message or "bash" in message.lower():
             suggestions.extend([
@@ -113,36 +111,36 @@ class ErrorContext:
                 "Consider using Python/Node.js scripts instead of shell commands",
                 "Always validate and sanitize inputs"
             ])
-        
+
         return suggestions
-    
-    def _get_faq_link(self, message: str) -> Optional[str]:
+
+    def _get_faq_link(self, message: str) -> str | None:
         """Get a relevant FAQ link based on the error."""
         base_url = "https://github.com/antimon-security/antimon/blob/main/docs/faq.md"
-        
+
         if "API key" in message:
             return f"{base_url}#api-key-false-positives"
         elif "sensitive file" in message:
             return f"{base_url}#sensitive-file-access"
         elif "LLM API" in message:
             return f"{base_url}#llm-api-alternatives"
-        
+
         return None
-    
-    def format_error_with_context(self, message: str, hook_data: Dict) -> str:
+
+    def format_error_with_context(self, message: str, hook_data: dict) -> str:
         """Format an error message with full context."""
         lines = []
-        
+
         # Main error message
-        lines.append(apply_color(f"❌ Security issue detected:", Colors.FAIL, self.no_color))
+        lines.append(apply_color("❌ Security issue detected:", Colors.FAIL, self.no_color))
         lines.append(f"   {message}")
         lines.append("")
-        
+
         # Add context
         context = self.get_context_for_error(message, hook_data)
         if context:
             lines.append(context)
-        
+
         return "\n".join(lines)
 
 

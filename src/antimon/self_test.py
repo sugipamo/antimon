@@ -7,8 +7,6 @@ Self-test functionality for antimon
 
 import json
 import logging
-import sys
-from typing import Tuple
 
 from .core import validate_hook_data
 
@@ -26,9 +24,9 @@ def run_self_test(verbose: bool = False) -> int:
     # Suppress logging during tests unless verbose mode is enabled
     if not verbose:
         logging.getLogger("antimon").setLevel(logging.ERROR)
-    
+
     print("🔍 Running antimon self-test...\n")
-    
+
     test_cases = [
         # Test 1: Should detect sensitive file access
         {
@@ -44,7 +42,7 @@ def run_self_test(verbose: bool = False) -> int:
             "should_detect": True,
             "expected_pattern": "system configuration file"
         },
-        
+
         # Test 2: Should detect API key
         {
             "name": "API key detection",
@@ -59,7 +57,7 @@ def run_self_test(verbose: bool = False) -> int:
             "should_detect": True,
             "expected_pattern": "API key"
         },
-        
+
         # Test 3: Should detect LLM API usage
         {
             "name": "LLM API detection",
@@ -74,7 +72,7 @@ def run_self_test(verbose: bool = False) -> int:
             "should_detect": True,
             "expected_pattern": "OpenAI API"
         },
-        
+
         # Test 4: Should detect Docker operations
         {
             "name": "Docker operation detection",
@@ -89,7 +87,7 @@ def run_self_test(verbose: bool = False) -> int:
             "should_detect": True,
             "expected_pattern": "Docker"
         },
-        
+
         # Test 5: Should detect localhost connections
         {
             "name": "Localhost connection detection",
@@ -104,7 +102,7 @@ def run_self_test(verbose: bool = False) -> int:
             "should_detect": True,
             "expected_pattern": "localhost"
         },
-        
+
         # Test 6: Safe operation should pass
         {
             "name": "Safe operation (should pass)",
@@ -119,7 +117,7 @@ def run_self_test(verbose: bool = False) -> int:
             "should_detect": False,
             "expected_pattern": None
         },
-        
+
         # Test 7: Edit tool with API key
         {
             "name": "Edit tool API key detection",
@@ -135,7 +133,7 @@ def run_self_test(verbose: bool = False) -> int:
             "should_detect": True,
             "expected_pattern": "API key"
         },
-        
+
         # Test 8: Safe Read tool should pass
         {
             "name": "Safe Read operation (should pass)",
@@ -149,7 +147,7 @@ def run_self_test(verbose: bool = False) -> int:
             "should_detect": False,
             "expected_pattern": None
         },
-        
+
         # Test 9: Read tool with sensitive file
         {
             "name": "Read sensitive file detection",
@@ -163,7 +161,7 @@ def run_self_test(verbose: bool = False) -> int:
             "should_detect": True,
             "expected_pattern": "sensitive file"
         },
-        
+
         # Test 10: Bash tool with dangerous command
         {
             "name": "Bash dangerous command detection",
@@ -177,7 +175,7 @@ def run_self_test(verbose: bool = False) -> int:
             "should_detect": True,
             "expected_pattern": "Dangerous command"
         },
-        
+
         # Test 11: Safe Bash command should pass
         {
             "name": "Safe Bash command (should pass)",
@@ -192,18 +190,18 @@ def run_self_test(verbose: bool = False) -> int:
             "expected_pattern": None
         }
     ]
-    
+
     passed = 0
     failed = 0
-    
+
     for i, test_case in enumerate(test_cases, 1):
         print(f"Test {i}: {test_case['name']}")
-        
+
         if verbose:
             print(f"  Input: {json.dumps(test_case['data'], indent=2)}")
-        
+
         has_issues, messages, stats = validate_hook_data(test_case['data'])
-        
+
         if test_case['should_detect']:
             if has_issues:
                 # Check if expected pattern is in any message
@@ -211,7 +209,7 @@ def run_self_test(verbose: bool = False) -> int:
                     test_case['expected_pattern'].lower() in msg.lower()
                     for msg in messages
                 )
-                
+
                 if pattern_found:
                     print(f"  ✅ PASS: Correctly detected {test_case['expected_pattern']}")
                     if verbose:
@@ -226,20 +224,20 @@ def run_self_test(verbose: bool = False) -> int:
                 failed += 1
         else:
             if not has_issues:
-                print(f"  ✅ PASS: Correctly allowed safe operation")
+                print("  ✅ PASS: Correctly allowed safe operation")
                 passed += 1
             else:
-                print(f"  ❌ FAIL: False positive - detected issues in safe operation")
+                print("  ❌ FAIL: False positive - detected issues in safe operation")
                 print(f"  Messages: {messages}")
                 failed += 1
-        
+
         print()
-    
+
     # Summary
     total = passed + failed
     print("="*50)
     print(f"📊 Test Summary: {passed}/{total} tests passed")
-    
+
     if failed == 0:
         print("✅ All tests passed! antimon is working correctly.")
         return 0

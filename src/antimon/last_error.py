@@ -6,12 +6,10 @@ Last error tracking for antimon
 """
 
 import json
-import sys
-from pathlib import Path
-from typing import Optional, Dict, List
 from datetime import datetime
+from pathlib import Path
 
-from .color_utils import apply_color, Colors
+from .color_utils import Colors, apply_color
 
 
 def get_error_file() -> Path:
@@ -21,11 +19,11 @@ def get_error_file() -> Path:
     return config_dir / "last_error.json"
 
 
-def save_last_error(issues: List[str], hook_data: Dict) -> None:
+def save_last_error(issues: list[str], hook_data: dict) -> None:
     """Save the last error for later explanation."""
     error_file = get_error_file()
     error_file.parent.mkdir(parents=True, exist_ok=True)
-    
+
     error_record = {
         "timestamp": datetime.now().isoformat(),
         "issues": issues,
@@ -33,24 +31,24 @@ def save_last_error(issues: List[str], hook_data: Dict) -> None:
         "tool_name": hook_data.get("tool_name", ""),
         "file_path": hook_data.get("tool_input", {}).get("file_path", "")
     }
-    
+
     try:
         with open(error_file, "w") as f:
             json.dump(error_record, f, indent=2)
-    except Exception as e:
+    except Exception:
         # Silently fail - don't interrupt the main flow
         pass
 
 
-def load_last_error() -> Optional[Dict]:
+def load_last_error() -> dict | None:
     """Load the last error if available."""
     error_file = get_error_file()
-    
+
     if not error_file.exists():
         return None
-    
+
     try:
-        with open(error_file, "r") as f:
+        with open(error_file) as f:
             return json.load(f)
     except Exception:
         return None
@@ -59,55 +57,55 @@ def load_last_error() -> Optional[Dict]:
 def explain_last_error(no_color: bool = False) -> None:
     """Explain the last error in detail."""
     error_record = load_last_error()
-    
+
     if not error_record:
         print(apply_color("ℹ️  No recent errors found.", Colors.WARNING, no_color))
         print("\nThis command shows detailed explanations for the last antimon block.")
         print("Run it after antimon blocks an operation to understand why.")
         return
-    
+
     print()
     print(apply_color("📋 Last Error Details", Colors.HEADER, no_color))
     print(apply_color("=" * 50, Colors.HEADER, no_color))
     print()
-    
+
     # Show when the error occurred
     timestamp = error_record.get("timestamp", "Unknown")
     print(f"⏰ Occurred at: {timestamp}")
     print()
-    
+
     # Show the tool and file
     tool_name = error_record.get("tool_name", "Unknown")
     file_path = error_record.get("file_path", "N/A")
     print(f"🔧 Tool: {tool_name}")
     print(f"📄 File: {file_path}")
     print()
-    
+
     # Show the issues
     issues = error_record.get("issues", [])
     print(apply_color("❌ Issues detected:", Colors.FAIL, no_color))
     for issue in issues:
         print(f"   • {issue}")
     print()
-    
+
     # Provide detailed explanations for each issue type
     hook_data = error_record.get("hook_data", {})
     _provide_detailed_explanations(issues, hook_data, no_color)
-    
+
     # Show how to bypass if needed
     print(apply_color("🔧 How to handle this:", Colors.OKBLUE, no_color))
     print()
     _suggest_solutions(issues, hook_data, no_color)
 
 
-def _provide_detailed_explanations(issues: List[str], hook_data: Dict, no_color: bool) -> None:
+def _provide_detailed_explanations(issues: list[str], hook_data: dict, no_color: bool) -> None:
     """Provide detailed explanations for each issue type."""
     print(apply_color("📚 Why these are blocked:", Colors.OKBLUE, no_color))
     print()
-    
+
     # Track which explanations we've shown to avoid duplicates
     explained_types = set()
-    
+
     for issue in issues:
         if "API key" in issue and "api_key" not in explained_types:
             explained_types.add("api_key")
@@ -123,7 +121,7 @@ def _provide_detailed_explanations(issues: List[str], hook_data: Dict, no_color:
             print("    - Regular expressions match common key patterns")
             print("    - Case-insensitive matching for flexibility")
             print()
-        
+
         elif "sensitive file" in issue and "sensitive_file" not in explained_types:
             explained_types.add("sensitive_file")
             print("• " + apply_color("Sensitive File Detection:", Colors.BOLD, no_color))
@@ -140,7 +138,7 @@ def _provide_detailed_explanations(issues: List[str], hook_data: Dict, no_color:
             print("    - Path pattern matching against known sensitive locations")
             print("    - File extension checking for key/cert files")
             print()
-        
+
         elif ("LLM API" in issue or "external AI" in issue) and "llm_api" not in explained_types:
             explained_types.add("llm_api")
             print("• " + apply_color("External LLM API Detection:", Colors.BOLD, no_color))
@@ -156,7 +154,7 @@ def _provide_detailed_explanations(issues: List[str], hook_data: Dict, no_color:
             print("    - Import statement pattern matching")
             print("    - URL and domain detection")
             print()
-        
+
         elif "Docker" in issue and "docker" not in explained_types:
             explained_types.add("docker")
             print("• " + apply_color("Docker Operation Detection:", Colors.BOLD, no_color))
@@ -171,7 +169,7 @@ def _provide_detailed_explanations(issues: List[str], hook_data: Dict, no_color:
             print("    - Command pattern matching")
             print("    - Dockerfile keyword detection")
             print()
-        
+
         elif "localhost" in issue and "localhost" not in explained_types:
             explained_types.add("localhost")
             print("• " + apply_color("Localhost Connection Detection:", Colors.BOLD, no_color))
@@ -188,10 +186,10 @@ def _provide_detailed_explanations(issues: List[str], hook_data: Dict, no_color:
             print()
 
 
-def _suggest_solutions(issues: List[str], hook_data: Dict, no_color: bool) -> None:
+def _suggest_solutions(issues: list[str], hook_data: dict, no_color: bool) -> None:
     """Suggest specific solutions for the detected issues."""
     suggested_solutions = set()
-    
+
     for issue in issues:
         if "API key" in issue:
             suggested_solutions.add("api_key")
@@ -199,7 +197,7 @@ def _suggest_solutions(issues: List[str], hook_data: Dict, no_color: bool) -> No
             suggested_solutions.add("sensitive_file")
         elif "LLM API" in issue:
             suggested_solutions.add("llm_api")
-    
+
     if "api_key" in suggested_solutions:
         print("1. " + apply_color("For API Keys:", Colors.BOLD, no_color))
         print("   # Instead of:")
@@ -209,7 +207,7 @@ def _suggest_solutions(issues: List[str], hook_data: Dict, no_color: bool) -> No
         print("   import os")
         print("   api_key = os.environ.get('API_KEY')")
         print()
-    
+
     if "sensitive_file" in suggested_solutions:
         file_path = hook_data.get("tool_input", {}).get("file_path", "")
         print("2. " + apply_color("For Sensitive Files:", Colors.BOLD, no_color))
@@ -218,7 +216,7 @@ def _suggest_solutions(issues: List[str], hook_data: Dict, no_color: bool) -> No
         print("   ~/.config/myapp/config.yaml")
         print("   ./config/settings.json")
         print()
-    
+
     if "llm_api" in suggested_solutions:
         print("3. " + apply_color("For LLM APIs:", Colors.BOLD, no_color))
         print("   # Instead of: from openai import OpenAI")
@@ -227,7 +225,7 @@ def _suggest_solutions(issues: List[str], hook_data: Dict, no_color: bool) -> No
         print("   - Local models with llama.cpp or ollama")
         print("   - Mock responses for testing")
         print()
-    
+
     # Always show bypass option
     print(apply_color("🚨 If you need to bypass temporarily:", Colors.WARNING, no_color))
     print("   # Disable antimon:")
@@ -236,7 +234,7 @@ def _suggest_solutions(issues: List[str], hook_data: Dict, no_color: bool) -> No
     print("   # Re-enable after:")
     print("   claude-code config set hooks.PreToolUse antimon")
     print()
-    
+
     # Show how to whitelist
     print(apply_color("📝 To allow specific files:", Colors.OKGREEN, no_color))
     print("   # Use runtime options:")

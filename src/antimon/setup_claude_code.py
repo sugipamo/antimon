@@ -2,10 +2,7 @@
 """Setup wizard for Claude Code integration"""
 
 import json
-import os
 import subprocess
-import sys
-from pathlib import Path
 
 from .color_utils import ColorFormatter
 
@@ -107,14 +104,14 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
         True if setup was successful, False otherwise
     """
     color = ColorFormatter(use_color=not no_color)
-    
+
     print(f"\n{color.header('🔧 Claude Code Integration Setup')}")
     print("=" * 50)
-    
+
     # Step 1: Check if claude-code is installed
     print(f"\n{color.info('Step 1: Checking for Claude Code...')}")
     claude_code_path = find_claude_code_command()
-    
+
     if not claude_code_path:
         print(f"{color.error('❌ Claude Code not found in PATH')}")
         print("\n💡 To install Claude Code:")
@@ -130,53 +127,53 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
         print("   • Claude Code docs: https://claude.ai/docs/code")
         print("   • antimon setup guide: https://github.com/antimon-security/antimon#claude-code-hook")
         return False
-    
+
     print(f"{color.success('✅ Claude Code found:')} {claude_code_path}")
-    
+
     # Step 2: Check if antimon is in PATH
     print(f"\n{color.info('Step 2: Checking antimon installation...')}")
     antimon_path = verify_antimon_in_path()
-    
+
     if not antimon_path:
         print(f"{color.error('❌ antimon not found in PATH')}")
         print("\n💡 Make sure antimon is installed and in your PATH:")
         print("   • Run: pip install antimon")
         print("   • Or: pipx install antimon")
         return False
-    
+
     print(f"{color.success('✅ antimon found:')} {antimon_path}")
-    
+
     # Step 3: Check current configuration
     print(f"\n{color.info('Step 3: Checking current configuration...')}")
     current_config = get_claude_code_config()
-    
+
     if current_config:
         hooks = current_config.get("hooks", {})
         current_hook = hooks.get("PreToolUse")
-        
+
         if current_hook:
             print(f"{color.warning('⚠️  PreToolUse hook already configured:')}")
             print(f"   Current value: {current_hook}")
-            
+
             if current_hook == "antimon":
                 print(f"\n{color.success('✅ antimon is already configured!')}")
                 print("\n🎉 You're all set! antimon is protecting your Claude Code sessions.")
                 return True
-            
+
             response = input(f"\n{color.info('Replace with antimon? [Y/n]:')} ").strip().lower()
             if response == 'n':
                 print("\n❌ Setup cancelled.")
                 return False
-    
+
     # Step 4: Configure the hook
     print(f"\n{color.info('Step 4: Configuring Claude Code hook...')}")
-    
+
     if set_claude_code_hook("PreToolUse", "antimon"):
         print(f"{color.success('✅ Successfully configured antimon as PreToolUse hook!')}")
-        
+
         # Step 5: Verify configuration
         print(f"\n{color.info('Step 5: Verifying configuration...')}")
-        
+
         # Check the configuration again
         verify_result = subprocess.run(
             ["claude-code", "config", "get", "hooks.PreToolUse"],
@@ -184,30 +181,30 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
             text=True,
             check=False
         )
-        
+
         if verify_result.returncode == 0 and verify_result.stdout.strip() == "antimon":
             print(f"{color.success('✅ Configuration verified!')}")
-            
+
             print(f"\n{color.header('🎉 Setup Complete!')}")
             print("\nantimon is now protecting your Claude Code sessions.")
             print("\n📝 What happens now:")
             print("   • antimon will check all code modifications before they're applied")
             print("   • Dangerous operations will be blocked automatically")
             print("   • You'll see clear explanations when something is blocked")
-            
+
             print("\n💡 Test it out:")
             print("   1. Open a new Claude Code session")
             print("   2. Try to write a file with an API key:")
             print(f'      {color.code("echo \'api_key = \"sk-123\"\' > test.py")}')
             print("   3. antimon should block this operation")
-            
+
             print("\n🔧 To disable temporarily:")
             print(f"   {color.code('claude-code config unset hooks.PreToolUse')}")
-            
+
             print("\n📚 Learn more:")
             print("   • Run: antimon --help")
             print("   • Visit: https://github.com/antimon-security/antimon")
-            
+
             return True
         else:
             print(f"{color.error('❌ Configuration verification failed')}")
@@ -231,7 +228,7 @@ def check_claude_code_setup() -> tuple[bool, str]:
     # Check if claude-code exists
     if not find_claude_code_command():
         return False, "Claude Code not installed"
-    
+
     # Check configuration
     try:
         result = subprocess.run(

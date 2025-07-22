@@ -9,23 +9,23 @@ import argparse
 import sys
 
 from . import __version__
-from .core import process_stdin, check_file_directly, check_content_directly
-from .logging_config import setup_logging
-from .self_test import run_self_test
+from .core import check_content_directly, check_file_directly, process_stdin
+from .demo import run_demo
+from .error_context import show_error_help
 from .first_run import (
     is_first_run,
     mark_first_run_complete,
-    show_first_run_guide,
-    suggest_claude_code_setup,
-    show_first_run_guide_interactive,
     run_interactive_setup,
+    show_first_run_guide,
+    show_first_run_guide_interactive,
+    suggest_claude_code_setup,
 )
-from .error_context import show_error_help
-from .runtime_config import RuntimeConfig, set_runtime_config
 from .last_error import explain_last_error
-from .demo import run_demo
-from .status import show_status
+from .logging_config import setup_logging
+from .runtime_config import RuntimeConfig, set_runtime_config
+from .self_test import run_self_test
 from .setup_claude_code import setup_claude_code_integration
+from .status import show_status
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -151,7 +151,7 @@ For more information: https://github.com/antimon-security/antimon
         action="store_true",
         help="Run interactive demo to see antimon's detection capabilities in action.",
     )
-    
+
     parser.add_argument(
         "--non-interactive",
         action="store_true",
@@ -169,25 +169,25 @@ For more information: https://github.com/antimon-security/antimon
         action="store_true",
         help="Preview what would be detected without blocking. Shows all detections that would occur.",
     )
-    
+
     parser.add_argument(
         "--stats",
         action="store_true",
         help="Show detailed statistics after checks (detector counts, pass/fail rates).",
     )
-    
+
     parser.add_argument(
         "--check-file",
         type=str,
         help="Check a specific file directly without JSON input. Example: antimon --check-file config.py",
     )
-    
+
     parser.add_argument(
         "--check-content",
         type=str,
         help="Check content directly without JSON input. Example: antimon --check-content 'api_key = \"sk-123\"'",
     )
-    
+
     parser.add_argument(
         "--setup-claude-code",
         action="store_true",
@@ -198,11 +198,11 @@ For more information: https://github.com/antimon-security/antimon
 
     # Check if this is the first run (before running test)
     first_run = is_first_run()
-    
+
     # Create and set runtime configuration
     runtime_config = RuntimeConfig.from_args(args)
     set_runtime_config(runtime_config)
-    
+
     # Show runtime config in verbose mode
     if args.verbose and not args.quiet:
         config_summary = runtime_config.get_summary()
@@ -211,7 +211,7 @@ For more information: https://github.com/antimon-security/antimon
             for line in config_summary:
                 print(f"   • {line}", file=sys.stderr)
             print("", file=sys.stderr)  # Empty line
-    
+
     # Show quickstart guide if requested
     if args.quickstart:
         show_first_run_guide(no_color=args.no_color)
@@ -219,42 +219,42 @@ For more information: https://github.com/antimon-security/antimon
         if first_run:
             mark_first_run_complete()
         return 0
-    
+
     # Show error help if requested
     if args.help_errors:
         show_error_help(no_color=args.no_color)
         if first_run:
             mark_first_run_complete()
         return 0
-    
+
     # Explain last error if requested
     if args.explain_last_error:
         explain_last_error(no_color=args.no_color)
         if first_run:
             mark_first_run_complete()
         return 0
-    
+
     # Run setup wizard if requested
     if args.setup:
         run_interactive_setup(no_color=args.no_color)
         if first_run:
             mark_first_run_complete()
         return 0
-    
+
     # Run demo if requested
     if args.demo:
         if first_run:
             mark_first_run_complete()
         run_demo(non_interactive=args.non_interactive)
         return 0
-    
+
     # Show status if requested
     if args.status:
         if first_run:
             mark_first_run_complete()
         show_status(no_color=args.no_color)
         return 0
-    
+
     # Run self-test if requested
     if args.test:
         if first_run:
@@ -292,13 +292,13 @@ For more information: https://github.com/antimon-security/antimon
         if first_run:
             mark_first_run_complete()
         return check_file_directly(args.check_file, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color)
-    
+
     # Handle direct content checking
     if args.check_content:
         if first_run:
             mark_first_run_complete()
         return check_content_directly(args.check_content, verbose=args.verbose, quiet=args.quiet, no_color=args.no_color)
-    
+
     # Handle Claude Code setup
     if args.setup_claude_code:
         if first_run:
