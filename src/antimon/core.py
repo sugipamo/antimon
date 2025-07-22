@@ -236,34 +236,34 @@ def _parse_json_input(
     except json.JSONDecodeError as e:
         logger.debug(f"JSON parsing error: {e}")
         if not quiet:
-            print(f"\n{color.error('❌ JSON parsing error:')} {e}", file=sys.stderr)
-            print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
-            print(
+            logger.error(f"\n{color.error('❌ JSON parsing error:')} {e}")
+            logger.print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
+            logger.print(
                 "   Ensure your input is valid JSON. Example of valid format:",
                 file=sys.stderr,
             )
-            print("   {", file=sys.stderr)
-            print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
-            print('     "tool_name": "Write",', file=sys.stderr)
-            print('     "tool_input": {', file=sys.stderr)
-            print('       "file_path": "example.py",', file=sys.stderr)
-            print('       "content": "print(\'Hello\')"', file=sys.stderr)
-            print("     }", file=sys.stderr)
-            print("   }", file=sys.stderr)
-            print("\n   Common issues:", file=sys.stderr)
-            print("   • Missing quotes around strings", file=sys.stderr)
-            print("   • Trailing commas after last item", file=sys.stderr)
-            print('   • Unescaped quotes in strings (use \\") ', file=sys.stderr)
-            print("   • Missing brackets or braces\n", file=sys.stderr)
+            logger.print("   {", file=sys.stderr)
+            logger.print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+            logger.print('     "tool_name": "Write",', file=sys.stderr)
+            logger.print('     "tool_input": {', file=sys.stderr)
+            logger.print('       "file_path": "example.py",', file=sys.stderr)
+            logger.print('       "content": "print(\'Hello\')"', file=sys.stderr)
+            logger.print("     }", file=sys.stderr)
+            logger.print("   }", file=sys.stderr)
+            logger.print("\n   Common issues:", file=sys.stderr)
+            logger.print("   • Missing quotes around strings", file=sys.stderr)
+            logger.print("   • Trailing commas after last item", file=sys.stderr)
+            logger.print('   • Unescaped quotes in strings (use \\") ', file=sys.stderr)
+            logger.print("   • Missing brackets or braces\n", file=sys.stderr)
         return None, 1
     except Exception as e:
         logger.error(f"Unexpected error reading input: {e}", exc_info=True)
         if not quiet:
-            print(f"\n{color.error('❌ Error reading input:')} {e}", file=sys.stderr)
-            print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
-            print("   • Ensure data is being piped to stdin", file=sys.stderr)
-            print("   • Example: echo '{...}' | antimon", file=sys.stderr)
-            print("   • Or: cat hook_data.json | antimon\n", file=sys.stderr)
+            logger.error(f"\n{color.error('❌ Error reading input:')} {e}")
+            logger.print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
+            logger.print("   • Ensure data is being piped to stdin", file=sys.stderr)
+            logger.print("   • Example: echo '{...}' | antimon", file=sys.stderr)
+            logger.print("   • Or: cat hook_data.json | antimon\n", file=sys.stderr)
         return None, 1
 
 
@@ -292,23 +292,22 @@ def _validate_required_fields(
             if "content" not in tool_input:
                 logger.error(f"Missing required field 'content' for {tool_name} tool")
                 if not quiet:
-                    print(
-                        f"\n{color.error('❌ Validation error:')} Missing required field 'content' for {tool_name} tool",
-                        file=sys.stderr,
+                    logger.error(
+                        f"\n{color.error('❌ Validation error:')} Missing required field 'content' for {tool_name} tool"
                     )
-                    print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
-                    print(
+                    logger.print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
+                    logger.print(
                         "   The Write tool requires both 'file_path' and 'content' fields:",
                         file=sys.stderr,
                     )
-                    print("   {", file=sys.stderr)
-                    print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
-                    print('     "tool_name": "Write",', file=sys.stderr)
-                    print('     "tool_input": {', file=sys.stderr)
-                    print('       "file_path": "example.py",', file=sys.stderr)
-                    print('       "content": "file contents here"', file=sys.stderr)
-                    print("     }", file=sys.stderr)
-                    print("   }\n", file=sys.stderr)
+                    logger.print("   {", file=sys.stderr)
+                    logger.print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+                    logger.print('     "tool_name": "Write",', file=sys.stderr)
+                    logger.print('     "tool_input": {', file=sys.stderr)
+                    logger.print('       "file_path": "example.py",', file=sys.stderr)
+                    logger.print('       "content": "file contents here"', file=sys.stderr)
+                    logger.print("     }", file=sys.stderr)
+                    logger.print("   }\n", file=sys.stderr)
                 return 1
         elif tool_name in {"Edit", "MultiEdit"}:
             # Edit tools need either 'new_string' or both 'old_string' and 'new_string'
@@ -317,62 +316,59 @@ def _validate_required_fields(
                     f"Missing required field 'new_string' for {tool_name} tool"
                 )
                 if not quiet:
-                    print(
-                        f"\n❌ Validation error: Missing required field 'new_string' for {tool_name} tool",
-                        file=sys.stderr,
+                    logger.error(
+                        f"\n❌ Validation error: Missing required field 'new_string' for {tool_name} tool"
                     )
-                    print("\n💡 How to fix:", file=sys.stderr)
-                    print(
+                    logger.print("\n💡 How to fix:", file=sys.stderr)
+                    logger.print(
                         f"   The {tool_name} tool requires 'old_string' and 'new_string' fields:",
                         file=sys.stderr,
                     )
-                    print("   {", file=sys.stderr)
-                    print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
-                    print(f'     "tool_name": "{tool_name}",', file=sys.stderr)
-                    print('     "tool_input": {', file=sys.stderr)
-                    print('       "file_path": "example.py",', file=sys.stderr)
-                    print('       "old_string": "text to replace",', file=sys.stderr)
-                    print('       "new_string": "replacement text"', file=sys.stderr)
-                    print("     }", file=sys.stderr)
-                    print("   }\n", file=sys.stderr)
+                    logger.print("   {", file=sys.stderr)
+                    logger.print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+                    logger.print(f'     "tool_name": "{tool_name}",', file=sys.stderr)
+                    logger.print('     "tool_input": {', file=sys.stderr)
+                    logger.print('       "file_path": "example.py",', file=sys.stderr)
+                    logger.print('       "old_string": "text to replace",', file=sys.stderr)
+                    logger.print('       "new_string": "replacement text"', file=sys.stderr)
+                    logger.print("     }", file=sys.stderr)
+                    logger.print("   }\n", file=sys.stderr)
                 return 1
 
     # Validate required fields for Read tool
     if tool_name == "Read" and "file_path" not in tool_input:
         logger.error(f"Missing required field 'file_path' for {tool_name} tool")
         if not quiet:
-            print(
-                f"\n{color.error('❌ Validation error:')} Missing required field 'file_path' for {tool_name} tool",
-                file=sys.stderr,
+            logger.error(
+                f"\n{color.error('❌ Validation error:')} Missing required field 'file_path' for {tool_name} tool"
             )
-            print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
-            print("   The Read tool requires a 'file_path' field:", file=sys.stderr)
-            print("   {", file=sys.stderr)
-            print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
-            print('     "tool_name": "Read",', file=sys.stderr)
-            print('     "tool_input": {', file=sys.stderr)
-            print('       "file_path": "/path/to/file"', file=sys.stderr)
-            print("     }", file=sys.stderr)
-            print("   }\n", file=sys.stderr)
+            logger.print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
+            logger.print("   The Read tool requires a 'file_path' field:", file=sys.stderr)
+            logger.print("   {", file=sys.stderr)
+            logger.print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+            logger.print('     "tool_name": "Read",', file=sys.stderr)
+            logger.print('     "tool_input": {', file=sys.stderr)
+            logger.print('       "file_path": "/path/to/file"', file=sys.stderr)
+            logger.print("     }", file=sys.stderr)
+            logger.print("   }\n", file=sys.stderr)
         return 1
 
     # Validate required fields for Bash tool
     if tool_name == "Bash" and "command" not in tool_input:
         logger.error(f"Missing required field 'command' for {tool_name} tool")
         if not quiet:
-            print(
-                f"\n{color.error('❌ Validation error:')} Missing required field 'command' for {tool_name} tool",
-                file=sys.stderr,
+            logger.error(
+                f"\n{color.error('❌ Validation error:')} Missing required field 'command' for {tool_name} tool"
             )
-            print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
-            print("   The Bash tool requires a 'command' field:", file=sys.stderr)
-            print("   {", file=sys.stderr)
-            print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
-            print('     "tool_name": "Bash",', file=sys.stderr)
-            print('     "tool_input": {', file=sys.stderr)
-            print('       "command": "ls -la"', file=sys.stderr)
-            print("     }", file=sys.stderr)
-            print("   }\n", file=sys.stderr)
+            logger.print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
+            logger.print("   The Bash tool requires a 'command' field:", file=sys.stderr)
+            logger.print("   {", file=sys.stderr)
+            logger.print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+            logger.print('     "tool_name": "Bash",', file=sys.stderr)
+            logger.print('     "tool_input": {', file=sys.stderr)
+            logger.print('       "command": "ls -la"', file=sys.stderr)
+            logger.print("     }", file=sys.stderr)
+            logger.print("   }\n", file=sys.stderr)
         return 1
 
     return 0
@@ -413,95 +409,94 @@ def _display_security_issues(
 
     # Always show security issues, even in quiet mode
     if dry_run:
-        print(
-            f"\n{color.warning('🔍 DRY RUN - Security issues that would be detected:')}",
-            file=sys.stderr,
+        logger.warning(
+            f"\n{color.warning('🔍 DRY RUN - Security issues that would be detected:')}"
         )
     else:
-        print(f"\n{color.error('⚠️  Security issues detected:')}", file=sys.stderr)
+        logger.error(f"\n{color.error('⚠️  Security issues detected:')}")
 
     # Structured output for issues
     if brief:
         # Brief mode: show only essential information
         for issue in issues:
-            print(f"  • {issue}", file=sys.stderr)
-        print("", file=sys.stderr)
-        print("💡 Run 'antimon --explain-last-error' for details", file=sys.stderr)
+            logger.print(f"  • {issue}", file=sys.stderr)
+        logger.print("", file=sys.stderr)
+        logger.print("💡 Run 'antimon --explain-last-error' for details", file=sys.stderr)
         # Show exit code documentation
         exit_code = 0 if dry_run else 2
-        print(
+        logger.print(
             f"\nExit code: {exit_code} ({'Preview only' if dry_run else 'Security issue detected'})",
             file=sys.stderr,
         )
     elif verbose and not quiet:
-        print("\n📊 Detection Results:", file=sys.stderr)
-        print(
+        logger.print("\n📊 Detection Results:", file=sys.stderr)
+        logger.print(
             f"   File: {json_data.get('tool_input', {}).get('file_path', 'N/A')}",
             file=sys.stderr,
         )
-        print(f"   Tool: {tool_name}", file=sys.stderr)
-        print(
+        logger.print(f"   Tool: {tool_name}", file=sys.stderr)
+        logger.print(
             f"   Summary: {stats['failed']} failed, {stats['passed']} passed, {stats['errors']} errors\n",
             file=sys.stderr,
         )
-        print("   Issues found:", file=sys.stderr)
+        logger.print("   Issues found:", file=sys.stderr)
         for i, issue in enumerate(issues, 1):
-            print(f"   [{i}] {issue}", file=sys.stderr)
+            logger.print(f"   [{i}] {issue}", file=sys.stderr)
             # Add context for each issue
             context = error_context.get_context_for_error(issue, json_data)
             if context:
-                print(f"\n{context}", file=sys.stderr)
+                logger.print(f"\n{context}", file=sys.stderr)
     else:
         for issue in issues:
-            print(f"  • {color.format_security_issue(issue)}", file=sys.stderr)
+            logger.print(f"  • {color.format_security_issue(issue)}", file=sys.stderr)
 
         # Show context for the first issue in non-verbose mode
         if issues and not quiet:
-            print("", file=sys.stderr)  # Empty line
+            logger.print("", file=sys.stderr)  # Empty line
             context = error_context.get_context_for_error(issues[0], json_data)
             if context:
-                print(context, file=sys.stderr)
+                logger.print(context, file=sys.stderr)
 
     if not quiet and not brief:
         if dry_run:
-            print("\n💡 DRY RUN Summary:", file=sys.stderr)
-            print("   • This is a preview of what would be blocked", file=sys.stderr)
-            print("   • No actual blocking occurred", file=sys.stderr)
-            print(
+            logger.print("\n💡 DRY RUN Summary:", file=sys.stderr)
+            logger.print("   • This is a preview of what would be blocked", file=sys.stderr)
+            logger.print("   • No actual blocking occurred", file=sys.stderr)
+            logger.print(
                 "   • To actually block these operations, run without --dry-run",
                 file=sys.stderr,
             )
-            print("   • To allow specific files, use --allow-file", file=sys.stderr)
-            print(
+            logger.print("   • To allow specific files, use --allow-file", file=sys.stderr)
+            logger.print(
                 "   • To disable specific detectors, use --disable-detector\n",
                 file=sys.stderr,
             )
         else:
-            print("\n💡 How to proceed:", file=sys.stderr)
-            print("   1. Review the detected issues above", file=sys.stderr)
-            print(
+            logger.print("\n💡 How to proceed:", file=sys.stderr)
+            logger.print("   1. Review the detected issues above", file=sys.stderr)
+            logger.print(
                 "   2. Run 'antimon --explain-last-error' for detailed explanations",
                 file=sys.stderr,
             )
-            print("   3. If false positive, consider:", file=sys.stderr)
-            print(
+            logger.print("   3. If false positive, consider:", file=sys.stderr)
+            logger.print(
                 "      • Using environment variables instead of hardcoded values",
                 file=sys.stderr,
             )
-            print(
+            logger.print(
                 "      • Moving sensitive data to separate config files",
                 file=sys.stderr,
             )
-            print(
+            logger.print(
                 "      • Using --allow-file or --ignore-pattern options",
                 file=sys.stderr,
             )
-            print("   4. For legitimate use cases, you can:", file=sys.stderr)
-            print(
+            logger.print("   4. For legitimate use cases, you can:", file=sys.stderr)
+            logger.print(
                 "      • Temporarily disable the hook in Claude Code settings",
                 file=sys.stderr,
             )
-            print(
+            logger.print(
                 "      • Report false positives at: https://github.com/antimon-security/antimon/issues\n",
                 file=sys.stderr,
             )
@@ -530,8 +525,8 @@ def _display_security_issues(
 
     # Always show error recovery hint for non-brief mode (Exit Code Documentation + Error Recovery Hints)
     if not quiet and not brief and not dry_run:
-        print("Exit code: 2 (Security issues detected)", file=sys.stderr)
-        print(
+        logger.print("Exit code: 2 (Security issues detected)", file=sys.stderr)
+        logger.print(
             "💡 For more information, run: antimon --explain-last-error\n",
             file=sys.stderr,
         )
@@ -591,23 +586,20 @@ def process_stdin(
         if tool_name in safe_tools:
             logger.info(f"Safe tool {tool_name} - no security validation needed")
             if verbose and not quiet:
-                print(
-                    f"ℹ️  Tool '{tool_name}' is considered safe - no security validation performed",
-                    file=sys.stderr,
+                logger.info(
+                    f"ℹ️  Tool '{tool_name}' is considered safe - no security validation performed"
                 )
         elif tool_name:
             logger.info(f"Unknown tool {tool_name} - skipping validation")
             if verbose and not quiet:
-                print(
-                    f"ℹ️  Unknown tool '{tool_name}' - no security validation performed",
-                    file=sys.stderr,
+                logger.info(
+                    f"ℹ️  Unknown tool '{tool_name}' - no security validation performed"
                 )
         else:
             logger.info("No tool name provided - skipping validation")
             if verbose and not quiet:
-                print(
-                    "ℹ️  No tool specified - no security validation performed",
-                    file=sys.stderr,
+                logger.info(
+                    "ℹ️  No tool specified - no security validation performed"
                 )
         return 0
 
@@ -672,38 +664,38 @@ def process_stdin(
     if config.show_stats or verbose:
         if not quiet:
             # Show detailed summary
-            print("\n📊 Detection Summary:", file=sys.stderr)
-            print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
-            print(f"   • Passed: {stats['passed']}", file=sys.stderr)
-            print(f"   • Failed: {stats['failed']}", file=sys.stderr)
+            logger.print("\n📊 Detection Summary:", file=sys.stderr)
+            logger.print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
+            logger.print(f"   • Passed: {stats['passed']}", file=sys.stderr)
+            logger.print(f"   • Failed: {stats['failed']}", file=sys.stderr)
             if stats["errors"] > 0:
-                print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+                logger.print(f"   • Errors: {stats['errors']}", file=sys.stderr)
 
             # Show timing information if --stats is used
             if config.show_stats and "total_time" in stats:
-                print("\n⏱️  Performance Metrics:", file=sys.stderr)
-                print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
+                logger.print("\n⏱️  Performance Metrics:", file=sys.stderr)
+                logger.print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
                 if "content_size" in stats and stats["content_size"] > 0:
-                    print(
+                    logger.print(
                         f"   • Content size: {stats['content_size']:,} bytes",
                         file=sys.stderr,
                     )
                 if "patterns_checked" in stats:
-                    print(
+                    logger.print(
                         f"   • Patterns checked: {stats['patterns_checked']}",
                         file=sys.stderr,
                     )
 
                 # Show individual detector times
                 if stats.get("detector_times"):
-                    print("\n⚡ Detector Performance:", file=sys.stderr)
+                    logger.print("\n⚡ Detector Performance:", file=sys.stderr)
                     sorted_times = sorted(
                         stats["detector_times"].items(),
                         key=lambda x: x[1],
                         reverse=True,
                     )
                     for detector_name, detector_time in sorted_times:
-                        print(
+                        logger.print(
                             f"   • {detector_name}: {detector_time:.3f}s",
                             file=sys.stderr,
                         )
@@ -721,14 +713,13 @@ def process_stdin(
                     content_size = len(tool_input["content"])
                     operation_info.append(f"Content: {content_size:,} bytes")
 
-        print(
-            f"\n✅ {color.success('Success:')} No security issues found",
-            file=sys.stderr,
+        logger.info(
+            f"\n✅ {color.success('Success:')} No security issues found"
         )
         if operation_info:
             for info in operation_info:
-                print(f"   • {info}", file=sys.stderr)
-        print(
+                logger.print(f"   • {info}", file=sys.stderr)
+        logger.print(
             f"   • Checks performed: {stats['total']} security detectors",
             file=sys.stderr,
         )
@@ -762,9 +753,8 @@ def check_files_batch(
 
     if not files:
         if not quiet:
-            print(
-                f"\n{color.warning('⚠️  Warning:')} No files found matching pattern: {file_pattern}",
-                file=sys.stderr,
+            logger.warning(
+                f"\n{color.warning('⚠️  Warning:')} No files found matching pattern: {file_pattern}"
             )
         return 0
 
@@ -773,14 +763,13 @@ def check_files_batch(
 
     if not files:
         if not quiet:
-            print(
-                f"\n{color.warning('⚠️  Warning:')} No files found matching pattern: {file_pattern}",
-                file=sys.stderr,
+            logger.warning(
+                f"\n{color.warning('⚠️  Warning:')} No files found matching pattern: {file_pattern}"
             )
         return 0
 
     if not quiet:
-        print(
+        logger.print(
             f"\n🔍 Checking {len(files)} file{'s' if len(files) != 1 else ''} matching pattern: {file_pattern}",
             file=sys.stderr,
         )
@@ -793,7 +782,7 @@ def check_files_batch(
     # Check each file
     for i, file_path in enumerate(files, 1):
         if not quiet:
-            print(f"\n[{i}/{len(files)}] Checking: {file_path}", file=sys.stderr)
+            logger.print(f"\n[{i}/{len(files)}] Checking: {file_path}", file=sys.stderr)
 
         # Check the file
         # For batch mode, always suppress individual file messages except errors
@@ -806,7 +795,7 @@ def check_files_batch(
             files_with_issues.append(file_path)
         elif result == 1:  # Error
             if not quiet:
-                print(f"   {color.error('⚠️  Error checking file')}", file=sys.stderr)
+                logger.error(f"   {color.error('⚠️  Error checking file')}")
 
     # Show summary
     total_time = time.time() - total_start_time
@@ -821,24 +810,23 @@ def check_files_batch(
             "issues": files_with_issues,
             "success": len(files_with_issues) == 0,
         }
-        print(json.dumps(result, indent=2))
+        logger.print(json.dumps(result, indent=2), file=sys.stdout)
     elif not quiet:
         # Text output
-        print(f"\n{'='*60}", file=sys.stderr)
-        print("📊 Batch Check Summary", file=sys.stderr)
-        print(f"{'='*60}", file=sys.stderr)
-        print(f"   • Files checked: {len(files)}", file=sys.stderr)
-        print(f"   • Files with issues: {len(files_with_issues)}", file=sys.stderr)
-        print(f"   • Total time: {total_time:.2f}s", file=sys.stderr)
+        logger.print(f"\n{'='*60}", file=sys.stderr)
+        logger.print("📊 Batch Check Summary", file=sys.stderr)
+        logger.print(f"{'='*60}", file=sys.stderr)
+        logger.print(f"   • Files checked: {len(files)}", file=sys.stderr)
+        logger.print(f"   • Files with issues: {len(files_with_issues)}", file=sys.stderr)
+        logger.print(f"   • Total time: {total_time:.2f}s", file=sys.stderr)
 
         if files_with_issues:
-            print(f"\n{color.error('❌ Files with security issues:')}", file=sys.stderr)
+            logger.error(f"\n{color.error('❌ Files with security issues:')}")
             for file_path in files_with_issues:
-                print(f"   • {file_path}", file=sys.stderr)
+                logger.print(f"   • {file_path}", file=sys.stderr)
         else:
-            print(
-                f"\n{color.success('✅ All files passed security checks!')}",
-                file=sys.stderr,
+            logger.info(
+                f"\n{color.success('✅ All files passed security checks!')}"
             )
 
     # Return appropriate exit code
@@ -870,9 +858,8 @@ def check_file_directly(
     # Check if file exists
     if not os.path.exists(file_path):
         if not quiet:
-            print(
-                f"\n{color.error('❌ Error:')} File not found: {file_path}",
-                file=sys.stderr,
+            logger.error(
+                f"\n{color.error('❌ Error:')} File not found: {file_path}"
             )
         return 1
 
@@ -882,7 +869,7 @@ def check_file_directly(
             content = f.read()
     except Exception as e:
         if not quiet:
-            print(f"\n{color.error('❌ Error reading file:')} {e}", file=sys.stderr)
+            logger.error(f"\n{color.error('❌ Error reading file:')} {e}")
         return 1
 
     # Create JSON data for validation
@@ -924,42 +911,42 @@ def check_file_directly(
 
     if config.show_stats or verbose:
         if not quiet:
-            print(
-                f"\n✅ File '{file_path}' passed all security checks", file=sys.stderr
+            logger.info(
+                f"\n✅ File '{file_path}' passed all security checks"
             )
-            print("\n📊 Detection Summary:", file=sys.stderr)
-            print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
-            print(f"   • Passed: {stats['passed']}", file=sys.stderr)
-            print(f"   • Failed: {stats['failed']}", file=sys.stderr)
+            logger.print("\n📊 Detection Summary:", file=sys.stderr)
+            logger.print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
+            logger.print(f"   • Passed: {stats['passed']}", file=sys.stderr)
+            logger.print(f"   • Failed: {stats['failed']}", file=sys.stderr)
             if stats["errors"] > 0:
-                print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+                logger.print(f"   • Errors: {stats['errors']}", file=sys.stderr)
 
             # Show timing information if --stats is used
             if config.show_stats and "total_time" in stats:
-                print("\n⏱️  Performance Metrics:", file=sys.stderr)
-                print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
-                print(f"   • File: {file_path}", file=sys.stderr)
+                logger.print("\n⏱️  Performance Metrics:", file=sys.stderr)
+                logger.print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
+                logger.print(f"   • File: {file_path}", file=sys.stderr)
                 if "content_size" in stats and stats["content_size"] > 0:
-                    print(
+                    logger.print(
                         f"   • Content size: {stats['content_size']:,} bytes",
                         file=sys.stderr,
                     )
                 if "patterns_checked" in stats:
-                    print(
+                    logger.print(
                         f"   • Patterns checked: {stats['patterns_checked']}",
                         file=sys.stderr,
                     )
 
                 # Show individual detector times
                 if stats.get("detector_times"):
-                    print("\n⚡ Detector Performance:", file=sys.stderr)
+                    logger.print("\n⚡ Detector Performance:", file=sys.stderr)
                     sorted_times = sorted(
                         stats["detector_times"].items(),
                         key=lambda x: x[1],
                         reverse=True,
                     )
                     for detector_name, detector_time in sorted_times:
-                        print(
+                        logger.print(
                             f"   • {detector_name}: {detector_time:.3f}s",
                             file=sys.stderr,
                         )
@@ -967,15 +954,14 @@ def check_file_directly(
         # Get file info for better user feedback
         file_size = os.path.getsize(file_path)
         file_size_kb = file_size / 1024
-        print(
-            f"\n✅ {color.success('Success:')} No security issues found",
-            file=sys.stderr,
+        logger.info(
+            f"\n✅ {color.success('Success:')} No security issues found"
         )
-        print(f"   • File: {file_path}", file=sys.stderr)
-        print(
+        logger.print(f"   • File: {file_path}", file=sys.stderr)
+        logger.print(
             f"   • Size: {file_size_kb:.1f} KB ({file_size:,} bytes)", file=sys.stderr
         )
-        print(
+        logger.print(
             f"   • Checks performed: {stats['total']} security detectors",
             file=sys.stderr,
         )
@@ -1046,39 +1032,39 @@ def check_content_directly(
 
     if config.show_stats or verbose:
         if not quiet:
-            print("\n✅ Content passed all security checks", file=sys.stderr)
-            print("\n📊 Detection Summary:", file=sys.stderr)
-            print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
-            print(f"   • Passed: {stats['passed']}", file=sys.stderr)
-            print(f"   • Failed: {stats['failed']}", file=sys.stderr)
+            logger.info("\n✅ Content passed all security checks")
+            logger.print("\n📊 Detection Summary:", file=sys.stderr)
+            logger.print(f"   • Total detectors run: {stats['total']}", file=sys.stderr)
+            logger.print(f"   • Passed: {stats['passed']}", file=sys.stderr)
+            logger.print(f"   • Failed: {stats['failed']}", file=sys.stderr)
             if stats["errors"] > 0:
-                print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+                logger.print(f"   • Errors: {stats['errors']}", file=sys.stderr)
 
             # Show timing information if --stats is used
             if config.show_stats and "total_time" in stats:
-                print("\n⏱️  Performance Metrics:", file=sys.stderr)
-                print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
+                logger.print("\n⏱️  Performance Metrics:", file=sys.stderr)
+                logger.print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
                 if "content_size" in stats and stats["content_size"] > 0:
-                    print(
+                    logger.print(
                         f"   • Content size: {stats['content_size']:,} bytes",
                         file=sys.stderr,
                     )
                 if "patterns_checked" in stats:
-                    print(
+                    logger.print(
                         f"   • Patterns checked: {stats['patterns_checked']}",
                         file=sys.stderr,
                     )
 
                 # Show individual detector times
                 if stats.get("detector_times"):
-                    print("\n⚡ Detector Performance:", file=sys.stderr)
+                    logger.print("\n⚡ Detector Performance:", file=sys.stderr)
                     sorted_times = sorted(
                         stats["detector_times"].items(),
                         key=lambda x: x[1],
                         reverse=True,
                     )
                     for detector_name, detector_time in sorted_times:
-                        print(
+                        logger.print(
                             f"   • {detector_name}: {detector_time:.3f}s",
                             file=sys.stderr,
                         )
@@ -1087,16 +1073,15 @@ def check_content_directly(
         content_lines = content.count("\n") + 1 if content else 0
         content_size = len(content.encode("utf-8"))
         content_size_kb = content_size / 1024
-        print(
-            f"\n✅ {color.success('Success:')} No security issues found",
-            file=sys.stderr,
+        logger.info(
+            f"\n✅ {color.success('Success:')} No security issues found"
         )
-        print(
+        logger.print(
             f"   • Content size: {content_size_kb:.1f} KB ({content_size:,} bytes)",
             file=sys.stderr,
         )
-        print(f"   • Lines: {content_lines:,}", file=sys.stderr)
-        print(
+        logger.print(f"   • Lines: {content_lines:,}", file=sys.stderr)
+        logger.print(
             f"   • Checks performed: {stats['total']} security detectors",
             file=sys.stderr,
         )
