@@ -214,7 +214,7 @@ For more information: https://github.com/antimon-security/antimon
 
     # Show quickstart guide if requested
     if args.quickstart:
-        show_first_run_guide(no_color=args.no_color)
+        show_first_run_guide(no_color=args.no_color, is_quickstart=True)
         suggest_claude_code_setup(no_color=args.no_color)
         if first_run:
             mark_first_run_complete()

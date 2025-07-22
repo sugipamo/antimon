@@ -24,30 +24,21 @@ def setup_logging(verbose: bool = False, quiet: bool = False) -> None:
     else:
         level = logging.WARNING  # Changed from INFO to WARNING for normal mode
 
-    # Create formatter with simplified timestamp for better readability
-    # Only include timestamp in verbose mode
-    if verbose:
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            datefmt="%H:%M:%S",
-        )
-    else:
-        formatter = logging.Formatter(
-            "%(name)s - %(levelname)s - %(message)s"
-        )
-
-    # Create console handler
-    console_handler = logging.StreamHandler(sys.stderr)
-    console_handler.setFormatter(formatter)
-
     # Configure root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
+    
+    # Important: Clear all existing handlers to prevent duplicates
+    # This includes handlers set by logger.py
     root_logger.handlers.clear()
-    root_logger.addHandler(console_handler)
-
-    # Set levels for specific loggers
-    logging.getLogger("antimon").setLevel(level)
+    
+    # Also clear handlers from antimon logger specifically
+    antimon_logger = logging.getLogger("antimon")
+    antimon_logger.handlers.clear()
+    antimon_logger.setLevel(level)
+    
+    # Don't add any handlers here - let logger.py handle formatting and output
+    # This prevents duplicate messages in verbose mode
 
 
 def get_logger(name: str) -> logging.Logger:

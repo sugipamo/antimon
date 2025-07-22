@@ -8,7 +8,7 @@ A Python package that detects potentially dangerous operations and
 prohibited patterns in code modifications.
 """
 
-__version__ = "0.2.8"
+__version__ = "0.2.12"
 
 from .core import check_content_directly, check_file_directly, validate_hook_data
 from .detectors import (

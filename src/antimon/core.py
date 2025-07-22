@@ -8,6 +8,7 @@ Core validation logic for antimon
 import json
 import logging
 import sys
+import time
 
 from .color_utils import ColorFormatter
 from .detectors import (
@@ -29,7 +30,7 @@ from .runtime_config import get_runtime_config
 logger = get_logger()
 
 
-def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, int]]:
+def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, int | float]]:
     """
     Validate hook data for security issues
 
@@ -39,6 +40,7 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
     Returns:
         Tuple of (has_issues, list_of_messages, detector_stats)
     """
+    start_time = time.time()
     # Get runtime configuration
     config = get_runtime_config()
 
@@ -103,9 +105,20 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
         "total": len(detectors),
         "passed": 0,
         "failed": 0,
-        "errors": 0
+        "errors": 0,
+        "total_time": 0.0,
+        "detector_times": {},
+        "patterns_checked": 0,
+        "content_size": 0
     }
     detailed_results = []  # For structured logging
+    
+    # Get content size if available
+    tool_input = json_data.get("tool_input", {})
+    if isinstance(tool_input, dict):
+        content = tool_input.get("content", "")
+        if content:
+            detector_stats["content_size"] = len(content)
 
     for detector in detectors:
         detector_name = detector.__name__.replace("detect_", "").replace("_", " ").title()
@@ -116,8 +129,12 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
             continue
 
         logger.debug(f"Running detector: {detector.__name__}")
+        detector_start = time.time()
         try:
             result = detector(json_data)
+            detector_time = time.time() - detector_start
+            detector_stats["detector_times"][detector.__name__] = detector_time
+            detector_stats["patterns_checked"] += 1
             if result.detected:
                 logger.debug(
                     f"Detector {detector.__name__} found issue: {result.message}"
@@ -157,6 +174,9 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
                 f"File: {result['file_path']} - "
                 f"{'Message: ' + result['message'] if result['message'] else 'No issues'}"
             )
+    
+    # Calculate total time
+    detector_stats["total_time"] = time.time() - start_time
 
     return len(issues) > 0, issues, detector_stats
 
@@ -181,23 +201,24 @@ def _parse_json_input(color: ColorFormatter, quiet: bool) -> tuple[HookData | No
         )
         return json_data, 0
     except json.JSONDecodeError as e:
-        logger.error(f"JSON parsing error: {e}")
+        logger.debug(f"JSON parsing error: {e}")
         if not quiet:
-            error_msg = f"❌ JSON parsing error: {e}\n\n💡 How to fix:\n"
-            error_msg += "   Ensure your input is valid JSON. Example of valid format:\n"
-            error_msg += '   {\n'
-            error_msg += '     "hook_event_name": "PreToolUse",\n'
-            error_msg += '     "tool_name": "Write",\n'
-            error_msg += '     "tool_input": {\n'
-            error_msg += '       "file_path": "example.py",\n'
-            error_msg += '       "content": "print(\'Hello\')"}\n'
-            error_msg += '   }\n'
-            error_msg += "\n   Common issues:\n"
-            error_msg += "   • Missing quotes around strings\n"
-            error_msg += "   • Trailing commas after last item\n"
-            error_msg += "   • Unescaped quotes in strings (use \\\") \n"
-            error_msg += "   • Missing brackets or braces"
-            logger.error(error_msg)
+            print(f"\n{color.error('❌ JSON parsing error:')} {e}", file=sys.stderr)
+            print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
+            print("   Ensure your input is valid JSON. Example of valid format:", file=sys.stderr)
+            print('   {', file=sys.stderr)
+            print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+            print('     "tool_name": "Write",', file=sys.stderr)
+            print('     "tool_input": {', file=sys.stderr)
+            print('       "file_path": "example.py",', file=sys.stderr)
+            print('       "content": "print(\'Hello\')"', file=sys.stderr)
+            print('     }', file=sys.stderr)
+            print('   }', file=sys.stderr)
+            print("\n   Common issues:", file=sys.stderr)
+            print("   • Missing quotes around strings", file=sys.stderr)
+            print("   • Trailing commas after last item", file=sys.stderr)
+            print("   • Unescaped quotes in strings (use \\\") ", file=sys.stderr)
+            print("   • Missing brackets or braces\n", file=sys.stderr)
         return None, 1
     except Exception as e:
         logger.error(f"Unexpected error reading input: {e}", exc_info=True)
@@ -477,6 +498,22 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
             print(f"   • Failed: {stats['failed']}", file=sys.stderr)
             if stats['errors'] > 0:
                 print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+            
+            # Show timing information if --stats is used
+            if config.show_stats and 'total_time' in stats:
+                print(f"\n⏱️  Performance Metrics:", file=sys.stderr)
+                print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
+                if 'content_size' in stats and stats['content_size'] > 0:
+                    print(f"   • Content size: {stats['content_size']:,} bytes", file=sys.stderr)
+                if 'patterns_checked' in stats:
+                    print(f"   • Patterns checked: {stats['patterns_checked']}", file=sys.stderr)
+                
+                # Show individual detector times
+                if 'detector_times' in stats and stats['detector_times']:
+                    print(f"\n⚡ Detector Performance:", file=sys.stderr)
+                    sorted_times = sorted(stats['detector_times'].items(), key=lambda x: x[1], reverse=True)
+                    for detector_name, detector_time in sorted_times:
+                        print(f"   • {detector_name}: {detector_time:.3f}s", file=sys.stderr)
     elif not quiet:
         # Enhanced success message showing what was checked
         operation_info = []
@@ -571,6 +608,23 @@ def check_file_directly(file_path: str, verbose: bool = False, quiet: bool = Fal
             print(f"   • Failed: {stats['failed']}", file=sys.stderr)
             if stats['errors'] > 0:
                 print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+            
+            # Show timing information if --stats is used
+            if config.show_stats and 'total_time' in stats:
+                print(f"\n⏱️  Performance Metrics:", file=sys.stderr)
+                print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
+                print(f"   • File: {file_path}", file=sys.stderr)
+                if 'content_size' in stats and stats['content_size'] > 0:
+                    print(f"   • Content size: {stats['content_size']:,} bytes", file=sys.stderr)
+                if 'patterns_checked' in stats:
+                    print(f"   • Patterns checked: {stats['patterns_checked']}", file=sys.stderr)
+                
+                # Show individual detector times
+                if 'detector_times' in stats and stats['detector_times']:
+                    print(f"\n⚡ Detector Performance:", file=sys.stderr)
+                    sorted_times = sorted(stats['detector_times'].items(), key=lambda x: x[1], reverse=True)
+                    for detector_name, detector_time in sorted_times:
+                        print(f"   • {detector_name}: {detector_time:.3f}s", file=sys.stderr)
     elif not quiet:
         # Get file info for better user feedback
         import os
@@ -640,6 +694,22 @@ def check_content_directly(content: str, file_name: str = "stdin", verbose: bool
             print(f"   • Failed: {stats['failed']}", file=sys.stderr)
             if stats['errors'] > 0:
                 print(f"   • Errors: {stats['errors']}", file=sys.stderr)
+            
+            # Show timing information if --stats is used
+            if config.show_stats and 'total_time' in stats:
+                print(f"\n⏱️  Performance Metrics:", file=sys.stderr)
+                print(f"   • Total time: {stats['total_time']:.3f}s", file=sys.stderr)
+                if 'content_size' in stats and stats['content_size'] > 0:
+                    print(f"   • Content size: {stats['content_size']:,} bytes", file=sys.stderr)
+                if 'patterns_checked' in stats:
+                    print(f"   • Patterns checked: {stats['patterns_checked']}", file=sys.stderr)
+                
+                # Show individual detector times
+                if 'detector_times' in stats and stats['detector_times']:
+                    print(f"\n⚡ Detector Performance:", file=sys.stderr)
+                    sorted_times = sorted(stats['detector_times'].items(), key=lambda x: x[1], reverse=True)
+                    for detector_name, detector_time in sorted_times:
+                        print(f"   • {detector_name}: {detector_time:.3f}s", file=sys.stderr)
     elif not quiet:
         # Get content info for better user feedback
         content_lines = content.count('\n') + 1 if content else 0

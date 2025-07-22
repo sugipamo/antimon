@@ -39,7 +39,7 @@ def mark_first_run_complete() -> None:
     marker_file.touch()
 
 
-def show_first_run_guide(no_color: bool = False) -> None:
+def show_first_run_guide(no_color: bool = False, is_quickstart: bool = False) -> None:
     """Display the first-run guide for new users."""
     print()
     print(apply_color("🎉 Welcome to antimon!", Colors.HEADER, no_color))
@@ -72,7 +72,10 @@ def show_first_run_guide(no_color: bool = False) -> None:
     print("   It will block potentially dangerous operations before they happen.")
     print()
 
-    print(apply_color("This message will only appear once. Happy coding! 🚀", Colors.OKGREEN, no_color))
+    if not is_quickstart:
+        print(apply_color("This message will only appear once. Happy coding! 🚀", Colors.OKGREEN, no_color))
+    else:
+        print(apply_color("Happy coding! 🚀", Colors.OKGREEN, no_color))
     print()
 
 

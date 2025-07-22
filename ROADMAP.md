@@ -18,16 +18,16 @@
 
 Transform antimon from a standalone script into a robust, extensible Python package that can be easily integrated into various AI coding assistant workflows and CI/CD pipelines.
 
-### Version 0.2.12 (User Experience) - IN PROGRESS
+### Version 0.2.12 (User Experience) - COMPLETED (2025-07-22)
 
-#### Completed (2025-07-22):
+#### Completed:
 - [x] Success message improvements (show what was checked)
-  - Enhanced success messages to show file path, size, line count, and number of checks performed
-  - Added comprehensive test coverage in `test_success_messages.py`
-  - Maintains backward compatibility with quiet and verbose modes
-
-#### Critical Bug Fixes (HIGHEST PRIORITY):
-_See "User Experience Enhancement Plan" section for detailed list of critical fixes_
+- [x] Fixed duplicate output bug in verbose mode
+- [x] Implemented --version flag properly
+- [x] Enhanced --stats flag with meaningful statistics
+- [x] Fixed JSON error handling
+- [x] Standardized output streams
+- [x] Fixed quickstart message behavior
 
 #### Documentation:
 - [ ] Windows-specific Claude Code setup instructions
@@ -43,6 +43,9 @@ _See "User Experience Enhancement Plan" section for detailed list of critical fi
 - [ ] Global configuration (`~/.config/antimon/antimon.toml`)
 - [ ] Environment variable overrides
 - [ ] Configuration file validation and schema
+- [ ] `.antimonignore` file support for project-specific exclusions
+- [ ] `--generate-config` command to create configuration template
+- [ ] Configuration inheritance (global → project → command-line)
 
 ## Version 0.4.0 (Enhanced Detection)
 - [ ] Additional security patterns:
@@ -70,6 +73,9 @@ _See "User Experience Enhancement Plan" section for detailed list of critical fi
 - [ ] **ML Detection**: Context-aware analysis, dependency scanning, metrics dashboard
 - [ ] **Enterprise**: SSO/LDAP, audit logging, RBAC, compliance reporting
 - [ ] **Scale**: Distributed scanning, caching, webhooks, REST API
+- [ ] **Internationalization (i18n)**: Multi-language support starting with Japanese
+- [ ] **Interactive Fix Mode**: `--fix-interactive` to apply suggested fixes with confirmation
+- [ ] **Learning Mode**: `--learn` to understand why patterns are dangerous with examples
 
 ## Version 1.0.0 (Production Ready)
 - [ ] Comprehensive documentation & 100% test coverage
@@ -79,8 +85,16 @@ _See "User Experience Enhancement Plan" section for detailed list of critical fi
 
 ## Next Immediate Tasks
 
-### Version 0.2.12 (Continuing):
-_Critical bug fixes and feature implementations are tracked in the "User Experience Enhancement Plan" section above._
+### Version 0.2.13 (Batch Processing & JSON):
+1. **Batch File Checking**: `antimon --check-files "src/**/*.py"` with progress indicators
+2. **JSON Output Format**: `--output-format json` for CI/CD integration
+3. **Brief Mode**: `--brief` for concise security reports
+4. **Exit Code Documentation**: Show meaning in error messages
+5. **Watch Mode**: `antimon --watch <directory>` for continuous monitoring
+6. **Pattern Testing**: `antimon --test-pattern <pattern>` to test detection patterns
+7. **Auto-fix Suggestions**: Provide code snippets for common security fixes
+8. **Error Recovery Hints**: Always show `--explain-last-error` hint on security detections
+9. **Setup Status on First Run**: Show Claude Code integration status on initial execution
 
 ### Critical Code Quality Issues (Must address before v0.3.0):
 - [ ] Fix circular dependency risks in 7 files (imports inside functions)
@@ -120,7 +134,8 @@ _Critical bug fixes and feature implementations are tracked in the "User Experie
 | Version | Target Date | Focus Area | Status |
 |---------|------------|------------|--------|
 | 0.2.11 | Released | Critical Fixes (Exit codes & docs) | ✅ Completed |
-| 0.2.12 | 2025-08-15 | User Experience | 🚧 Next Release |
+| 0.2.12 | Released | User Experience | ✅ Completed |
+| 0.2.13 | 2025-08-15 | Batch Processing & JSON | 🚧 Next Release |
 | 0.3.0 | 2025-10-01 | Configuration | 📋 Planned |
 | 0.4.0 | 2026-01-15 | Enhanced detection | 📋 Planned |
 | 0.5.0 | 2026-04-01 | Integrations | 📋 Planned |
@@ -173,6 +188,50 @@ Before marking any feature as "completed", verify:
 
 After comprehensive testing from a user perspective, the following critical issues and enhancements have been identified:
 
+### 📝 Additional User Experience Findings (2025-07-22)
+
+From hands-on testing with real scenarios, additional insights have been identified:
+
+#### 1. **初回利用時の情報提供**
+- 現状: `--status`で必要な情報は確認できるが、初回利用時にClaude Codeとの連携状態が分かりにくい
+- 改善案: 初回実行時に簡単なセットアップ状態を表示（Claude Code連携、有効なdetector等）
+
+#### 2. **エラー時の回復方法の明確化**
+- 現状: `--explain-last-error`は詳細で素晴らしいが、存在を知らないと使えない
+- 改善案: エラー発生時に「詳細は`antimon --explain-last-error`で確認」を常に表示
+
+#### 3. **日本語対応（国際化）**
+- 現状: 英語のみ対応
+- 改善案: エラーメッセージとヘルプの多言語対応（特に日本語）
+
+#### 4. **設定ファイルのサンプル提供**
+- 現状: v0.3.0で設定ファイル対応予定だが、どのような設定が可能か不明
+- 改善案: `--generate-config`で設定ファイルのテンプレート生成機能
+
+#### 5. **プロジェクト固有の除外設定**
+- 現状: `--allow-file`や`--ignore-pattern`はコマンドライン引数のみ
+- 改善案: `.antimonignore`ファイルでプロジェクト固有の設定を永続化
+
+#### 6. **CI/CD環境での利用ガイド**
+- 現状: README.mdに基本的な例はあるが、実践的なCI/CDテンプレートがない
+- 改善案: GitHub Actions、GitLab CI、Jenkins等の設定テンプレート提供
+
+#### 7. **チーム開発での共有設定**
+- 現状: 各開発者が個別に設定する必要がある
+- 改善案: プロジェクトルートの`antimon.toml`で共有設定、個人設定の上書き機能
+
+#### 8. **検出パターンの透明性**
+- 現状: どのようなパターンで検出されるか内部実装を見ないと分からない
+- 改善案: `--list-patterns`で現在有効な検出パターンを表示
+
+#### 9. **誤検知の報告フロー**
+- 現状: GitHubのissueで報告するよう案内されているが、フォーマットが不明
+- 改善案: `--report-false-positive`で必要な情報を収集してissueテンプレートを生成
+
+#### 10. **統計情報の活用**
+- 現状: `--stats`で統計情報が見られるが、履歴が残らない
+- 改善案: 検出履歴をローカルに保存し、傾向分析やレポート生成機能
+
 ### 🌟 What's Working Well
 - **Error Messages**: Exceptionally clear with risks, fixes, and best practices
 - **Demo Mode**: Excellent educational tool with 10 practical scenarios
@@ -180,16 +239,6 @@ After comprehensive testing from a user perspective, the following critical issu
 - **Success Feedback**: Shows useful info (file size, checks performed) - Enhanced in v0.2.12
 - **Multiple Input Modes**: Flexible with files, content, and JSON
 
-### 🔴 Critical Issues to Fix (v0.2.12)
-1. **Duplicate Output Bug**: All verbose mode messages appear twice with different formatting
-2. **Missing Features**: 
-   - `--version` flag documented but not implemented (shows error)
-   - `--stats` flag doesn't provide meaningful statistics
-3. **JSON Errors**: 
-   - Error messages appear twice
-   - Example JSON in error messages has syntax errors
-4. **Output Stream Issues**: Mixed stdout/stderr causes automation problems
-5. **Quickstart Message**: Claims to "only appear once" but appears every time
 
 ### 📊 Key Usage Patterns
 - Primary use: Direct file checking (`--check-file`)
@@ -200,19 +249,7 @@ After comprehensive testing from a user perspective, the following critical issu
 
 ### 🎯 Solutions by Priority
 
-#### Phase 1: Critical Fixes (v0.2.12 - Immediate)
-1. Fix duplicate logging bug in verbose mode
-2. Implement `--version` flag properly
-3. Make `--stats` show timing, pattern matches, file counts
-4. Fix JSON error handling (no duplicates, correct syntax)
-5. Standardize output streams (errors→stderr, normal→stdout)
-6. Fix quickstart message behavior
 
-#### Phase 2: Core Enhancements (v0.2.13)
-1. **Batch File Checking**: `antimon --check-files "src/**/*.py"` with progress indicators
-2. **JSON Output Format**: `--output-format json` for CI/CD integration
-3. **Brief Mode**: `--brief` for concise security reports
-4. **Exit Code Documentation**: Show meaning in error messages
 
 #### Phase 3: Configuration Support (v0.3.0)
 _See detailed configuration plans in Version 0.3.0 section_
