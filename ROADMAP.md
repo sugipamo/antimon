@@ -3,32 +3,31 @@
 ## Current Status (2025-07-22)
 
 ### Recent Achievements:
+- ✅ **v0.2.12 (In Progress)**: Enhanced success messages showing detailed information about what was checked
 - ✅ **v0.2.11**: Fixed exit codes (0=success, 1=error, 2=security issue) and comprehensive FAQ documentation
 - ✅ **v0.2.10**: Verified `--quickstart`, `--stats`, and `--config` functionality
 - ✅ **v0.2.1-v0.2.8**: Core features including detector fixes, direct file checking, Claude Code integration, and structured logging
 
 ### Quality Check Summary:
-- ✅ **pytest**: 119/119 tests passing (75% code coverage)
-- ✅ **ruff**: All style issues fixed (18 SIM117 warnings acceptable)
+- ✅ **pytest**: 125/125 tests passing (75% code coverage) - All tests are stable
+- ✅ **ruff**: All style issues fixed
 - ⚠️ **mypy**: 81 type errors remaining (future version)
-- ⚠️ **src-check**: Score 53.0/100 - Main issues:
-  - Architecture: High coupling in several modules
-  - Code quality: Many print statements should use logging
-  - Type safety: Missing type hints
-  - Documentation: Missing parameter/return documentation
+- ⚠️ **src-check**: Score 51.9/100 - See "Code Quality Improvements" section for detailed issues
 
 ## Project Vision
 
 Transform antimon from a standalone script into a robust, extensible Python package that can be easily integrated into various AI coding assistant workflows and CI/CD pipelines.
 
-### Version 0.2.12 (User Experience) - NEXT RELEASE
+### Version 0.2.12 (User Experience) - IN PROGRESS
 
-#### High Priority Features (Based on User Testing):
-- [ ] Batch file checking with glob patterns (`antimon --check-files "*.py"`)
-- [ ] JSON output format (`--output-format json`)
-- [ ] Success message improvements (show what was checked)
-- [ ] Quiet mode fixes (truly silent except errors)
-- [ ] Progress indicators for multiple operations
+#### Completed (2025-07-22):
+- [x] Success message improvements (show what was checked)
+  - Enhanced success messages to show file path, size, line count, and number of checks performed
+  - Added comprehensive test coverage in `test_success_messages.py`
+  - Maintains backward compatibility with quiet and verbose modes
+
+#### Critical Bug Fixes (HIGHEST PRIORITY):
+_See "User Experience Enhancement Plan" section for detailed list of critical fixes_
 
 #### Documentation:
 - [ ] Windows-specific Claude Code setup instructions
@@ -80,18 +79,33 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 ## Next Immediate Tasks
 
-1. **Code Quality Improvements**
-   - [ ] Replace print statements with proper logging throughout codebase
-   - [ ] Add missing type hints (60+ functions need type hints)
-   - [ ] Reduce module coupling (split large modules, reduce imports)
-   - [ ] Fix high complexity functions (10+ functions exceed complexity limit)
-   - [ ] Improve test coverage from 75% to 85%+
+### Version 0.2.12 (Continuing):
+_Critical bug fixes and feature implementations are tracked in the "User Experience Enhancement Plan" section above._
 
-2. **Documentation Enhancement**
-   - [ ] Add missing parameter/return documentation for functions
-   - [ ] Add API documentation
-   - [ ] Create contributor's guide
-   - [ ] Add more examples in the examples/ directory
+### Critical Code Quality Issues (Must address before v0.3.0):
+- [ ] Fix circular dependency risks in 7 files (imports inside functions)
+- [ ] Replace os.system in color_utils.py with safer alternative
+- [ ] Add basic type hints to public API functions
+- [ ] Start converting print statements to logging (at least in core.py)
+
+### Code Quality Improvements (Priority for v0.3.0+):
+- [ ] Replace print statements with proper logging throughout codebase (280+ occurrences)
+- [ ] Add missing type hints (60+ functions need type hints)
+- [ ] Reduce module coupling (split large modules, reduce imports)
+  - Refactor modules with >15 external calls
+- [ ] Fix high complexity functions (10+ functions exceed complexity limit)
+  - cli.py: main() - complexity 31
+  - core.py: process_stdin() - complexity 39
+  - detectors.py: Multiple functions with complexity >10
+- [ ] Improve test coverage from 75% to 85%+
+- [ ] Address security concerns:
+  - Handle input() safely for Python 2 compatibility
+
+### Documentation Enhancement:
+- [ ] Add missing parameter/return documentation for functions
+- [ ] Add API documentation
+- [ ] Create contributor's guide
+- [ ] Add more examples in the examples/ directory
 
 
 ## Long-term Goals
@@ -103,219 +117,121 @@ Transform antimon from a standalone script into a robust, extensible Python pack
 
 ## Release Schedule
 
-| Version | Target Date | Focus Area |
-|---------|------------|------------|
-| 0.2.11 | Immediate | Critical Fixes (Exit codes & docs) |
-| 0.2.12 | 2025 Q3 | User Experience |
-| 0.3.0 | 2025 Q4 | Configuration |
-| 0.4.0 | 2026 Q1 | Enhanced detection |
-| 0.5.0 | 2026 Q2 | Integrations |
-| 1.0.0 | 2027 Q3 | Production ready |
+| Version | Target Date | Focus Area | Status |
+|---------|------------|------------|--------|
+| 0.2.11 | Released | Critical Fixes (Exit codes & docs) | ✅ Completed |
+| 0.2.12 | 2025-08-15 | User Experience | 🚧 Next Release |
+| 0.3.0 | 2025-10-01 | Configuration | 📋 Planned |
+| 0.4.0 | 2026-01-15 | Enhanced detection | 📋 Planned |
+| 0.5.0 | 2026-04-01 | Integrations | 📋 Planned |
+| 1.0.0 | 2027-07-01 | Production ready | 🎯 Goal |
 
 
 
 ## User Testing Insights
 
-### 🌟 What's Working Well
-- Excellent demo mode with practical examples
-- Clear security detection messages
-- Good visual design with colors and icons
-- `--quickstart` and `--stats` work correctly
-
-### 📊 Key Usage Patterns
-- Direct file checking (`--check-file`) is primary use case
-- JSON input rarely used in practice
-- Users expect proper exit codes for CI/CD automation
-- Dry-run mode helpful for debugging false positives
+_See detailed user testing analysis in the "User Experience Enhancement Plan" section below._
 
 ## Developer-Centric Features
 
 ### 🛠️ Making antimon Developer-Friendly
 
-Based on real-world usage patterns, developers need:
+**Quick Wins**: Shell aliases, editor integrations (VS Code, Vim, Emacs), Git hooks, smart defaults
 
-#### **Quick Wins for Daily Use**
-1. **Shell Aliases Support**
-   ```bash
-   # Add to documentation
-   alias check='antimon --check-file'
-   alias checkall='antimon --check-files "**/*.py"'
-   alias checksafe='antimon --dry-run --check-file'
-   ```
+**Developer Education**: Security learning mode with explanations and pattern playground
 
-2. **Editor Integration Snippets**
-   - VS Code: Task runner configuration
-   - Vim: Async lint integration
-   - Emacs: Flycheck checker
-   - Sublime: Build system config
+_Detailed implementation planned for v0.5.0 (Integration Features) and beyond._
 
-3. **Git Integration**
-   - Pre-commit hook template
-   - Pre-push validation script
-   - Commit message validation
-   - Branch protection rules
+## User Recovery Guidance
 
-4. **Smart Defaults**
-   - Auto-detect project type (Python/JS/Go)
-   - Language-specific rule sets
-   - Framework detection (Django/React/etc)
-   - Severity-based filtering
+### 🚨 When Detection Occurs - Enhancement Opportunities:
 
-#### **Developer Education**
-1. **Security Learning Mode**
-   - Explain why each pattern is dangerous
-   - Show real-world exploit examples
-   - Provide secure coding alternatives
-   - Link to OWASP/CWE references
+- **Current Strengths**: Clear explanations, quick fixes, best practices, informational links
+- **Needed Enhancements**:
+  - Show which detector triggered (for allowlisting)
+  - Add severity levels
+  - Provide copy-paste ready solutions
+  - Add "override" instructions
+  - Include "why dangerous" explanations
+  - Support team exception sharing
 
-2. **Pattern Playground**
-   - Test custom patterns safely
-   - See what existing patterns catch
-   - Generate pattern documentation
-   - Share patterns with team
+_These enhancements are planned for v0.5.0 (Integration Features) and v0.6.0 (ML Detection)._
 
 ## Testing Checklist
 
 Before marking any feature as "completed", verify:
-- [ ] Exit codes work correctly (echo $? after running)
-- [ ] Documentation referenced in error messages exists
-- [ ] Feature works in both Linux and Windows
-- [ ] --quiet mode is actually quiet
-- [ ] Error output goes to stderr, not stdout
-- [ ] Success messages appear in normal mode
-- [ ] Batch operations show progress
-- [ ] Configuration files are loaded correctly
+- Exit codes work correctly
+- Documentation exists for referenced features
+- Cross-platform compatibility (Linux/Windows)
+- Output stream consistency (stdout/stderr)
+- All documented flags work as expected
+- No duplicate output in any mode
 
 ## User Experience Enhancement Plan
 
-### 🎯 Based on User Perspective Analysis
+### 🎯 Based on User Testing Analysis (2025-07-22)
 
-The following enhancements would significantly improve the antimon experience:
+After comprehensive testing from a user perspective, the following critical issues and enhancements have been identified:
 
-#### 1. **Clear Success Feedback** 🟢
-**Issue**: When files pass security checks, users get no feedback in normal mode
-**Solution**: 
-- Add success messages by default: "✓ config.py: No security issues detected"
-- Show summary for batch operations: "✓ Checked 15 files, all secure"
-- Make --quiet truly silent, normal mode informative
+### 🌟 What's Working Well
+- **Error Messages**: Exceptionally clear with risks, fixes, and best practices
+- **Demo Mode**: Excellent educational tool with 10 practical scenarios
+- **Help System**: Well-organized with `--help`, `--quickstart`, `--help-errors`
+- **Success Feedback**: Shows useful info (file size, checks performed) - Enhanced in v0.2.12
+- **Multiple Input Modes**: Flexible with files, content, and JSON
 
-#### 2. **Better Error Context and Recovery** 🔧
-**Issue**: Users know what's wrong but not always how to fix it
-**Solution**:
-- Add `--suggest-fix` flag that shows safe code alternatives
-- Provide copy-paste ready solutions for common issues
-- Link to specific documentation sections for each error type
-- Example: "API key detected. Try: API_KEY = os.environ.get('API_KEY')"
+### 🔴 Critical Issues to Fix (v0.2.12)
+1. **Duplicate Output Bug**: All verbose mode messages appear twice with different formatting
+2. **Missing Features**: 
+   - `--version` flag documented but not implemented (shows error)
+   - `--stats` flag doesn't provide meaningful statistics
+3. **JSON Errors**: 
+   - Error messages appear twice
+   - Example JSON in error messages has syntax errors
+4. **Output Stream Issues**: Mixed stdout/stderr causes automation problems
+5. **Quickstart Message**: Claims to "only appear once" but appears every time
 
-#### 3. **Simplified Configuration** ⚙️
-**Issue**: No persistent configuration, must repeat flags
-**Solution** (Priority for v0.3.0):
-- Support `.antimonrc` or `antimon.yml` in project root
-- Global config in `~/.config/antimon/`
-- Environment variable support: `ANTIMON_ALLOW_FILES`, `ANTIMON_DISABLE_DETECTORS`
-- Config wizard: `antimon --init-config`
+### 📊 Key Usage Patterns
+- Primary use: Direct file checking (`--check-file`)
+- JSON mode rarely used outside of CI/CD
+- Users expect proper exit codes for automation
+- Verbose mode used for debugging false positives
+- Dry-run mode helpful for testing
 
-#### 4. **Enhanced Logging and Reporting** 📊
-**Issue**: Limited visibility into what was checked and why
-**Solution**:
-- Add `--report` flag for detailed analysis output
-- Support multiple output formats: `--output-format json|yaml|html|markdown`
-- Save scan history: `~/.antimon/history.log`
-- Show detection statistics and trends
+### 🎯 Solutions by Priority
 
-#### 5. **Batch Operations and Integration** 🚀
-**Issue**: Checking multiple files is cumbersome
-**Solution**:
-- Support glob patterns: `antimon --check-files "src/**/*.py"`
-- Add `--watch` mode for continuous monitoring
-- Provide pre-commit hook template
-- Better CI/CD examples (GitHub Actions, GitLab CI, Jenkins)
+#### Phase 1: Critical Fixes (v0.2.12 - Immediate)
+1. Fix duplicate logging bug in verbose mode
+2. Implement `--version` flag properly
+3. Make `--stats` show timing, pattern matches, file counts
+4. Fix JSON error handling (no duplicates, correct syntax)
+5. Standardize output streams (errors→stderr, normal→stdout)
+6. Fix quickstart message behavior
 
-#### 6. **Interactive Mode Improvements** 💬
-**Issue**: Current interaction is limited to demo and setup
-**Solution**:
-- Interactive fix mode: Guide users through resolving issues
-- Pattern explorer: Test custom patterns interactively
-- Learning mode: Explain why each pattern is dangerous
+#### Phase 2: Core Enhancements (v0.2.13)
+1. **Batch File Checking**: `antimon --check-files "src/**/*.py"` with progress indicators
+2. **JSON Output Format**: `--output-format json` for CI/CD integration
+3. **Brief Mode**: `--brief` for concise security reports
+4. **Exit Code Documentation**: Show meaning in error messages
 
-#### 7. **Documentation Accessibility** 📚
-**Issue**: Help is scattered across multiple flags
-**Solution**:
-- Unified help system: `antimon help [topic]`
-- In-context help: Show relevant docs for current error
-- Offline documentation browser
-- Quick reference card generation
+#### Phase 3: Configuration Support (v0.3.0)
+_See detailed configuration plans in Version 0.3.0 section_
 
-#### 8. **Performance and Feedback** ⚡
-**Issue**: No progress indication for large operations
-**Solution**:
-- Progress bars for multi-file operations
-- Estimated time remaining
-- Parallel file checking option
-- Cache results for unchanged files
+#### Phase 4: Advanced Features (v0.4.0+)
+_See roadmap sections for enhanced detection, integrations, and enterprise features_
 
 ## Common User Scenarios & Pain Points
 
-### 🔍 Scenario Analysis
+### 🔍 Key Scenarios Identified:
 
-#### 1. **New User First Experience**
-**Current State**: Good - Interactive setup, demo mode, quickstart guide
-**Pain Points**: 
-- Unclear which mode to use (JSON vs direct checking)
-- Confusion about when to use as hook vs CLI tool
-**Improvement**: Add decision tree in quickstart
+1. **New User Experience**: Good setup, but needs clearer mode selection guidance
+2. **CI/CD Integration**: Working but needs ready-made templates
+3. **Development Workflow**: Basic functionality, needs watch mode and IDE plugins
+4. **Team Collaboration**: Limited sharing capabilities, needs config files
+5. **False Positive Management**: Basic controls, needs persistent allowlists
 
-#### 2. **CI/CD Pipeline Integration**
-**Current State**: Working - Proper exit codes, JSON input support
-**Pain Points**:
-- No ready-made pipeline templates
-- Limited examples for different CI systems
-- No built-in report generation for CI artifacts
-**Improvement**: Provide copy-paste CI/CD configs
+_Solutions for these scenarios are addressed in the version roadmap sections._
 
-#### 3. **Development Workflow**
-**Current State**: Basic - Manual file checking works
-**Pain Points**:
-- Repetitive checking of same files
-- No IDE integration
-- Can't check files before committing
-**Improvement**: Watch mode, pre-commit hooks, IDE plugins
-
-#### 4. **Team Collaboration**
-**Current State**: Limited - No shared configurations
-**Pain Points**:
-- Each developer must configure individually
-- No way to share custom patterns
-- Inconsistent security policies across team
-**Improvement**: Shared config files, pattern libraries
-
-#### 5. **False Positive Management**
-**Current State**: Basic - Can disable detectors or allow files
-**Pain Points**:
-- Must remember flags for each run
-- No way to annotate code as safe
-- Limited pattern customization
-**Improvement**: Inline annotations, persistent allowlists
-
-## Priority Implementation Order
-
-### Phase 1: Immediate UX Fixes (v0.2.12)
-1. Success message implementation
-2. True quiet mode
-3. Basic batch file checking
-4. Improved error suggestions
-
-### Phase 2: Configuration & Persistence (v0.3.0)
-1. Configuration file support
-2. Environment variable handling
-3. Project and global configs
-4. Config migration tools
-
-### Phase 3: Advanced Features (v0.4.0+)
-1. Interactive fix mode
-2. Watch mode
-3. Advanced reporting
-4. IDE integrations
 
 ## How to Contribute
 

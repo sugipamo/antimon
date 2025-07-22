@@ -478,8 +478,24 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
             if stats['errors'] > 0:
                 print(f"   • Errors: {stats['errors']}", file=sys.stderr)
     elif not quiet:
-        # Simple success message in normal mode
-        print("✅ Check passed", file=sys.stderr)
+        # Enhanced success message showing what was checked
+        operation_info = []
+        if tool_name:
+            operation_info.append(f"Tool: {tool_name}")
+        if json_data and "tool_input" in json_data:
+            tool_input = json_data["tool_input"]
+            if isinstance(tool_input, dict):
+                if "file_path" in tool_input:
+                    operation_info.append(f"File: {tool_input['file_path']}")
+                if "content" in tool_input and isinstance(tool_input["content"], str):
+                    content_size = len(tool_input["content"])
+                    operation_info.append(f"Content: {content_size:,} bytes")
+        
+        print(f"\n✅ {color.success('Success:')} No security issues found", file=sys.stderr)
+        if operation_info:
+            for info in operation_info:
+                print(f"   • {info}", file=sys.stderr)
+        print(f"   • Checks performed: {stats['total']} security detectors", file=sys.stderr)
     return 0
 
 
@@ -556,7 +572,14 @@ def check_file_directly(file_path: str, verbose: bool = False, quiet: bool = Fal
             if stats['errors'] > 0:
                 print(f"   • Errors: {stats['errors']}", file=sys.stderr)
     elif not quiet:
-        print(f"✅ No security issues found in '{file_path}'", file=sys.stderr)
+        # Get file info for better user feedback
+        import os
+        file_size = os.path.getsize(file_path)
+        file_size_kb = file_size / 1024
+        print(f"\n✅ {color.success('Success:')} No security issues found", file=sys.stderr)
+        print(f"   • File: {file_path}", file=sys.stderr)
+        print(f"   • Size: {file_size_kb:.1f} KB ({file_size:,} bytes)", file=sys.stderr)
+        print(f"   • Checks performed: {stats['total']} security detectors", file=sys.stderr)
 
     return 0
 
@@ -618,6 +641,13 @@ def check_content_directly(content: str, file_name: str = "stdin", verbose: bool
             if stats['errors'] > 0:
                 print(f"   • Errors: {stats['errors']}", file=sys.stderr)
     elif not quiet:
-        print("✅ No security issues found in provided content", file=sys.stderr)
+        # Get content info for better user feedback
+        content_lines = content.count('\n') + 1 if content else 0
+        content_size = len(content.encode('utf-8'))
+        content_size_kb = content_size / 1024
+        print(f"\n✅ {color.success('Success:')} No security issues found", file=sys.stderr)
+        print(f"   • Content size: {content_size_kb:.1f} KB ({content_size:,} bytes)", file=sys.stderr)
+        print(f"   • Lines: {content_lines:,}", file=sys.stderr)
+        print(f"   • Checks performed: {stats['total']} security detectors", file=sys.stderr)
 
     return 0
