@@ -12,6 +12,16 @@ from .color_utils import Colors, supports_color
 from .core import validate_hook_data
 
 
+def safe_input(prompt):
+    """Safe input function that works with both Python 2 and 3."""
+    if sys.version_info[0] < 3:
+        # In Python 2, use raw_input to avoid eval
+        return raw_input(prompt)  # noqa: F821
+    else:
+        # In Python 3, input is safe
+        return input(prompt)
+
+
 class InteractiveDemo:
     """Interactive demonstration of antimon's detection capabilities."""
 
@@ -225,7 +235,7 @@ class InteractiveDemo:
         print("0. Exit demo")
 
         return (
-            input("\n" + self.colors.CYAN + "Choose an option: " + self.colors.RESET)
+            safe_input("\n" + self.colors.CYAN + "Choose an option: " + self.colors.RESET)
             .strip()
             .lower()
         )
@@ -238,7 +248,7 @@ class InteractiveDemo:
         for i, _demo in enumerate(self.demo_cases):
             self._run_single_demo(i)
             if i < len(self.demo_cases) - 1:
-                input(
+                safe_input(
                     "\n"
                     + self.colors.CYAN
                     + "Press Enter to continue..."
@@ -303,14 +313,14 @@ class InteractiveDemo:
 
         # Get tool name
         print("\nAvailable tools: Write, Read, Edit, MultiEdit")
-        tool_name = input(self.colors.CYAN + "Tool name: " + self.colors.RESET).strip()
+        tool_name = safe_input(self.colors.CYAN + "Tool name: " + self.colors.RESET).strip()
 
         if tool_name not in ["Write", "Read", "Edit", "MultiEdit"]:
             self._print_error("Invalid tool name")
             return
 
         # Get file path
-        file_path = input(self.colors.CYAN + "File path: " + self.colors.RESET).strip()
+        file_path = safe_input(self.colors.CYAN + "File path: " + self.colors.RESET).strip()
 
         # Build tool_input based on tool
         tool_input = {"file_path": file_path}
@@ -319,17 +329,17 @@ class InteractiveDemo:
             print("Enter content (type 'END' on a new line when done):")
             lines = []
             while True:
-                line = input()
+                line = safe_input("")
                 if line == "END":
                     break
                 lines.append(line)
             tool_input["content"] = "\n".join(lines)
 
         elif tool_name == "Edit":
-            old_string = input(
+            old_string = safe_input(
                 self.colors.CYAN + "Text to replace: " + self.colors.RESET
             )
-            new_string = input(self.colors.CYAN + "Replace with: " + self.colors.RESET)
+            new_string = safe_input(self.colors.CYAN + "Replace with: " + self.colors.RESET)
             tool_input["old_string"] = old_string
             tool_input["new_string"] = new_string
 

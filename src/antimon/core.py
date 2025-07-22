@@ -5,8 +5,10 @@
 Core validation logic for antimon
 """
 
+import glob
 import json
 import logging
+import os
 import sys
 import time
 
@@ -749,9 +751,6 @@ def check_files_batch(
     Returns:
         Exit code (0=success, 1=error, 2=security issues)
     """
-    import glob
-    import os
-
     # Initialize color formatter
     color = ColorFormatter(use_color=not no_color)
 
@@ -862,8 +861,6 @@ def check_file_directly(
     Returns:
         Exit code (0=success, 1=error, 2=security issues)
     """
-    import os
-
     # Initialize color formatter
     color = ColorFormatter(use_color=not no_color)
 
@@ -965,8 +962,6 @@ def check_file_directly(
                         )
     elif not quiet:
         # Get file info for better user feedback
-        import os
-
         file_size = os.path.getsize(file_path)
         file_size_kb = file_size / 1024
         print(

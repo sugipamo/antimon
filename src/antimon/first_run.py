@@ -90,8 +90,6 @@ def show_first_run_guide(no_color: bool = False, is_quickstart: bool = False) ->
 def check_claude_code_setup() -> str | None:
     """Check if Claude Code is set up with antimon."""
     try:
-        import subprocess
-
         result = subprocess.run(
             ["claude-code", "config", "get", "hooks.PreToolUse"],
             capture_output=True,

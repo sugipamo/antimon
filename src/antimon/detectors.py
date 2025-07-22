@@ -9,6 +9,8 @@ import re
 from dataclasses import dataclass
 from typing import Any, TypedDict
 
+from .runtime_config import get_runtime_config
+
 
 class ToolInput(TypedDict, total=False):
     """Type definition for tool input data."""
@@ -63,8 +65,6 @@ def detect_filenames(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if dangerous paths were detected
     """
-    from .runtime_config import get_runtime_config
-
     dangerous_patterns = [
         r"/etc/passwd",
         r"/etc/shadow",
@@ -145,8 +145,6 @@ def detect_llm_api(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if LLM API references were detected
     """
-    from .runtime_config import get_runtime_config
-
     # Check if file is ignored
     file_path = json_data.get("tool_input", {}).get("file_path", "")
     config = get_runtime_config()
@@ -254,8 +252,6 @@ def detect_api_key(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if API keys were detected
     """
-    from .runtime_config import get_runtime_config
-
     # Check if file is ignored
     file_path = json_data.get("tool_input", {}).get("file_path", "")
     config = get_runtime_config()
@@ -340,8 +336,6 @@ def detect_docker(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if Docker operations were detected
     """
-    from .runtime_config import get_runtime_config
-
     # Check if file is ignored
     file_path = json_data.get("tool_input", {}).get("file_path", "")
     config = get_runtime_config()
@@ -408,8 +402,6 @@ def detect_localhost(json_data: HookData) -> DetectionResult:
     Returns:
         DetectionResult indicating if localhost references were detected
     """
-    from .runtime_config import get_runtime_config
-
     # Check if file is ignored
     file_path = json_data.get("tool_input", {}).get("file_path", "")
     config = get_runtime_config()

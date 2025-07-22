@@ -6,6 +6,8 @@ Color utilities for antimon terminal output
 """
 
 import os
+import platform
+import subprocess
 import sys
 
 
@@ -61,15 +63,17 @@ def supports_color() -> bool:
     if sys.platform == "win32":
         # Windows 10+ supports ANSI colors
         try:
-            import platform
-
             version = platform.version()
             major = int(version.split(".")[0])
             if major >= 10:
                 # Enable ANSI color support on Windows 10+
-                # Note: os.system('') is the documented way to enable ANSI on Windows
+                # Using subprocess.run with empty command to enable ANSI escape sequences
+                # This is safer than os.system() as it doesn't go through the shell
                 # See: https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
-                os.system("")  # This enables ANSI escape sequences
+                try:
+                    subprocess.run([""], shell=True, capture_output=True, check=False)
+                except Exception:
+                    pass
                 return True
         except Exception:
             pass

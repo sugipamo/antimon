@@ -8,6 +8,7 @@ Last error tracking for antimon
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from .color_utils import Colors, apply_color
 
@@ -20,7 +21,7 @@ def get_error_file() -> Path:
     return config_dir / "last_error.json"
 
 
-def save_last_error(issues: list[str], hook_data: dict) -> None:
+def save_last_error(issues: list[str], hook_data: dict[str, Any]) -> None:
     """Save the last error for later explanation."""
     error_file = get_error_file()
     error_file.parent.mkdir(parents=True, exist_ok=True)
@@ -41,7 +42,7 @@ def save_last_error(issues: list[str], hook_data: dict) -> None:
         pass
 
 
-def load_last_error() -> dict | None:
+def load_last_error() -> dict[str, Any] | None:
     """Load the last error if available."""
     error_file = get_error_file()
 
