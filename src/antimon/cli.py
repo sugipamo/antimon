@@ -45,13 +45,13 @@ def main(argv: list[str] | None = None) -> int:
 Examples:
   # Validate JSON input from stdin
   echo '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"file_path": "hello.py", "content": "print(\\"Hello\\")"}}' | antimon
-  
+
   # Use with a file
   cat hook_data.json | antimon
-  
+
   # Enable verbose logging
   cat hook_data.json | antimon --verbose
-  
+
   # Use as a Claude Code hook (add to settings.json)
   {"hooks": {"PreToolUse": "antimon"}}
 

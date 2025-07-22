@@ -15,7 +15,7 @@ from .setup_claude_code import check_claude_code_setup
 def show_status(no_color: bool = False) -> None:
     """
     Display the current status of antimon configuration
-    
+
     Args:
         no_color: Disable colored output
     """
@@ -87,7 +87,7 @@ def show_status(no_color: bool = False) -> None:
     ]
 
     env_found = False
-    for var_name, description in env_vars:
+    for var_name, _description in env_vars:
         if var_value := os.environ.get(var_name):
             env_found = True
             print(f"  • {var_name}: {var_value}")

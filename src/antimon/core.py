@@ -43,13 +43,13 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
     config = get_runtime_config()
 
     # Define code-editing tools that need validation
-    CODE_EDITING_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
+    code_editing_tools = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 
     # Define tools that need special validation
-    SPECIAL_VALIDATION_TOOLS = {"Read", "Bash"}
+    special_validation_tools = {"Read", "Bash"}
 
     # Define safe tools that don't need validation
-    SAFE_TOOLS = {
+    safe_tools = {
         "LS", "Glob", "Grep", "NotebookRead",
         "WebFetch", "WebSearch", "TodoWrite", "exit_plan_mode"
     }
@@ -61,10 +61,10 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
     # filename detection to be skipped while other detectors still run
 
     # Skip truly safe tools
-    if tool_name in SAFE_TOOLS:
+    if tool_name in safe_tools:
         logger.debug(f"Skipping safe non-code-editing tool: {tool_name}")
         return False, [], {}
-    elif tool_name not in CODE_EDITING_TOOLS and tool_name not in SPECIAL_VALIDATION_TOOLS:
+    elif tool_name not in code_editing_tools and tool_name not in special_validation_tools:
         if tool_name:
             logger.debug(f"Skipping unknown tool: {tool_name}")
         else:
@@ -72,7 +72,7 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
         return False, [], {}
 
     # Select appropriate detectors based on tool type
-    if tool_name in CODE_EDITING_TOOLS:
+    if tool_name in code_editing_tools:
         detectors = [
             detect_filenames,
             detect_llm_api,
@@ -150,7 +150,7 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
             })
 
     # Log structured results in verbose mode
-    if logger.isEnabledFor(logging.DEBUG):
+    if logger.is_enabled_for(logging.DEBUG):
         for result in detailed_results:
             logger.debug(
                 f"[{result['status']}] {result['detector']} - "
@@ -164,11 +164,11 @@ def validate_hook_data(json_data: HookData) -> tuple[bool, list[str], dict[str, 
 def _parse_json_input(color: ColorFormatter, quiet: bool) -> tuple[HookData | None, int]:
     """
     Parse JSON input from stdin.
-    
+
     Args:
         color: Color formatter instance
         quiet: Suppress all output except errors
-        
+
     Returns:
         Tuple of (parsed_json_data, exit_code). If error, json_data is None.
     """
@@ -213,21 +213,21 @@ def _parse_json_input(color: ColorFormatter, quiet: bool) -> tuple[HookData | No
 def _validate_required_fields(json_data: HookData, tool_name: str, color: ColorFormatter, quiet: bool) -> int:
     """
     Validate required fields for different tool types.
-    
+
     Args:
         json_data: Parsed JSON data
         tool_name: Name of the tool being used
         color: Color formatter instance
         quiet: Suppress all output except errors
-        
+
     Returns:
         Exit code (0=valid, 1=missing required fields)
     """
     tool_input = json_data.get("tool_input", {})
-    CODE_EDITING_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
+    code_editing_tools = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 
     # Validate required fields for code-editing tools
-    if tool_name in CODE_EDITING_TOOLS:
+    if tool_name in code_editing_tools:
         # Check for required fields based on tool type
         if tool_name == "Write":
             if "content" not in tool_input:
@@ -265,8 +265,7 @@ def _validate_required_fields(json_data: HookData, tool_name: str, color: ColorF
                 return 1
 
     # Validate required fields for Read tool
-    if tool_name == "Read":
-        if "file_path" not in tool_input:
+    if tool_name == "Read" and "file_path" not in tool_input:
             logger.error(f"Missing required field 'file_path' for {tool_name} tool")
             if not quiet:
                 print(f"\n{color.error('❌ Validation error:')} Missing required field 'file_path' for {tool_name} tool", file=sys.stderr)
@@ -282,8 +281,7 @@ def _validate_required_fields(json_data: HookData, tool_name: str, color: ColorF
             return 1
 
     # Validate required fields for Bash tool
-    if tool_name == "Bash":
-        if "command" not in tool_input:
+    if tool_name == "Bash" and "command" not in tool_input:
             logger.error(f"Missing required field 'command' for {tool_name} tool")
             if not quiet:
                 print(f"\n{color.error('❌ Validation error:')} Missing required field 'command' for {tool_name} tool", file=sys.stderr)
@@ -305,7 +303,7 @@ def _display_security_issues(issues: list[str], stats: dict[str, int], json_data
                            tool_name: str, color: ColorFormatter, verbose: bool, quiet: bool, no_color: bool = False, dry_run: bool = False) -> None:
     """
     Display security issues found during validation.
-    
+
     Args:
         issues: List of security issues found
         stats: Detection statistics
@@ -394,9 +392,9 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
         return exit_code
 
     # Define tool categories for user feedback
-    CODE_EDITING_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
-    SPECIAL_VALIDATION_TOOLS = {"Read", "Bash"}
-    SAFE_TOOLS = {
+    code_editing_tools = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
+    special_validation_tools = {"Read", "Bash"}
+    safe_tools = {
         "LS", "Glob", "Grep", "NotebookRead",
         "WebFetch", "WebSearch", "TodoWrite", "exit_plan_mode"
     }
@@ -409,8 +407,8 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
         return validation_result
 
     # Provide feedback for non-code-editing tools
-    if tool_name not in CODE_EDITING_TOOLS and tool_name not in SPECIAL_VALIDATION_TOOLS:
-        if tool_name in SAFE_TOOLS:
+    if tool_name not in code_editing_tools and tool_name not in special_validation_tools:
+        if tool_name in safe_tools:
             logger.info(f"Safe tool {tool_name} - no security validation needed")
             if verbose and not quiet:
                 print(f"ℹ️  Tool '{tool_name}' is considered safe - no security validation performed", file=sys.stderr)
@@ -488,13 +486,13 @@ def process_stdin(verbose: bool = False, quiet: bool = False, no_color: bool = F
 def check_file_directly(file_path: str, verbose: bool = False, quiet: bool = False, no_color: bool = False) -> int:
     """
     Check a file directly without JSON input.
-    
+
     Args:
         file_path: Path to the file to check
         verbose: Enable verbose output
         quiet: Suppress all output except errors
         no_color: Disable colored output
-        
+
     Returns:
         Exit code (0=success, 1=error, 2=security issues)
     """
@@ -566,14 +564,14 @@ def check_file_directly(file_path: str, verbose: bool = False, quiet: bool = Fal
 def check_content_directly(content: str, file_name: str = "stdin", verbose: bool = False, quiet: bool = False, no_color: bool = False) -> int:
     """
     Check content directly without JSON input.
-    
+
     Args:
         content: Content to check
         file_name: Optional file name for context
         verbose: Enable verbose output
         quiet: Suppress all output except errors
         no_color: Disable colored output
-        
+
     Returns:
         Exit code (0=success, 2=security issues)
     """

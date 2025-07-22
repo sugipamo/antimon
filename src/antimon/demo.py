@@ -240,7 +240,7 @@ class InteractiveDemo:
         print("\n" + self.colors.BOLD + "Running all demos..." + self.colors.RESET)
         print("="*60)
 
-        for i, demo in enumerate(self.demo_cases):
+        for i, _demo in enumerate(self.demo_cases):
             self._run_single_demo(i)
             if i < len(self.demo_cases) - 1:
                 input("\n" + self.colors.CYAN + "Press Enter to continue..." + self.colors.RESET)
@@ -353,14 +353,11 @@ class InteractiveDemo:
 
 def run_demo(non_interactive: bool = False):
     """Entry point for the demo command.
-    
+
     Args:
         non_interactive: Run in non-interactive mode (automatic demo)
     """
-    if non_interactive:
-        demo = NonInteractiveDemo()
-    else:
-        demo = InteractiveDemo()
+    demo = NonInteractiveDemo() if non_interactive else InteractiveDemo()
 
     try:
         demo.run()

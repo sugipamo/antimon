@@ -39,11 +39,11 @@ class DetectionResult:
 def find_line_number(text: str, pattern_match: re.Match[str]) -> int:
     """
     Find the line number where a pattern match occurs
-    
+
     Args:
         text: The full text
         pattern_match: The regex match object
-        
+
     Returns:
         Line number (1-indexed)
     """
@@ -456,10 +456,10 @@ def detect_claude_antipatterns(json_data: HookData) -> DetectionResult:
 def detect_read_sensitive_files(json_data: HookData) -> DetectionResult:
     """
     Detect Read tool attempts to access sensitive files
-    
+
     Args:
         json_data: Hook data containing file path information
-        
+
     Returns:
         DetectionResult indicating if sensitive file read was attempted
     """
@@ -540,10 +540,10 @@ def detect_read_sensitive_files(json_data: HookData) -> DetectionResult:
 def detect_bash_dangerous_commands(json_data: HookData) -> DetectionResult:
     """
     Detect dangerous Bash commands
-    
+
     Args:
         json_data: Hook data containing command information
-        
+
     Returns:
         DetectionResult indicating if dangerous commands were detected
     """

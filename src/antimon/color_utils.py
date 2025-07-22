@@ -39,7 +39,7 @@ class Colors:
 def supports_color() -> bool:
     """
     Check if the terminal supports color output
-    
+
     Returns:
         True if color is supported, False otherwise
     """
@@ -69,7 +69,7 @@ def supports_color() -> bool:
                 # See: https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
                 os.system('')  # This enables ANSI escape sequences
                 return True
-        except:
+        except Exception:
             pass
         return False
 
@@ -82,7 +82,7 @@ class ColorFormatter:
     def __init__(self, use_color: bool | None = None):
         """
         Initialize color formatter
-        
+
         Args:
             use_color: Force color on/off. If None, auto-detect.
         """
@@ -129,10 +129,10 @@ class ColorFormatter:
     def format_security_issue(self, message: str) -> str:
         """
         Format security issue messages with appropriate colors
-        
+
         Args:
             message: The security issue message
-            
+
         Returns:
             Formatted message with colors
         """
@@ -169,20 +169,16 @@ class ColorFormatter:
 def apply_color(text: str, color: str, no_color: bool = False) -> str:
     """
     Apply color to text if color is enabled
-    
+
     Args:
         text: Text to colorize
         color: Color code from Colors class
         no_color: If True, don't apply color
-        
+
     Returns:
         Colored text or original text if no_color is True
     """
     if no_color or not supports_color():
         return text
-
-    # Enable ANSI colors on Windows
-    if sys.platform == "win32":
-        enable_windows_ansi_support()
 
     return f"{color}{text}{Colors.RESET}"

@@ -14,10 +14,10 @@ from .core import validate_hook_data
 def run_self_test(verbose: bool = False) -> int:
     """
     Run a self-test to verify antimon is working correctly
-    
+
     Args:
         verbose: Enable verbose output
-        
+
     Returns:
         0 if all tests pass, 1 if any test fails
     """

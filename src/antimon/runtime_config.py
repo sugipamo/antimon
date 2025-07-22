@@ -84,7 +84,7 @@ class RuntimeConfig:
 
     def is_file_allowed(self, file_path: str) -> bool:
         """Check if a file is explicitly allowed.
-        
+
         Supports:
         - Exact file paths
         - Glob patterns (*.env, config/*.json)

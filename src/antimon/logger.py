@@ -90,7 +90,7 @@ class AntimonLogger:
         """Set the logging level"""
         self.logger.setLevel(level.value)
 
-    def isEnabledFor(self, level: int) -> bool:
+    def is_enabled_for(self, level: int) -> bool:
         """Check if logging is enabled for the given level"""
         return self.logger.isEnabledFor(level)
 

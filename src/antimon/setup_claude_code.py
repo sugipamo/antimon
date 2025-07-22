@@ -10,7 +10,7 @@ from .color_utils import ColorFormatter
 def find_claude_code_command() -> str | None:
     """
     Find claude-code command in PATH
-    
+
     Returns:
         Path to claude-code command or None if not found
     """
@@ -31,7 +31,7 @@ def find_claude_code_command() -> str | None:
 def get_claude_code_config() -> dict | None:
     """
     Get current Claude Code configuration
-    
+
     Returns:
         Current configuration dict or None if not available
     """
@@ -52,11 +52,11 @@ def get_claude_code_config() -> dict | None:
 def set_claude_code_hook(hook_name: str, command: str) -> bool:
     """
     Set a Claude Code hook
-    
+
     Args:
         hook_name: Name of the hook (e.g., "PreToolUse")
         command: Command to run for the hook
-        
+
     Returns:
         True if successful, False otherwise
     """
@@ -75,7 +75,7 @@ def set_claude_code_hook(hook_name: str, command: str) -> bool:
 def verify_antimon_in_path() -> str | None:
     """
     Verify antimon is in PATH
-    
+
     Returns:
         Path to antimon command or None if not found
     """
@@ -96,10 +96,10 @@ def verify_antimon_in_path() -> str | None:
 def setup_claude_code_integration(no_color: bool = False) -> bool:
     """
     Interactive setup for Claude Code integration
-    
+
     Args:
         no_color: Disable colored output
-        
+
     Returns:
         True if setup was successful, False otherwise
     """
@@ -221,7 +221,7 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
 def check_claude_code_setup() -> tuple[bool, str]:
     """
     Quick check if Claude Code is properly configured with antimon
-    
+
     Returns:
         Tuple of (is_configured, status_message)
     """
