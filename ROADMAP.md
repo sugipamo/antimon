@@ -1,193 +1,217 @@
-# antimon Development Roadmap
+# antimon OSS化ロードマップ
 
-## Current Status (2025-07-22)
+## 概要
+antimonをオープンソースプロジェクトとして公開するための段階的な準備計画です。
+**開発者向けガードレールツール**として、prettier/eslint/ruffのような「開発者に愛されるツール」を目指します。
 
-### Recent Achievements:
-- ✅ **v0.2.15 (In Progress)**: Fixed critical code quality issues - circular dependencies, unsafe input(), os.system, added Python dangerous code detection
-- ✅ **v0.2.14**: Developer tools - watch mode, pattern testing, auto-fix suggestions, first-run setup
-- ✅ **v0.2.13**: Batch processing & JSON output format 
-- ✅ **v0.2.12**: Enhanced success messages showing detailed information about what was checked
-- ✅ **v0.2.11**: Fixed exit codes (0=success, 1=error, 2=security issue) and comprehensive FAQ documentation
-- ✅ **v0.2.10**: Verified `--quickstart`, `--stats`, and `--config` functionality
-- ✅ **v0.2.1-v0.2.8**: Core features including detector fixes, direct file checking, Claude Code integration, and structured logging
+## 🚨 フェーズ1: 緊急対応 (1週間以内)
 
-### Quality Check Summary (2025-07-22):
-- ✅ **pytest**: 202/204 tests passing (76% code coverage) - 2 tests failing in test_last_error.py due to state persistence
-- ✅ **ruff**: All auto-fixable style issues fixed
-- ⚠️ **mypy**: 108 type errors remaining (future version)
-- ⚠️ **src-check**: Score 57.5/100 (slightly decreased due to stricter checks):
-  - ✅ Fixed all 7 high severity circular dependency issues
-  - ✅ Fixed os.system security vulnerability
-  - ✅ Fixed unsafe input() usage for Python 2 compatibility
-  - ✅ Added Python dangerous code detection (os.system, eval, exec, etc.)
-  - Remaining: 4 high severity issues:
-    - 2 instances of unsafe input() usage (false positives - already using safe_input helper)
-    - 1 import inside function in color_utils.py line 76
-    - 1 high coupling issue (color_utils.py: God class 'Colors' with 16 attributes)
-  - Remaining: 128 medium severity issues (mostly print statements, complexity)
-  - Remaining: 11 low severity issues
+### ライセンス関連
+- [ ] **ライセンス選択と適用** (Priority: 🔴 Critical)
+  - MITライセンスの適用
+  - LICENSE ファイルの作成
+  - 各ソースファイルへの著作権表記追加
+  - `pyproject.toml` へのライセンス情報追加
 
-## Project Vision
+### セキュリティ監査
+- [ ] **機密情報漏洩チェック** (Priority: 🔴 Critical)
+  - `.env` ファイルの存在確認
+  - ハードコードされたAPIキー・パスワードの検索
+  - テストファイル内の機密情報チェック
+  - `.gitignore` の見直し
 
-Transform antimon from a standalone script into a robust, extensible Python package that can be easily integrated into various AI coding assistant workflows and CI/CD pipelines.
+### コミュニティ基盤
+- [ ] **Issue/PRテンプレート作成** (Priority: 🔴 Critical)
+  - `.github/ISSUE_TEMPLATE/` の作成
+    - bug_report.yml
+    - feature_request.yml
+    - security_vulnerability.yml
+  - `.github/pull_request_template.md` の作成
 
-## Completed Versions
+### 開発者体験(DX)向上 【新規追加】
+- [ ] **VSCode拡張機能の基盤整備** (Priority: 🔴 Critical)
+  - Language Server Protocol (LSP) 対応準備
+  - リアルタイム検証API設計
+  - VS Code Marketplace準備
 
-### Version 0.2.12 (User Experience) - COMPLETED
-- Success message improvements (show what was checked)
-- Fixed duplicate output bug in verbose mode
-- Implemented --version flag properly
-- Enhanced --stats flag with meaningful statistics
+- [ ] **設定プリセット導入** (Priority: 🟡 High)
+  - 初心者向け（厳格チェック無効）
+  - 標準モード（現在のデフォルト）
+  - 厳格モード（全チェック有効）
+  - `antimon init --preset=beginner` 対応
 
-### Version 0.2.13 (Batch Processing & JSON) - COMPLETED
-- Batch File Checking with progress indicators
-- JSON Output Format for CI/CD integration
-- Brief Mode for concise security reports
-- Exit Code Documentation
+## 🔧 フェーズ2: 品質改善 (2-4週間)
 
-### Version 0.2.14 (Developer Tools) - COMPLETED
-- Watch Mode for continuous monitoring
-- Pattern Testing to test detection patterns
-- Auto-fix Suggestions for common security fixes
-- Setup Status on First Run
+### テストとコード品質
+- [ ] **テストカバレッジ向上** (Priority: 🟡 High)
+  - 現在66% → 70%以上への向上（開発者ツールとして適度な水準）
+  - 不足している単体テスト追加
+  - エラーハンドリングのテスト強化
+  - 境界値テストの追加
 
-## Version 0.2.15 (Code Quality & Performance) - IN PROGRESS
+- [ ] **コード品質修正** (Priority: 🟡 High)
+  - Pylint指摘191項目のうち重要度High項目を優先対応
+  - 型ヒントの追加・修正
+  - docstringの統一と改善
+  - 未使用インポートの削除
 
-### Completed:
-- Fixed critical code quality issues (circular dependencies, os.system, unsafe input())
-- Added Python dangerous code detection (os.system, eval, exec, subprocess with shell=True)
-- Created centralized logging infrastructure
-- Fixed Ruff linting issues
+### 依存関係とパフォーマンス
+- [ ] **依存関係整理** (Priority: 🟡 High)
+  - requirements.txt の最適化
+  - 不要な依存関係の削除
+  - セキュリティ脆弱性のある依存関係の更新
+  - pyproject.toml の依存関係見直し
 
-### Remaining Tasks:
-1. **Complete Logging Migration** (High Priority) - Convert 280+ print statements
-2. **Performance Optimizations** (Medium Priority) - Caching, parallel processing
-3. **Code Quality Improvements** (Medium Priority) - Type hints, reduce coupling
-4. **Documentation Updates** - Windows setup, CI/CD examples, API docs
+- [ ] **パフォーマンス最適化** (Priority: 🔴 Critical) 【重要度UP】
+  - 大規模プロジェクト対応（1000+ファイル）
+  - 検出処理時間目標：<3秒（1000ファイル）
+  - 検出処理の並列化強化
+  - 初回実行時間の短縮
 
-## Version 0.3.0 (Configuration Support)
-- [ ] TOML configuration file support (`antimon.toml`)
-- [ ] Custom pattern definitions
-- [ ] Enable/disable specific detectors
-- [ ] Severity levels for detections
-- [ ] Whitelist/ignore patterns
-- [ ] Global configuration (`~/.config/antimon/antimon.toml`)
-- [ ] Environment variable overrides
-- [ ] Configuration file validation and schema
-- [ ] `.antimonignore` file support for project-specific exclusions
-- [ ] `--generate-config` command to create configuration template
-- [ ] Configuration inheritance (global → project → command-line)
+### IDE/エディタ統合強化 【新規追加】
+- [ ] **VSCode拡張機能開発** (Priority: 🟡 High)
+  - リアルタイム問題表示
+  - インライン修正提案
+  - 設定UIの提供
+  - VS Code Marketplace公開
 
-## Version 0.4.0 (Enhanced Detection)
-- [ ] Additional security patterns:
-  - [ ] SQL injection detection
-  - [ ] Command injection detection
-  - [ ] Path traversal detection
-  - [ ] XXE (XML External Entity) detection
-  - [ ] SSRF (Server-Side Request Forgery) patterns
-- [ ] Language-specific detections:
-  - [ ] Python: `eval()`, `exec()`, `__import__`
-  - [ ] JavaScript: `eval()`, `Function()`, `innerHTML`
-  - [ ] Shell: Command injection patterns
-- [ ] Framework-specific patterns
+- [ ] **pre-commit統合の簡素化** (Priority: 🟡 High)
+  - `.pre-commit-hooks.yaml`提供
+  - 1コマンドセットアップ：`antimon setup-precommit`
+  - Git hooks 自動設定
 
-## Version 0.5.0 (Integration Features)
-- [ ] Plugin system for custom detectors
-- [ ] Pre-commit hook support
-- [ ] GitHub Actions integration
-- [ ] GitLab CI integration
-- [ ] VS Code extension API
-- [ ] Reporting formats (SARIF, JUnit XML, HTML, Markdown)
+- [ ] **キャッシュ機能実装** (Priority: 🟢 Medium)
+  - ファイル変更検出によるスキップ
+  - 検出結果のキャッシュ保存
+  - プロジェクト全体の高速化
 
-## Version 0.6.0 - 0.9.0 (Advanced Features)
-- [ ] **Performance**: Retry mechanisms, offline mode, progress indicators
-- [ ] **ML Detection**: Context-aware analysis, dependency scanning, metrics dashboard
-- [ ] **Enterprise**: SSO/LDAP, audit logging, RBAC, compliance reporting
-- [ ] **Scale**: Distributed scanning, caching, webhooks, REST API
-- [ ] **Internationalization (i18n)**: Multi-language support starting with Japanese
-- [ ] **Interactive Fix Mode**: `--fix-interactive` to apply suggested fixes with confirmation
-- [ ] **Learning Mode**: `--learn` to understand why patterns are dangerous with examples
+## 📚 フェーズ3: 拡張整備 (1-3ヶ月)
 
-## Version 0.2.16 (User Experience Polish) - CRITICAL
+### ドキュメント国際化
+- [ ] **多言語対応** (Priority: 🟡 High)
+  - README英語版作成 (README_EN.md)
+  - コマンドヘルプメッセージの英語対応
+  - エラーメッセージの多言語化検討
+  - ドキュメント翻訳の継続的メンテナンス方針
 
-### Critical Fixes (Must Do):
-- [ ] Fix Silent Success - Change default log level to INFO
-- [ ] Add Operation Context - Show what's being checked
-- [ ] Fix --config Flag - Implement or remove
-- [ ] Improve Default Verbosity - Add progress indicators
+### コミュニティガバナンス
+- [ ] **行動規範策定** (Priority: 🟡 High)
+  - CODE_OF_CONDUCT.md の作成 (Contributor Covenant v2.1)
+  - 違反報告の仕組み構築
+  - モデレーション方針の策定
 
-### High Priority:
-- [ ] Quick Commands (`antimon .`, short aliases)
-- [ ] .antimonignore file support
-- [ ] Better success feedback
-- [ ] Git integration (pre-commit hooks)
+- [ ] **コントリビューションガイド** (Priority: 🟡 High)
+  - CONTRIBUTING.md の作成
+  - 開発環境セットアップ手順
+  - コーディング規約の明文化
+  - PR レビュープロセスの定義
 
-## Version 1.0.0 (Production Ready)
-- [ ] Comprehensive documentation & 100% test coverage
-- [ ] Performance benchmarks & security audit
-- [ ] Stable API guarantee with LTS commitment
-- [ ] Migration guides & professional support
+### 学習支援・オンボーディング 【新規追加】
+- [ ] **インタラクティブチュートリアル** (Priority: 🟢 Medium)
+  - `antimon tutorial` コマンド
+  - ステップバイステップガイド
+  - 実際のコード例を使った学習
 
-## Long-term Goals
+- [ ] **トラブルシューティング強化** (Priority: 🟡 High)
+  - `antimon doctor` 診断コマンド
+  - 設定問題の自動検出・修正
+  - 環境固有問題の解決ガイド
 
-- **Developer Experience**: IDE plugins, debugging tools, plugin API, i18n support
-- **Community**: GitHub organization, contribution guidelines, pattern sharing
-- **Ecosystem**: Editor plugins (VS Code, IntelliJ, Vim), CI/CD integrations
-- **Research**: AI-powered suggestions, automated fixes, pattern learning
+- [ ] **使用例ライブラリ** (Priority: 🟢 Medium)
+  - 実際のプロジェクトでの使用例
+  - Best Practices集
+  - アンチパターン事例集
 
-## Release Schedule
+### セキュリティ体制 【簡素化】 
+- [ ] **基本セキュリティポリシー作成** (Priority: 🟡 High)
+  - SECURITY.md の作成（簡易版）
+  - 脆弱性報告手順の策定
+  - 基本的なセキュリティアップデート方針
 
-| Version | Target Date | Focus Area | Status |
-|---------|------------|------------|--------|
-| 0.2.11 | Released | Critical Fixes (Exit codes & docs) | ✅ Completed |
-| 0.2.12 | Released | User Experience | ✅ Completed |
-| 0.2.13 | Released | Batch Processing & JSON | ✅ Completed |
-| 0.2.14 | Released | Developer Tools | ✅ Completed |
-| 0.2.15 | 2025-07-25 | Code Quality & Performance | 🚧 In Progress |
-| 0.2.16 | 2025-08-01 | User Experience Polish | 🔥 Critical |
-| 0.3.0 | 2025-10-01 | Configuration | 📋 Planned |
-| 0.4.0 | 2026-01-15 | Enhanced detection | 📋 Planned |
-| 0.5.0 | 2026-04-01 | Integrations | 📋 Planned |
-| 1.0.0 | 2027-07-01 | Production ready | 🎯 Goal |
+### 配布とCI/CD
+- [ ] **パッケージ配布準備** (Priority: 🟢 Medium)
+  - PyPI登録準備
+  - GitHub Releases の自動化
+  - バージョニング戦略の確立
+  - 配布パッケージのテスト自動化
 
+- [ ] **CI/CDパイプライン強化** (Priority: 🟢 Medium)
+  - 複数Python バージョンでのテスト
+  - 複数OS (Linux, macOS, Windows) でのテスト
+  - 基本的なセキュリティスキャン
+  - コードカバレッジレポートの自動生成
 
+## 🔌 フェーズ4: エコシステム統合 (3-6ヶ月) 【新規追加】
 
+### CI/CD統合の簡素化
+- [ ] **GitHub Actions公式Action作成** (Priority: 🟢 Medium)
+  - `uses: antimon-security/antimon-action@v1`
+  - 設定不要でPRコメント表示
+  - 結果の視覚的レポート
 
+- [ ] **他ツールとの協調** (Priority: 🟢 Medium)
+  - `ruff`、`black`との併用最適化
+  - `mypy`結果との統合表示
+  - `pytest`との連携強化
 
+### コミュニティ・プラグイン 
+- [ ] **カスタム検出器API** (Priority: 🟢 Medium)
+  - サードパーティ検出器対応
+  - プラグイン開発ガイド
+  - コミュニティ検出器レジストリ
 
+## 📊 進捗管理
 
+### 完了状況
+- [ ] フェーズ1: 0/4 完了（開発者体験向上追加）
+- [ ] フェーズ2: 0/6 完了（IDE統合強化追加）
+- [ ] フェーズ3: 0/10 完了（学習支援追加）
+- [ ] フェーズ4: 0/3 完了（エコシステム統合新規）
 
+### 品質指標
+- **テストカバレッジ**: 66% → 目標70%（開発者ツールとして適度な水準）
+- **Pylint スコア**: 現在の問題191項目 → 重要度High項目のみ対応
+- **パフォーマンス**: 検出処理時間 <3秒（1000ファイル）
+- **依存関係脆弱性**: 0件維持
+- **ドキュメント品質**: 既に高品質 (README: 673行, FAQ: 356行)
 
+## 🎯 成功指標
 
-## User Experience Summary (2025-07-22)
+### 技術指標 【開発者フレンドリー重視に調整】
+- テストカバレッジ 70% 以上
+- 検出処理時間 <3秒（1000ファイル）
+- セキュリティ脆弱性 0件
+- ビルド成功率 90% 以上
 
-### Key Findings:
-1. **The tool is too quiet in normal mode** - users don't see success confirmations
-2. **Critical security gap fixed** - Added Python dangerous code detection
-3. **Logging migration incomplete** - 280+ print statements remain
-4. **Missing persistent settings** - .antimonignore support needed
+### 開発者体験指標 【新規追加】
+- 初回セットアップ時間: <2分
+- エラー理解率: >90%（ユーザーアンケート）
+- VSCode拡張ダウンロード数
+- pre-commit設定追加率
 
-### Most Common User Workflows:
-- 80% use direct file checking (`--check-file`)
-- 15% use content checking (`--check-content`)
-- 5% use JSON mode (CI/CD pipelines)
+### コミュニティ指標
+- GitHub Star 数（目標：50-100個）
+- Issue/PR の応答時間 (<48時間)
+- コントリビューター数
+- ダウンロード数 (PyPI)
 
-## Next Immediate Tasks (2025-07-22)
+## 📝 注意事項 【開発者ツール重視に更新】
 
-1. **Complete Logging Migration** (Priority: HIGH)
-   - Convert 280+ print statements to use logger.py
-   - Implement proper verbose mode
-   
-2. **Add .antimonignore Support** (Priority: HIGH)
-   - Allow persistent file/pattern exclusions
-   - Support glob patterns
-   
-3. **Fix User Experience Issues** (Priority: HIGH)
-   - Fix silent success in normal mode
-   - Add operation context
-   - Implement or remove --config flag
-   
-4. **Improve Test Coverage** (Priority: MEDIUM)
-   - Current: 77%, Target: 85%+
+1. **開発者体験ファースト**: prettier/eslint/ruffのような「開発者に愛されるツール」を目指す
+2. **段階的公開**: フェーズ1完了後に限定公開、フェーズ2完了後に本格公開を検討
+3. **コミュニティ対応**: Issue/PR への迅速な対応体制の構築が必要（目標：48時間以内）
+4. **パフォーマンス重視**: 大規模プロジェクトでもストレスフリーな体験を提供
+5. **シンプルさの維持**: 過度に複雑な機能追加は避け、コアユースケースに集中
 
+## 🔄 更新履歴
 
+- 2025-07-23: 初版作成 (OSS化調査結果を基に)
+- 2025-07-23: 「開発者向けガードレール」コンセプトに基づく大幅更新
+  - フェーズ4「エコシステム統合」追加
+  - VSCode拡張機能、パフォーマンス最適化を最優先化
+  - 学習支援・オンボーディング要素を強化
+  - 成功指標を開発者体験重視に調整
+
+---
+
+**このロードマップは living document として定期的に更新し、進捗状況を反映していきます。**
