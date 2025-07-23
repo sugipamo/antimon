@@ -134,6 +134,14 @@ class ColorFormatter:
             return text
         return f"{Colors.BOLD}{text}{Colors.RESET}"
 
+    def header(self, text: str) -> str:
+        """Format header text in bold cyan"""
+        return self._colorize(text, Colors.CYAN, bold=True)
+
+    def code(self, text: str) -> str:
+        """Format code text in cyan"""
+        return self._colorize(text, Colors.CYAN, bold=False)
+
     def format_security_issue(self, message: str) -> str:
         """
         Format security issue messages with appropriate colors

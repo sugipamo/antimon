@@ -30,18 +30,25 @@ from .error_context import ErrorContext
 from .last_error import save_last_error
 from .logger import get_logger
 from .runtime_config import get_runtime_config
+from .config import load_config
+from .pattern_detector import PatternDetector
+from .ai_detector import AIDetector
 
 logger = get_logger()
 
 
 def validate_hook_data(
     json_data: HookData,
+    quiet: bool = False, 
+    no_color: bool = False
 ) -> tuple[bool, list[str], dict[str, int | float]]:
     """
     Validate hook data for security issues
 
     Args:
         json_data: Hook data from AI assistant
+        quiet: Suppress warning messages
+        no_color: Disable colored output
 
     Returns:
         Tuple of (has_issues, list_of_messages, detector_stats)
@@ -197,6 +204,75 @@ def validate_hook_data(
                 }
             )
 
+    # Run pattern-based detectors from config file
+    try:
+        pattern_detector = PatternDetector()
+        pattern_results = pattern_detector.detect_patterns(json_data)
+        
+        for result in pattern_results:
+            if result.detected:
+                issues.append(result.message)
+                detector_stats["failed"] += 1
+                detailed_results.append({
+                    "detector": f"Pattern: {result.details.get('pattern_name', 'unknown')}",
+                    "status": "FAILED",
+                    "message": result.message,
+                    "file_path": json_data.get("tool_input", {}).get("file_path", "N/A"),
+                })
+            detector_stats["patterns_checked"] += 1
+    except Exception as e:
+        logger.error(f"Error in pattern detector: {e}", exc_info=True)
+        detector_stats["errors"] += 1
+
+    # Run AI-powered detectors from config file
+    try:
+        ai_config = load_config()
+        for ai_name, ai_detector_config in ai_config.ai_detectors.items():
+            if not ai_detector_config.enabled:
+                continue
+                
+            detector_stats["total"] += 1
+            
+            try:
+                # Create AI detector
+                api_key = os.environ.get(ai_detector_config.api_key_env)
+                if not api_key:
+                    # Always show warning for missing API key (even in quiet mode)
+                    from .color_utils import ColorFormatter
+                    color = ColorFormatter(use_color=not no_color)
+                    print(f"{color.warning('⚠️  AI Detector Warning:')} {ai_name} is enabled but {ai_detector_config.api_key_env} is not set", file=sys.stderr)
+                    print(f"{color.info('💡 To enable AI detection:')} Run 'antimon help api-setup' for setup instructions", file=sys.stderr)
+                    logger.debug(f"Skipping AI detector {ai_name}: API key not found")
+                    continue
+                
+                ai_detector = AIDetector(api_key=api_key, api_base=ai_detector_config.api_base)
+                
+                # Run detection
+                result = ai_detector.detect_from_hook_data(
+                    json_data,
+                    ai_detector_config.prompt,
+                    ai_detector_config.model
+                )
+                
+                if result.detected:
+                    issues.append(f"[AI/{ai_name}] {result.message}")
+                    detector_stats["failed"] += 1
+                    detailed_results.append({
+                        "detector": f"AI: {ai_name}",
+                        "status": "FAILED",
+                        "message": result.message,
+                        "file_path": json_data.get("tool_input", {}).get("file_path", "N/A"),
+                    })
+                else:
+                    detector_stats["passed"] += 1
+                    
+            except Exception as e:
+                logger.error(f"Error in AI detector {ai_name}: {e}", exc_info=True)
+                detector_stats["errors"] += 1
+                
+    except Exception as e:
+        logger.error(f"Error loading AI detectors: {e}", exc_info=True)
+
     # Log structured results in verbose mode
     if logger.is_enabled_for(logging.DEBUG):
         for result in detailed_results:
@@ -228,7 +304,9 @@ def _parse_json_input(
     try:
         logger.debug("Reading input from stdin")
         input_data = sys.stdin.read()
+        
         json_data = json.loads(input_data)
+        
         logger.debug(
             f"Parsed JSON data with tool: {json_data.get('tool_name', 'unknown')}"
         )
@@ -255,15 +333,21 @@ def _parse_json_input(
             logger.print("   • Trailing commas after last item", file=sys.stderr)
             logger.print('   • Unescaped quotes in strings (use \\") ', file=sys.stderr)
             logger.print("   • Missing brackets or braces\n", file=sys.stderr)
+        else:
+            # Show minimal error even in quiet mode
+            print(f"❌ JSON Parse Error: {e}", file=sys.stderr)
         return None, 1
     except Exception as e:
-        logger.error(f"Unexpected error reading input: {e}", exc_info=True)
+        logger.debug(f"Unexpected error reading input: {e}")
         if not quiet:
             logger.error(f"\n{color.error('❌ Error reading input:')} {e}")
             logger.print(f"\n{color.info('💡 How to fix:')}", file=sys.stderr)
             logger.print("   • Ensure data is being piped to stdin", file=sys.stderr)
             logger.print("   • Example: echo '{...}' | antimon", file=sys.stderr)
             logger.print("   • Or: cat hook_data.json | antimon\n", file=sys.stderr)
+        else:
+            # Show minimal error even in quiet mode
+            print(f"❌ Error reading input: {e}", file=sys.stderr)
         return None, 1
 
 
@@ -549,6 +633,8 @@ def process_stdin(
     Returns:
         Exit code (0=success, 1=parse error, 2=security issues)
     """
+    import sys
+    
     # Initialize color formatter
     color = ColorFormatter(use_color=not no_color)
 
@@ -607,7 +693,7 @@ def process_stdin(
     config = get_runtime_config()
 
     # Validate code-editing tools
-    has_issues, issues, stats = validate_hook_data(json_data)
+    has_issues, issues, stats = validate_hook_data(json_data, quiet=quiet, no_color=no_color)
 
     # In verbose mode, add pattern visualization
     if verbose and has_issues:
@@ -883,7 +969,7 @@ def check_file_directly(
     config = get_runtime_config()
 
     # Validate the file
-    has_issues, issues, stats = validate_hook_data(json_data)
+    has_issues, issues, stats = validate_hook_data(json_data, quiet=quiet, no_color=no_color)
 
     if has_issues:
         # Get runtime config to check for dry run mode
@@ -1004,7 +1090,7 @@ def check_content_directly(
     config = get_runtime_config()
 
     # Validate the content
-    has_issues, issues, stats = validate_hook_data(json_data)
+    has_issues, issues, stats = validate_hook_data(json_data, quiet=quiet, no_color=no_color)
 
     if has_issues:
         # Get runtime config to check for dry run mode

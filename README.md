@@ -29,24 +29,7 @@ uv pip install antimon
 
 ## Quick Start
 
-### Direct File/Content Checking (NEW in v0.2.8!)
-
-Check files and content directly without JSON:
-
-```bash
-# Check a Python file for security issues
-antimon --check-file config.py
-
-# Check code content directly
-antimon --check-content 'api_key = "sk-1234567890abcdef"'
-
-# Check a file and see verbose output
-antimon --check-file main.py --verbose
-```
-
-### Traditional JSON Input
-
-For AI assistant hooks and CI/CD pipelines:
+antimon is designed to be simple and focused. It primarily works through JSON input, making it ideal for integration with AI coding assistants and CI/CD pipelines:
 
 ```bash
 # Example 1: Detect attempt to write to sensitive file
@@ -54,7 +37,7 @@ echo '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"fi
 # Output: Security issue detected: Attempt to access sensitive file: /etc/passwd
 
 # Example 2: Detect hardcoded API key
-echo '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"file_path": "config.py", "content": "api_key = \"sk-1234567890abcdef\""}}' | antimon
+echo '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"file_path": "config.py", "content": "api_key = \"your-api-key-here\""}}' | antimon
 # Output: Security issue detected: API key found in content
 
 # Example 3: Safe operation (should pass)
@@ -62,40 +45,49 @@ echo '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"fi
 # Output: (no output, exit code 0)
 ```
 
-### Interactive Demo
+## Design Philosophy
 
-See antimon in action:
+antimon follows a minimalist design approach, focusing on essential functionality:
 
-```bash
-# Interactive demo (try different scenarios)
-antimon --demo
+### Core Principles
 
-# Non-interactive demo (automatic demonstration)
-antimon --demo --non-interactive
-```
+1. **Simplicity First**: antimon is intentionally kept simple with a focused feature set
+2. **JSON-Based Interface**: All security validation happens through JSON input via stdin
+3. **AI Assistant Integration**: Optimized for use as a security hook with AI coding tools
+4. **Clear Communication**: Debug messages provide transparency about what's being checked
+
+### Primary Use Cases
+
+- Integration with AI coding assistants (Claude Code, etc.)
+- CI/CD pipeline security checks
+- Automated security validation via JSON input
+- Pre-commit hooks and automated workflows
+
 
 ## Usage
 
-### As a command-line tool
+### Command Line Usage
 
-#### Direct Checking (Simplest Way!)
+#### Available Commands
 
 ```bash
-# Check a file
-antimon --check-file yourfile.py
+# Initialize Claude Code integration
+antimon init
 
-# Check code snippet
-antimon --check-content 'import os; os.system("rm -rf /")'
+# List all security detectors
+antimon list
 
-# Check with options
-antimon --check-file config.py --verbose
-antimon --check-file test.py --allow-file '*.test.py'
+# List configured patterns from config file
+antimon list --patterns
 
-# Dry-run mode: preview detections without blocking
-antimon --check-file main.py --dry-run
+# Create configuration file
+antimon config
+
+# Test a specific AI detector
+antimon test sql_injection
 ```
 
-#### JSON Input (For Hooks & Automation)
+#### JSON Input Mode (Primary Interface)
 
 ```bash
 # Validate JSON input from stdin
@@ -121,38 +113,64 @@ cat suspicious_operation.json | antimon
 
 ### As a Claude Code hook
 
-#### Automatic Setup (NEW in v0.2.8!)
+#### Automatic Setup
 
 Use the interactive setup wizard:
 
 ```bash
-# Automatically configure antimon with Claude Code
-antimon --setup-claude-code
-
-# Check current status
-antimon --status
+# Initialize antimon with Claude Code integration
+antimon init
 ```
 
 #### Manual Setup
 
-Add to your Claude Code settings:
+Claude Code supports three levels of settings files with different priorities:
+
+1. **Project-local settings** (`.claude/settings.local.json`) - Personal, not committed to Git
+2. **Project settings** (`.claude/settings.json`) - Shared with team, committed to Git  
+3. **Global settings** (`~/.claude/settings.json`) - User-wide configuration
+
+**Recommended: Project-local setup** for individual security preferences:
+
+Create `.claude/settings.local.json` in your project root:
 
 ```json
 {
   "hooks": {
-    "PreToolUse": "antimon"
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -m antimon"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
 
-Or set it up via command line:
+**Alternative: Global setup** for all projects:
 
 ```bash
-# On macOS/Linux
-claude-code config set hooks.PreToolUse antimon
-
-# Verify it's working
-claude-code config get hooks.PreToolUse
+# Add to ~/.claude/settings.json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command", 
+            "command": "antimon"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
 ### As a Python module
@@ -260,14 +278,13 @@ def validate_all(hook_data):
 
 ## Features
 
-### New in v0.2.8 🎉
+### Available Commands
 
-1. **Direct File Checking**: `antimon --check-file <path>` - No JSON needed!
-2. **Direct Content Checking**: `antimon --check-content "<code>"` - Check snippets instantly
-3. **Claude Code Auto-Setup**: `antimon --setup-claude-code` - One-command integration
-4. **Non-Interactive Demo**: `antimon --demo --non-interactive` - See capabilities automatically
-5. **Enhanced Status Display**: `antimon --status` - Shows Claude Code integration status
-6. **Dry-Run Mode**: `antimon --dry-run` - Preview what would be detected without blocking
+1. **Initialize Integration**: `antimon init` - Setup Claude Code integration
+2. **List Detectors**: `antimon list` - View available security detectors
+3. **List Patterns**: `antimon list --patterns` - View configured detection patterns
+4. **Create Config**: `antimon config` - Generate configuration file template
+5. **Test Detectors**: `antimon test DETECTOR` - Test specific AI detectors
 
 ### Detection Capabilities
 
@@ -284,27 +301,17 @@ def validate_all(hook_data):
 - `1`: JSON parsing error
 - `2`: Security issues detected
 
-### Dry-Run Mode
+### JSON Input Examples
 
-The `--dry-run` option allows you to preview what would be detected without actually blocking operations. This is useful for:
-
-- Testing new patterns or configurations
-- Understanding why certain code is being flagged
-- Debugging false positives
-- Onboarding new team members
+Antimon processes JSON input to validate operations before they're executed. This design makes it perfect for integration with AI coding assistants and automation pipelines.
 
 ```bash
-# Preview what would be detected in a file
-antimon --check-file deploy.py --dry-run
+# Use with JSON input for testing
+echo '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"file_path": "config.py", "content": "api_key = \"sk-123\""}}' | antimon
 
-# Use with JSON input for hook testing
-echo '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"file_path": "config.py", "content": "api_key = \"sk-123\""}}' | antimon --dry-run
+# Or pipe from a file
+cat operation.json | antimon
 ```
-
-In dry-run mode, antimon will:
-- Show all detections that would normally block
-- Return exit code 0 (success) regardless of detections
-- Display "[DRY-RUN]" prefix on detection messages
 
 ## Common Use Cases
 
@@ -467,7 +474,11 @@ class SecurityMonitor:
 
 ## Configuration
 
-Antimon can be configured using an `antimon.toml` file. Place this file in your project root or specify its location with the `--config` flag.
+Antimon can be configured using an `antimon.toml` file. Generate a sample configuration with:
+
+```bash
+antimon config
+```
 
 Example `antimon.toml`:
 

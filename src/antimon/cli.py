@@ -6,33 +6,288 @@ Command-line interface for antimon
 """
 
 import argparse
+import os
 import sys
 
 from . import __version__
-from .core import (
-    check_content_directly,
-    check_file_directly,
-    check_files_batch,
-    process_stdin,
-)
-from .demo import run_demo
-from .error_context import show_error_help
-from .first_run import (
-    is_first_run,
-    mark_first_run_complete,
-    run_interactive_setup,
-    show_first_run_guide,
-    show_first_run_guide_interactive,
-    suggest_claude_code_setup,
-)
-from .last_error import explain_last_error
-from .logging_config import setup_logging
-from .pattern_test import run_pattern_test
-from .runtime_config import RuntimeConfig, set_runtime_config
-from .self_test import run_self_test
+from .core import process_stdin
 from .setup_claude_code import setup_claude_code_integration
-from .status import show_status
-from .watch import watch_directory
+from .color_utils import ColorFormatter
+from .config import create_sample_config, load_config
+from .pattern_detector import PatternDetector
+from .ai_detector import AIDetector
+from .help_commands import show_api_setup_help
+
+
+def list_detectors(no_color: bool = False) -> None:
+    """List all available security detectors"""
+    color = ColorFormatter(use_color=not no_color)
+    
+    detectors = [
+        ("filenames", "Detects access to sensitive files like /etc/passwd, SSH keys, .env files"),
+        ("llm_api", "Detects external AI API usage (OpenAI, Claude, Gemini, etc.)"),
+        ("api_key", "Detects hardcoded API keys and credentials in code"),
+        ("docker", "Detects Docker-related operations that might be security risks"),
+        ("localhost", "Detects localhost connections and specific port access"),
+        ("claude_antipatterns", "Uses Claude AI to detect fallback patterns and workarounds"),
+        ("read_sensitive_files", "Detects attempts to read sensitive configuration files"),
+        ("bash_dangerous_commands", "Detects dangerous bash commands like rm -rf, format, etc."),
+        ("dangerous_python_code", "Detects dangerous Python code (eval, exec, os.system, etc.)")
+    ]
+    
+    print(f"\n{color.header('🛡️  Available Security Detectors')}")
+    print("=" * 50)
+    
+    for name, description in detectors:
+        print(f"\n{color.info(f'• {name}')}")
+        print(f"  {description}")
+    
+    print(f"\n{color.info('Usage:')}")
+    print("  All detectors are enabled by default when antimon runs as a Claude Code hook.")
+    print("  Future versions will support disabling specific detectors.")
+
+
+def list_patterns(no_color: bool = False) -> None:
+    """List configured patterns from config file"""
+    color = ColorFormatter(use_color=not no_color)
+    
+    try:
+        detector = PatternDetector()
+        enabled_patterns = detector.get_enabled_patterns()
+        all_patterns = list(detector.config.patterns.keys())
+        
+        print(f"\n{color.header('📋 Configured Patterns')}")
+        print("=" * 50)
+        
+        if not all_patterns:
+            print(f"\n{color.warning('No patterns configured. Create a config file with:')}")
+            print(f"  {color.code('antimon --create-config')}")
+            return
+        
+        for pattern_name in all_patterns:
+            pattern_config = detector.get_pattern_info(pattern_name)
+            status = color.success("✅ enabled") if pattern_name in enabled_patterns else color.warning("❌ disabled")
+            
+            print(f"\n{color.info(f'• {pattern_name}')} ({status})")
+            if pattern_config.description:
+                print(f"  {pattern_config.description}")
+            
+            # Show pattern counts
+            content_count = len(pattern_config.content_patterns)
+            file_count = len(pattern_config.file_patterns)
+            import_count = len(pattern_config.import_patterns)
+            
+            if content_count:
+                print(f"  Content patterns: {content_count}")
+            if file_count:
+                print(f"  File patterns: {file_count}")
+            if import_count:
+                print(f"  Import patterns: {import_count}")
+        
+        print(f"\n{color.info('Total:')} {len(enabled_patterns)}/{len(all_patterns)} patterns enabled")
+        
+    except Exception as e:
+        print(f"{color.error('Error loading patterns:')} {e}")
+
+
+def test_ai_detector(detector_name: str, no_color: bool = False) -> int:
+    """Test an AI detector with sample content"""
+    color = ColorFormatter(use_color=not no_color)
+    
+    # Load config
+    config = load_config()
+    
+    if detector_name not in config.ai_detectors:
+        print(f"{color.error('❌ AI detector not found:')} {detector_name}")
+        print(f"\n{color.info('Available AI detectors:')}")
+        for name in config.ai_detectors:
+            print(f"  • {name}")
+        return 1
+    
+    detector_config = config.ai_detectors[detector_name]
+    
+    if not detector_config.enabled:
+        print(f"{color.warning('⚠️  Detector is disabled in config')}")
+        print(f"Enable it by setting: ai_detectors.{detector_name}.enabled = true")
+        return 1
+    
+    # Sample code for testing
+    sample_code = '''
+# Sample code for testing
+def get_user(user_id):
+    query = "SELECT * FROM users WHERE id = " + user_id
+    return db.execute(query)
+    
+api_key = "sk-1234567890abcdef"
+'''
+    
+    print(f"\n{color.header(f'🧪 Testing AI Detector: {detector_name}')}")
+    print("=" * 50)
+    print(f"\n{color.info('Configuration:')}")
+    print(f"  Model: {detector_config.model}")
+    print(f"  Temperature: {detector_config.temperature}")
+    print(f"  Max tokens: {detector_config.max_tokens}")
+    print(f"\n{color.info('Prompt:')}")
+    print(f"  {detector_config.prompt}")
+    print(f"\n{color.info('Testing with sample code...')}")
+    
+    # Create detector
+    api_key = os.environ.get(detector_config.api_key_env)
+    if not api_key:
+        print(f"\n{color.error(f'❌ API key not found in environment: {detector_config.api_key_env}')}")
+        print(f"Set it with: export {detector_config.api_key_env}='your-api-key'")
+        return 1
+    
+    detector = AIDetector(api_key=api_key, api_base=detector_config.api_base)
+    
+    # Run detection
+    result = detector.detect(
+        content=sample_code,
+        prompt=detector_config.prompt,
+        model=detector_config.model,
+        temperature=detector_config.temperature,
+        max_tokens=detector_config.max_tokens
+    )
+    
+    print(f"\n{color.header('Results:')}")
+    if result.detected:
+        print(f"{color.error(f'⚠️  Issue detected: {result.message}')}")
+        print(f"Severity: {result.severity}")
+    else:
+        if result.severity == "error":
+            print(f"{color.error(f'❌ {result.message}')}")
+        else:
+            print(f"{color.success('✅ No issues detected')}")
+            print(f"Message: {result.message}")
+    
+    return 0 if result.severity != "error" else 1
+
+
+def create_argument_parser() -> argparse.ArgumentParser:
+    """Create and configure the argument parser"""
+    parser = argparse.ArgumentParser(
+        prog="antimon",
+        description="Security validation tool for AI coding assistants.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
+    )
+
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Disable colored output",
+    )
+
+    # Create subparsers for commands
+    subparsers = parser.add_subparsers(
+        dest="command",
+        help="Available commands",
+        metavar="COMMAND"
+    )
+
+    # init command (replaces --setup-claude-code)
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Setup wizard to configure antimon with Claude Code",
+        description="Initialize antimon integration with Claude Code"
+    )
+
+    # list command (replaces --list-detectors and --list-patterns)
+    list_parser = subparsers.add_parser(
+        "list",
+        help="List available security detectors or configured patterns",
+        description="List available security detectors or configured patterns"
+    )
+    list_parser.add_argument(
+        "--patterns",
+        action="store_true",
+        help="List configured patterns instead of detectors"
+    )
+
+    # config command (replaces --create-config)
+    config_parser = subparsers.add_parser(
+        "config",
+        help="Create sample configuration file",
+        description="Create a sample antimon.toml configuration file"
+    )
+    config_parser.add_argument(
+        "path",
+        type=str,
+        nargs="?",
+        default="./antimon.toml",
+        help="Path for the configuration file (default: ./antimon.toml)"
+    )
+
+    # test command (replaces --test-ai-detector)
+    test_parser = subparsers.add_parser(
+        "test",
+        help="Test an AI detector with sample content",
+        description="Test an AI detector to verify configuration"
+    )
+    test_parser.add_argument(
+        "detector",
+        type=str,
+        help="Name of the AI detector to test"
+    )
+
+    # help command for specific topics
+    help_parser = subparsers.add_parser(
+        "help",
+        help="Show help for specific topics",
+        description="Get detailed help for various antimon features"
+    )
+    help_parser.add_argument(
+        "topic",
+        type=str,
+        choices=["api-setup"],
+        help="Help topic to display"
+    )
+
+    return parser
+
+
+def handle_command(args: argparse.Namespace) -> int:
+    """Route to appropriate command handler"""
+    if args.command == "init":
+        success = setup_claude_code_integration(no_color=args.no_color)
+        return 0 if success else 1
+
+    elif args.command == "list":
+        if args.patterns:
+            list_patterns(no_color=args.no_color)
+        else:
+            list_detectors(no_color=args.no_color)
+        return 0
+
+    elif args.command == "config":
+        color = ColorFormatter(use_color=not args.no_color)
+        try:
+            create_sample_config(args.path)
+            print(f"{color.success('✅ Configuration file created:')} {args.path}")
+            print(f"{color.info('Edit the file to customize detection patterns.')}")
+            return 0
+        except FileExistsError:
+            print(f"{color.error('❌ Configuration file already exists:')} {args.path}")
+            return 1
+        except PermissionError:
+            print(f"{color.error('❌ Permission denied:')} {args.path}")
+            return 1
+        except OSError as e:
+            print(f"{color.error('❌ Failed to create config file:')} {e}")
+            return 1
+
+    elif args.command == "test":
+        return test_ai_detector(args.detector, no_color=args.no_color)
+    
+    elif args.command == "help":
+        if args.topic == "api-setup":
+            show_api_setup_help(no_color=args.no_color)
+            return 0
+
+    return 1
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -45,396 +300,22 @@ def main(argv: list[str] | None = None) -> int:
     Returns:
         Exit code
     """
-    parser = argparse.ArgumentParser(
-        prog="antimon",
-        description="Security validation tool for AI coding assistants that detects potentially dangerous operations and prohibited patterns in code modifications.",
-        epilog="""
-Examples:
-  # Validate JSON input from stdin
-  echo '{"hook_event_name": "PreToolUse", "tool_name": "Write", "tool_input": {"file_path": "hello.py", "content": "print(\\"Hello\\")"}}' | antimon
-
-  # Use with a file
-  cat hook_data.json | antimon
-
-  # Enable verbose logging
-  cat hook_data.json | antimon --verbose
-
-  # Use as a Claude Code hook (add to settings.json)
-  {"hooks": {"PreToolUse": "antimon"}}
-
-Exit codes:
-  0 - No security issues detected (or non-code-editing operation)
-  1 - JSON parsing error or internal error
-  2 - Security issues detected
-
-For more information: https://github.com/antimon-security/antimon
-        """,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-
-    parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {__version__}"
-    )
-
-    parser.add_argument(
-        "--config",
-        type=str,
-        help="Path to configuration file (coming in v0.3.0). Will allow custom patterns and detector settings.",
-    )
-
-    parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Enable verbose output with detailed logging of each detector's execution",
-    )
-
-    parser.add_argument(
-        "--quiet",
-        "-q",
-        action="store_true",
-        help="Suppress all output except errors. Only display security issues when detected.",
-    )
-
-    parser.add_argument(
-        "--brief",
-        "-b",
-        action="store_true",
-        help="Show concise security reports without detailed explanations. Useful for CI/CD pipelines.",
-    )
-
-    parser.add_argument(
-        "--autofix",
-        action="store_true",
-        help="Show auto-fix suggestions for detected security issues. Provides code snippets to fix common problems.",
-    )
-
-    parser.add_argument(
-        "--test",
-        action="store_true",
-        help="Run a self-test to verify antimon is working correctly. Useful after installation.",
-    )
-
-    parser.add_argument(
-        "--no-color",
-        action="store_true",
-        help="Disable colored output. Useful for CI/CD pipelines or when terminal doesn't support colors.",
-    )
-
-    parser.add_argument(
-        "--quickstart",
-        action="store_true",
-        help="Show the quick start guide and examples. Useful for new users.",
-    )
-
-    parser.add_argument(
-        "--help-errors",
-        action="store_true",
-        help="Show help for dealing with antimon errors and blocks.",
-    )
-
-    parser.add_argument(
-        "--ignore-pattern",
-        action="append",
-        help="Add file pattern to ignore (can be used multiple times). Example: --ignore-pattern '*.test.py' --ignore-pattern 'examples/*'",
-    )
-
-    parser.add_argument(
-        "--allow-file",
-        action="append",
-        help="Allow specific file path or glob pattern (can be used multiple times). "
-        "Examples: --allow-file /home/user/.config/app.conf, --allow-file '*.env', "
-        "--allow-file 'config/*.json', --allow-file '**/*.secret'",
-    )
-
-    parser.add_argument(
-        "--disable-detector",
-        action="append",
-        choices=[
-            "filenames",
-            "llm_api",
-            "api_key",
-            "docker",
-            "localhost",
-            "claude_antipatterns",
-            "bash",
-            "read",
-        ],
-        help="Disable specific detector (can be used multiple times). Example: --disable-detector api_key --disable-detector localhost",
-    )
-
-    parser.add_argument(
-        "--explain-last-error",
-        action="store_true",
-        help="Show detailed explanation of the last error that occurred. Run this after antimon blocks an operation.",
-    )
-
-    parser.add_argument(
-        "--setup",
-        action="store_true",
-        help="Run the interactive setup wizard to configure antimon with your tools.",
-    )
-
-    parser.add_argument(
-        "--demo",
-        action="store_true",
-        help="Run interactive demo to see antimon's detection capabilities in action.",
-    )
-
-    parser.add_argument(
-        "--non-interactive",
-        action="store_true",
-        help="When used with --demo, runs a non-interactive automated demonstration.",
-    )
-
-    parser.add_argument(
-        "--status",
-        action="store_true",
-        help="Show current configuration, enabled detectors, and exclusion patterns.",
-    )
-
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Preview what would be detected without blocking. Shows all detections that would occur.",
-    )
-
-    parser.add_argument(
-        "--stats",
-        action="store_true",
-        help="Show detailed statistics after checks (detector counts, pass/fail rates).",
-    )
-
-    parser.add_argument(
-        "--check-file",
-        type=str,
-        help="Check a specific file directly without JSON input. Example: antimon --check-file config.py",
-    )
-
-    parser.add_argument(
-        "--check-content",
-        type=str,
-        help="Check content directly without JSON input. Example: antimon --check-content 'api_key = \"sk-123\"'",
-    )
-
-    parser.add_argument(
-        "--check-files",
-        type=str,
-        help="Check multiple files using glob pattern. Example: antimon --check-files 'src/**/*.py'",
-    )
-
-    parser.add_argument(
-        "--output-format",
-        choices=["text", "json"],
-        default="text",
-        help="Output format for results (default: text). JSON format is useful for CI/CD integration.",
-    )
-
-    parser.add_argument(
-        "--setup-claude-code",
-        action="store_true",
-        help="Interactive setup wizard to configure antimon with Claude Code. Automatically configures the PreToolUse hook.",
-    )
-
-    parser.add_argument(
-        "--watch",
-        type=str,
-        metavar="DIRECTORY",
-        help="Watch a directory for file changes and re-check modified files automatically. Example: antimon --watch src/",
-    )
-
-    parser.add_argument(
-        "--test-pattern",
-        type=str,
-        metavar="PATTERN",
-        help="Test a pattern against antimon detectors to see if it would be blocked. Example: antimon --test-pattern 'api_key = \"sk-123\"'",
-    )
-
-    parser.add_argument(
-        "--pattern-examples",
-        action="store_true",
-        help="Show example patterns that would trigger each detector. Useful for understanding what antimon blocks.",
-    )
-
-    parser.add_argument(
-        "--detector",
-        type=str,
-        choices=["api_key", "llm_api", "docker", "localhost", "filenames"],
-        help="When used with --test-pattern, test against a specific detector only.",
-    )
-
+    parser = create_argument_parser()
     args = parser.parse_args(argv)
 
-    # Check if this is the first run (before running test)
-    first_run = is_first_run()
+    # Handle subcommands
+    if args.command:
+        return handle_command(args)
 
-    # Create and set runtime configuration
-    runtime_config = RuntimeConfig.from_args(args)
-    set_runtime_config(runtime_config)
-
-    # Show runtime config in verbose mode
-    if args.verbose and not args.quiet:
-        config_summary = runtime_config.get_summary()
-        if config_summary:
-            print("\n📋 Runtime Configuration:", file=sys.stderr)
-            for line in config_summary:
-                print(f"   • {line}", file=sys.stderr)
-            print("", file=sys.stderr)  # Empty line
-
-    # Show quickstart guide if requested
-    if args.quickstart:
-        show_first_run_guide(no_color=args.no_color, is_quickstart=True)
-        suggest_claude_code_setup(no_color=args.no_color)
-        if first_run:
-            mark_first_run_complete()
-        return 0
-
-    # Show error help if requested
-    if args.help_errors:
-        show_error_help(no_color=args.no_color)
-        if first_run:
-            mark_first_run_complete()
-        return 0
-
-    # Explain last error if requested
-    if args.explain_last_error:
-        explain_last_error(no_color=args.no_color)
-        if first_run:
-            mark_first_run_complete()
-        return 0
-
-    # Run setup wizard if requested
-    if args.setup:
-        run_interactive_setup(no_color=args.no_color)
-        if first_run:
-            mark_first_run_complete()
-        return 0
-
-    # Run demo if requested
-    if args.demo:
-        if first_run:
-            mark_first_run_complete()
-        run_demo(non_interactive=args.non_interactive)
-        return 0
-
-    # Show status if requested
-    if args.status:
-        if first_run:
-            mark_first_run_complete()
-        show_status(no_color=args.no_color)
-        return 0
-
-    # Run self-test if requested
-    if args.test:
-        if first_run:
-            mark_first_run_complete()
-        return run_self_test(verbose=args.verbose)
-
-    # Show first-run guide if needed
-    if first_run and not args.quiet:
-        show_first_run_guide_interactive(no_color=args.no_color)
-        mark_first_run_complete()
-
-    # Check for conflicting options
-    if args.verbose and args.quiet:
-        print("\n⚠️  Cannot use --verbose and --quiet together", file=sys.stderr)
-        return 1
-
-    # Setup logging
-    setup_logging(verbose=args.verbose, quiet=args.quiet)
-
-    if args.config and not args.quiet:
-        print("\n⚠️  Configuration file support is not yet available", file=sys.stderr)
-        print(
-            "   This feature is planned for v0.3.0 and will include:", file=sys.stderr
-        )
-        print("   • Custom detection patterns", file=sys.stderr)
-        print("   • Project-specific whitelists", file=sys.stderr)
-        print("   • Detector sensitivity tuning", file=sys.stderr)
-        print("   • Team-wide configuration sharing", file=sys.stderr)
-        print("\n📌 For now, you can use:", file=sys.stderr)
-        print("   • --allow-file: Allow specific files or patterns", file=sys.stderr)
-        print("   • --disable-detector: Disable specific detectors", file=sys.stderr)
-        print("   • --ignore-pattern: Ignore files matching patterns", file=sys.stderr)
-        print(
-            "\n💡 Example: antimon --allow-file '*.env' --disable-detector api_key\n",
-            file=sys.stderr,
-        )
-
-    # Handle direct file checking
-    if args.check_file:
-        if first_run:
-            mark_first_run_complete()
-        return check_file_directly(
-            args.check_file,
-            verbose=args.verbose,
-            quiet=args.quiet,
+    # If stdin is available (hook data), process it
+    if not sys.stdin.isatty():
+        return process_stdin(
+            verbose=False,
+            quiet=False,  # Show detailed errors for better UX
             no_color=args.no_color,
-            output_format=args.output_format,
+            output_format="text"
         )
 
-    # Handle direct content checking
-    if args.check_content:
-        if first_run:
-            mark_first_run_complete()
-        return check_content_directly(
-            args.check_content,
-            verbose=args.verbose,
-            quiet=args.quiet,
-            no_color=args.no_color,
-            output_format=args.output_format,
-        )
-
-    # Handle batch file checking
-    if args.check_files:
-        if first_run:
-            mark_first_run_complete()
-        return check_files_batch(
-            args.check_files,
-            verbose=args.verbose,
-            quiet=args.quiet,
-            no_color=args.no_color,
-            output_format=args.output_format,
-        )
-
-    # Handle Claude Code setup
-    if args.setup_claude_code:
-        if first_run:
-            mark_first_run_complete()
-        success = setup_claude_code_integration(no_color=args.no_color)
-        return 0 if success else 1
-
-    # Handle watch mode
-    if args.watch:
-        if first_run:
-            mark_first_run_complete()
-        return watch_directory(
-            args.watch,
-            verbose=args.verbose,
-            quiet=args.quiet,
-            no_color=args.no_color,
-            output_format=args.output_format,
-        )
-
-    # Handle pattern testing
-    if args.test_pattern or args.pattern_examples:
-        if first_run:
-            mark_first_run_complete()
-        return run_pattern_test(
-            pattern=args.test_pattern,
-            detector_type=args.detector,
-            show_examples=args.pattern_examples,
-            verbose=args.verbose,
-            no_color=args.no_color,
-        )
-
-    return process_stdin(
-        verbose=args.verbose,
-        quiet=args.quiet,
-        no_color=args.no_color,
-        output_format=args.output_format,
-    )
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    # If no specific command and no stdin, show help
+    parser.print_help()
+    return 1

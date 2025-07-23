@@ -1,0 +1,154 @@
+# Antimon Configuration File
+# This file defines custom detection patterns for security validation
+
+[patterns]
+
+# External AI API usage detection
+[patterns.external_ai_apis]
+enabled = true
+description = "External AI API usage detection"
+content_patterns = [
+    "openai\\.com",
+    "claude\\.ai", 
+    "gemini\\.google\\.com",
+    "cohere\\.ai",
+    "huggingface\\.co"
+]
+import_patterns = [
+    "import openai",
+    "from openai import",
+    "import anthropic",
+    "from anthropic import"
+]
+message = "External AI API usage detected"
+severity = "warning"
+
+# Hardcoded API keys and credentials
+[patterns.api_keys]
+enabled = true
+description = "Hardcoded API keys and credentials"
+content_patterns = [
+    "sk-[a-zA-Z0-9]{48}",           # OpenAI
+    "AIza[0-9A-Za-z\\-_]{35}",      # Google  
+    "AKIA[0-9A-Z]{16}",             # AWS Access Key
+    "ghp_[a-zA-Z0-9]{36}",          # GitHub Personal Access Token
+    "api_key\\s*=\\s*[\"'][^\"']+[\"']", # Generic API key assignment
+]
+message = "Hardcoded API key detected"
+severity = "error"
+
+# Access to sensitive files
+[patterns.sensitive_files]
+enabled = true
+description = "Access to sensitive files"
+file_patterns = [
+    "/etc/passwd",
+    "/etc/shadow",
+    "~/.ssh/id_rsa",
+    "~/.ssh/id_ed25519", 
+    "\\.env$",
+    "\\.pem$",
+    "\\.key$",
+    "secrets/.*",
+    "config/database\\.yml"
+]
+message = "Access to sensitive file detected"
+severity = "error"
+
+# Docker operations that might be risky
+[patterns.docker_operations]
+enabled = true
+description = "Docker operations that might be risky"
+content_patterns = [
+    "docker\\s+run.*--privileged",
+    "FROM.*:latest",
+    "docker\\s+exec.*sh",
+]
+message = "Potentially risky Docker operation detected"
+severity = "warning"
+
+# Localhost connections and port access
+[patterns.localhost_connections]
+enabled = true
+description = "Localhost connections and specific port access"
+content_patterns = [
+    "localhost:[0-9]+",
+    "127\\.0\\.0\\.1:[0-9]+",
+    "0\\.0\\.0\\.0:[0-9]+"
+]
+message = "Localhost connection detected"
+severity = "warning"
+
+# Example: Company-specific secrets (disabled by default)
+[patterns.company_secrets]
+enabled = false
+description = "Company-specific secret patterns"
+content_patterns = [
+    "COMPANY_SECRET_[A-Z0-9]+",
+    "internal_api_[a-f0-9]{32}",
+]
+message = "Company secret detected"
+severity = "error"
+
+# Absolutely forbidden patterns - these will always block
+[patterns.forbidden_patterns]
+enabled = true
+description = "Patterns that must always be blocked"
+content_patterns = [
+    "ABSOLUTELY_FORBIDDEN",
+    "NEVER_ALLOW_THIS",
+    "rm\\s+-rf\\s+/",  # Dangerous rm command
+    "DELETE\\s+FROM\\s+users\\s+WHERE\\s+1=1",  # SQL injection example
+]
+message = "FORBIDDEN: This pattern is absolutely not allowed"
+severity = "error"
+
+# Note: bash_dangerous_commands is hardcoded and cannot be configured
+# This ensures critical security patterns are always enforced
+
+# AI-powered detectors (require API key)
+[ai_detectors]
+
+# Example: SQL injection detection using AI
+[ai_detectors.sql_injection]
+enabled = true  # Enable for testing
+description = "AI-powered SQL injection detection"
+prompt = "Check if this code contains SQL injection vulnerabilities. Focus on string concatenation in SQL queries, lack of parameterization, and user input handling."
+model = "gpt-4o-mini"
+temperature = 0.0
+max_tokens = 150
+api_key_env = "OPENAI_API_KEY"  # Environment variable for API key
+
+# Try-catch misuse detection (LLM-specific capability)
+[ai_detectors.try_catch_misuse]
+enabled = true
+description = "Detect inappropriate try-catch usage and mixed responsibilities"
+prompt = "Analyze this code for try-catch anti-patterns. Check for: 1) Overly broad try blocks mixing multiple responsibilities, 2) Empty or generic except blocks that hide errors, 3) Business logic mixed with error handling, 4) Try blocks doing too many unrelated things. Focus on separation of concerns and proper error handling practices."
+model = "gpt-4o-mini"
+temperature = 0.0
+max_tokens = 200
+
+# Code smell detection - mixing concerns
+[ai_detectors.mixed_responsibilities]
+enabled = true
+description = "Detect methods/functions with mixed responsibilities"
+prompt = "Check if this code violates Single Responsibility Principle. Look for: 1) Functions doing multiple unrelated tasks, 2) Data access mixed with business logic, 3) UI logic mixed with data processing, 4) Error handling mixed with core logic. Only flag serious violations where a function clearly has multiple distinct responsibilities."
+model = "gpt-4o-mini"
+temperature = 0.0
+max_tokens = 200
+
+# Example: Generic code quality check
+[ai_detectors.code_quality]
+enabled = false
+description = "AI-powered code quality analysis"
+prompt = "Check this code for serious quality issues: race conditions, memory leaks, or security vulnerabilities."
+model = "gpt-4o-mini"
+temperature = 0.0
+max_tokens = 200
+
+# Example: Custom business logic check
+[ai_detectors.business_logic]
+enabled = false
+description = "Check for company-specific coding violations"
+prompt = "Check if this code violates these rules: 1) No direct database access in controllers, 2) All API calls must have timeout, 3) No hardcoded configuration values"
+model = "gpt-4o-mini"
