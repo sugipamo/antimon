@@ -5,10 +5,9 @@
 AI-powered detection using OpenAI API
 """
 
-import json
 import os
 import time
-from typing import Dict, Optional
+from typing import Optional
 
 from .constants import AI_API_BASE
 from .detectors import DetectionResult, HookData
@@ -43,7 +42,6 @@ class AIDetector:
         model: str = "gpt-4o-mini",
         temperature: float = 0.0,
         max_tokens: int = 100,
-        response_format: str = "json",  # "json" or "simple"
         detector_name: str = "unknown",
         file_path: str = "unknown"
     ) -> DetectionResult:
@@ -81,57 +79,29 @@ class AIDetector:
                 "Content-Type": "application/json"
             }
             
-            # Create the detection prompt based on format
-            if response_format == "simple":
-                # Simple format: first line is True/False/Invalid
-                system_prompt = """内容が以下条件に該当するかを確認し、1行目に [True, False, Invalid] のいずれかを記載し、その理由を2行目以降に記述してください。"""
-                
-                user_prompt = f"""## 判定基準
+            # Simple format only: first line is True/False/Invalid
+            system_prompt = """あなたはセキュリティ検証AIです。"""
+            
+            user_prompt = f"""**重要: 必ず以下の形式で回答してください:**
+
+1行目: True, False, Invalid のいずれか（括弧や他の文字は一切含めない）
+2行目以降: 理由の説明
+
+## 判定基準
 {prompt}
 
 ## 編集内容
 {content}"""
-                
-                data = {
-                    "model": model,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    "temperature": temperature,
-                    "max_tokens": max_tokens
-                }
-            else:
-                # JSON format (default)
-                system_prompt = """You are a security analyzer. Your response MUST be valid JSON only, no other text.
-
-IMPORTANT: Respond with EXACTLY this JSON structure:
-{
-  "detected": true,
-  "message": "Brief description here",
-  "severity": "error"
-}
-
-Rules:
-- detected: MUST be boolean (true or false), not string
-- message: Short description (max 100 chars)
-- severity: MUST be one of: "error", "warning", "info"
-- If no issue found: {"detected": false, "message": "No issues found", "severity": "info"}
-- Do NOT include any text before or after the JSON
-- Do NOT use markdown code blocks"""
-                
-                user_prompt = f"{prompt}\n\nCode to analyze:\n```\n{content}\n```"
-                
-                data = {
-                    "model": model,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    "temperature": temperature,
-                    "max_tokens": max_tokens,
-                    "response_format": {"type": "json_object"}  # Force JSON response
-                }
+            
+            data = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "temperature": temperature,
+                "max_tokens": max_tokens
+            }
             
             # Make the API call with timing
             start_time = time.time()
@@ -154,69 +124,58 @@ Rules:
             result = response.json()
             content = result["choices"][0]["message"]["content"]
             
-            # Parse AI response based on format
-            if response_format == "simple":
-                # Parse simple format
-                lines = content.strip().split('\n')
-                if len(lines) >= 1:
-                    first_line = lines[0].strip().lower()
-                    message = lines[1].strip() if len(lines) > 1 else "No description provided"
-                    
-                    if first_line == "true":
-                        return DetectionResult(
-                            detected=True,
-                            message=message,
-                            severity="warning"
-                        )
-                    elif first_line == "false":
-                        return DetectionResult(
-                            detected=False,
-                            message=message,
-                            severity="info"
-                        )
-                    elif first_line == "invalid":
-                        return DetectionResult(
-                            detected=False,
-                            message=f"Invalid request: {message}",
-                            severity="error"
-                        )
+            # Parse simple format response
+            lines = content.strip().split('\n')
+            if len(lines) >= 1:
+                first_line = lines[0].strip().lower()
+                message = lines[1].strip() if len(lines) > 1 else "No description provided"
                 
-                return DetectionResult(
+                if first_line == "true":
+                    detection_result = DetectionResult(
+                        detected=True,
+                        message=message,
+                        severity="warning"
+                    )
+                elif first_line == "false":
+                    detection_result = DetectionResult(
+                        detected=False,
+                        message=message,
+                        severity="info"
+                    )
+                elif first_line == "invalid":
+                    detection_result = DetectionResult(
+                        detected=False,
+                        message=f"Invalid request: {message}",
+                        severity="error"
+                    )
+                else:
+                    detection_result = DetectionResult(
+                        detected=False,
+                        message=f"Failed to parse simple response: {content[:100]}",
+                        severity="error"
+                    )
+            else:
+                detection_result = DetectionResult(
                     detected=False,
                     message=f"Failed to parse simple response: {content[:100]}",
                     severity="error"
                 )
-            else:
-                # Parse JSON format
-                try:
-                    ai_result = json.loads(content)
-                    detection_result = DetectionResult(
-                        detected=ai_result.get("detected", False),
-                        message=ai_result.get("message", "AI detection completed"),
-                        severity=ai_result.get("severity", "warning")
-                    )
-                    
-                    # Log LLM interaction
-                    try:
-                        log_llm_interaction(
-                            detector_name=detector_name,
-                            model=model,
-                            prompt=user_prompt,
-                            response=content,
-                            file_path=file_path,
-                            detected=detection_result.detected,
-                            api_call_duration=api_duration
-                        )
-                    except Exception:
-                        pass  # Don't fail detection if logging fails
-                    
-                    return detection_result
-                except json.JSONDecodeError:
-                    return DetectionResult(
-                        detected=False,
-                        message=f"Failed to parse AI response: {content[:100]}",
-                        severity="error"
-                    )
+            
+            # Log LLM interaction
+            try:
+                log_llm_interaction(
+                    detector_name=detector_name,
+                    model=model,
+                    prompt=user_prompt,
+                    response=content,
+                    file_path=file_path,
+                    detected=detection_result.detected,
+                    api_call_duration=api_duration
+                )
+            except Exception:
+                pass  # Don't fail detection if logging fails
+            
+            return detection_result
                 
         except Exception as e:
             return DetectionResult(
