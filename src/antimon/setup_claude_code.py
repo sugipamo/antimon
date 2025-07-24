@@ -43,9 +43,9 @@ def get_claude_code_config() -> dict | None:
     
     # Check settings files in order of precedence
     config_paths = [
+        ".claude/settings.local.json",  # Current directory relative path
         os.path.expanduser("~/.claude/settings.local.json"),
-        os.path.expanduser("~/.claude/settings.json"),
-        os.path.expanduser("~/.claude/settings.json")  # User settings
+        os.path.expanduser("~/.claude/settings.json")
     ]
     
     for config_path in config_paths:
@@ -72,8 +72,8 @@ def set_claude_code_hook(hook_name: str, command: str) -> bool:
     import os
     import json
     
-    # Use .claude/settings.local.json for local project settings
-    config_dir = os.path.expanduser("~/.claude")
+    # Use .claude/settings.local.json in current directory
+    config_dir = ".claude"
     config_path = os.path.join(config_dir, "settings.local.json")
     
     try:
@@ -138,7 +138,7 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
     if not claude_code_path:
         print(f"{color.error('❌ Claude Code not found in PATH')}")
         print("\n💡 To install Claude Code:")
-        print(f"   {color.code('Visit: https://claude.ai/download')}")
+        print(f"   {color.code('Visit the Claude Code download page')}")
         print(f"   {color.code('Or run: npm install -g @anthropic/claude-code')}")
         print(f"\n   After installation, run: {color.code('antimon --setup-claude-code')}")
         return False
@@ -164,7 +164,7 @@ def setup_claude_code_integration(no_color: bool = False) -> bool:
         
         # Show which file was modified
         import os
-        config_path = os.path.expanduser("~/.claude/settings.local.json")
+        config_path = ".claude/settings.local.json"
         print(f"\n{color.info('Configuration file:')} {config_path}")
         print(f"{color.info('Usage:')} antimon will now protect your Claude Code sessions.")
         return True

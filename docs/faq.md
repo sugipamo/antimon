@@ -128,7 +128,7 @@ antimon might flag legitimate code. Here are your options:
 
 1. **Allow specific files:**
    ```bash
-   antimon --allow-file '/home/user/.config/app.conf'
+   antimon --allow-file '~/.config/app.conf'
    antimon --allow-file '*.env'
    antimon --allow-file 'config/*.json'
    ```
@@ -325,7 +325,7 @@ If it's still not detected, please report it as an issue on GitHub.
 ### Where can I report bugs or request features?
 
 Please visit our GitHub repository:
-https://github.com/antimon-security/antimon/issues
+https://github.com/your-org/antimon/issues
 
 ### How can I contribute to antimon?
 
@@ -353,4 +353,4 @@ Currently, the best place for support is:
 
 ---
 
-For more information, visit: https://github.com/antimon-security/antimon
+For more information, visit: https://github.com/your-org/antimon

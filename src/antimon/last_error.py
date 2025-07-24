@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from .color_utils import Colors, apply_color
+from .constants import API_ENDPOINTS
 from .first_run import get_config_dir
 
 
@@ -157,7 +158,9 @@ def _provide_detailed_explanations(
             )
             print("  " + apply_color("What we look for:", Colors.UNDERLINE, no_color))
             print("    - Import statements: from openai import ...")
-            print("    - API endpoints: api.openai.com, gemini.google.com")
+            # Generate endpoint list from config
+            endpoint_domains = [ep.get("domain") for provider, ep in API_ENDPOINTS.items() if "domain" in ep]
+            print(f"    - API endpoints: {', '.join(endpoint_domains[:2])}, etc.")
             print("    - SDK usage: OpenAI(), Anthropic(), etc.")
             print("  " + apply_color("Why it's dangerous:", Colors.UNDERLINE, no_color))
             print("    - Your code/data leaves your control")
@@ -246,7 +249,7 @@ def _suggest_solutions(issues: list[str], hook_data: dict, no_color: bool) -> No
         print("   # Instead of: from openai import OpenAI")
         print("   # Consider:")
         print("   - Using Claude's built-in capabilities")
-        print("   - Local models with llama.cpp or ollama")
+        print("   - Local models or approved internal APIs")
         print("   - Mock responses for testing")
         print()
 

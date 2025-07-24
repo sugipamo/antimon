@@ -10,6 +10,7 @@ from typing import List, Tuple
 
 from .config import AntimonConfig, PatternConfig, load_config
 from .detectors import DetectionResult, HookData
+from .runtime_config import get_runtime_config
 
 
 class PatternDetector:
@@ -35,9 +36,14 @@ class PatternDetector:
             List of detection results
         """
         results = []
+        runtime_config = get_runtime_config()
         
         for pattern_name, pattern_config in self.config.patterns.items():
             if not pattern_config.enabled:
+                continue
+            
+            # Check if pattern is disabled by runtime config
+            if not runtime_config.is_detector_enabled(pattern_name):
                 continue
             
             result = self._check_pattern(pattern_name, pattern_config, json_data)

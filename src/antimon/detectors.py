@@ -195,13 +195,13 @@ def detect_llm_api(json_data: HookData) -> DetectionResult:
                 # Determine which LLM service is being referenced
                 if "openai" in matched_text.lower():
                     service = "OpenAI"
-                    local_alt = "ollama with llama2 or mistral models"
-                    import_alt = "# Instead of: from openai import OpenAI\n            # Use: import ollama"
+                    local_alt = "local language models"
+                    import_alt = "# Instead of: from openai import OpenAI\n            # Consider: using local models or approved internal APIs"
                 elif (
                     "gemini" in matched_text.lower() or "google" in matched_text.lower()
                 ):
                     service = "Google Gemini"
-                    local_alt = "llama.cpp with gemma models"
+                    local_alt = "local language models"
                     import_alt = "# Consider using local models instead"
                 elif (
                     "anthropic" in matched_text.lower()
@@ -214,11 +214,11 @@ def detect_llm_api(json_data: HookData) -> DetectionResult:
                     )
                 elif "cohere" in matched_text.lower():
                     service = "Cohere"
-                    local_alt = "sentence-transformers for embeddings"
-                    import_alt = "# For embeddings: from sentence_transformers import SentenceTransformer"
+                    local_alt = "local embedding models"
+                    import_alt = "# Consider using local embedding models"
                 else:
                     service = "external LLM"
-                    local_alt = "local open-source models"
+                    local_alt = "local language models"
                     import_alt = "# Consider local alternatives"
 
                 message_parts = [

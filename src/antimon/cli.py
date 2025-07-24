@@ -23,28 +23,44 @@ def list_detectors(no_color: bool = False) -> None:
     """List all available security detectors"""
     color = ColorFormatter(use_color=not no_color)
     
-    detectors = [
-        ("filenames", "Detects access to sensitive files like /etc/passwd, SSH keys, .env files"),
-        ("llm_api", "Detects external AI API usage (OpenAI, Claude, Gemini, etc.)"),
-        ("api_key", "Detects hardcoded API keys and credentials in code"),
-        ("docker", "Detects Docker-related operations that might be security risks"),
-        ("localhost", "Detects localhost connections and specific port access"),
-        ("claude_antipatterns", "Uses Claude AI to detect fallback patterns and workarounds"),
-        ("read_sensitive_files", "Detects attempts to read sensitive configuration files"),
-        ("bash_dangerous_commands", "Detects dangerous bash commands like rm -rf, format, etc."),
-        ("dangerous_python_code", "Detects dangerous Python code (eval, exec, os.system, etc.)")
-    ]
-    
     print(f"\n{color.header('🛡️  Available Security Detectors')}")
     print("=" * 50)
     
-    for name, description in detectors:
-        print(f"\n{color.info(f'• {name}')}")
-        print(f"  {description}")
+    # Load configuration to show actual configured detectors
+    try:
+        config = load_config()
+        
+        # List pattern-based detectors
+        if config.patterns:
+            print(f"\n{color.info('Pattern-based Detectors:')}")
+            for pattern_name, pattern_config in config.patterns.items():
+                status = color.success("enabled") if pattern_config.enabled else color.warning("disabled")
+                print(f"\n  • {color.info(pattern_name)} ({status})")
+                if pattern_config.description:
+                    print(f"    {pattern_config.description}")
+        
+        # List AI-powered detectors
+        if config.ai_detectors:
+            print(f"\n{color.info('AI-powered Detectors:')}")
+            for ai_name, ai_config in config.ai_detectors.items():
+                status = color.success("enabled") if ai_config.enabled else color.warning("disabled")
+                print(f"\n  • {color.info(ai_name)} ({status})")
+                if ai_config.description:
+                    print(f"    {ai_config.description}")
+                print(f"    Model: {ai_config.model}")
+        
+        if not config.patterns and not config.ai_detectors:
+            print(f"\n{color.warning('No detectors configured.')}")
+            print(f"Create a configuration file with: {color.code('antimon config')}")
+        
+    except Exception as e:
+        print(f"\n{color.error('Error loading configuration:')} {e}")
+        print(f"Create a configuration file with: {color.code('antimon config')}")
     
     print(f"\n{color.info('Usage:')}")
-    print("  All detectors are enabled by default when antimon runs as a Claude Code hook.")
-    print("  Future versions will support disabling specific detectors.")
+    print("  Detectors are configured in antimon.toml")
+    print("  Use 'antimon config' to create a sample configuration")
+    print("  Use 'antimon list --patterns' to see pattern details")
 
 
 def list_patterns(no_color: bool = False) -> None:

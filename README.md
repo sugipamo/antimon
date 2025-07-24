@@ -1,6 +1,6 @@
 # antimon
 
-[![Version](https://img.shields.io/badge/version-0.2.13-blue.svg)](https://github.com/antimon-security/antimon/releases)
+[![Version](https://img.shields.io/badge/version-0.2.13-blue.svg)](https://github.com/your-org/antimon/releases)
 
 A security validation tool for AI coding assistants that detects potentially dangerous operations and prohibited patterns in code modifications.
 
@@ -190,7 +190,7 @@ json_data = {
     "hook_event_name": "PreToolUse",
     "tool_name": "Write", 
     "tool_input": {
-        "file_path": "/home/user/.env",
+        "file_path": "~/.env",
         "content": "OPENAI_API_KEY=sk-1234567890abcdef"
     }
 }
@@ -483,32 +483,52 @@ antimon config
 Example `antimon.toml`:
 
 ```toml
-# Enable/disable specific detectors
-[detectors]
-filenames = true
-llm_api = true
-api_key = true
-docker = true
-localhost = true
-claude_antipatterns = true  # Enable Claude-based anti-pattern detection
+# Basic pattern-based detectors (no external dependencies)
+[patterns.api_keys]
+enabled = true
+description = "Hardcoded API keys and credentials"
+severity = "error"
 
-# Custom patterns
-[patterns]
-filename_blacklist = [
-    "credentials.json",
-    "*.pem",
-    "deploy_key"
-]
+[patterns.sensitive_files]
+enabled = true
+description = "Access to sensitive files"
+severity = "warning"
 
-# Whitelist specific files
-[whitelist]
-files = [
-    "test_secrets.yaml",
-    "example_config.json"
-]
+# AI-powered detectors (disabled by default - opt-in)
+# To use these:
+# 1. Set your OpenAI API key: export OPENAI_API_KEY="your-key"
+# 2. Enable specific detectors below
+[ai_detectors.sql_injection]
+enabled = false  # Set to true to enable
+description = "AI-powered SQL injection detection"
+model = "gpt-4o-mini"
+
+[ai_detectors.code_quality]
+enabled = false  # Set to true to enable
+description = "AI-powered code quality analysis"
 ```
 
-Note: Configuration file support is planned for version 0.3.0. The above example shows the planned configuration format. Currently, antimon uses built-in patterns only.
+### Enabling AI Detectors
+
+AI-powered detectors provide advanced code analysis but require an OpenAI API key:
+
+1. **Set your API key:**
+   ```bash
+   export OPENAI_API_KEY="sk-..."
+   ```
+
+2. **Enable specific detectors in `antimon.toml`:**
+   ```toml
+   [ai_detectors.sql_injection]
+   enabled = true  # Changed from false to true
+   ```
+
+3. **Use alternative AI providers:**
+   ```bash
+   export ANTIMON_AI_API_BASE="https://your-api-endpoint/v1"
+   ```
+
+Note: AI detectors are completely optional. The core security patterns work without any external API.
 
 ## Troubleshooting
 
@@ -654,7 +674,7 @@ print("Checking filenames:", detect_filenames(data))
 
 ```bash
 # Clone the repository
-git clone https://github.com/antimon-security/antimon.git
+git clone https://github.com/your-org/antimon.git
 cd antimon
 
 # Install in development mode

@@ -33,8 +33,6 @@ class RuntimeConfig:
     # Brief mode - concise output
     brief: bool = False
 
-    # Show auto-fix suggestions
-    show_autofix: bool = False
 
     @classmethod
     def from_args(cls, args) -> "RuntimeConfig":
@@ -65,9 +63,6 @@ class RuntimeConfig:
         if hasattr(args, "brief"):
             config.brief = args.brief
 
-        # Set auto-fix mode
-        if hasattr(args, "autofix"):
-            config.show_autofix = args.autofix
 
         # Also check environment variables
         config._load_from_env()
@@ -190,4 +185,5 @@ def get_runtime_config() -> RuntimeConfig:
     global _runtime_config
     if _runtime_config is None:
         _runtime_config = RuntimeConfig()
+        _runtime_config._load_from_env()
     return _runtime_config

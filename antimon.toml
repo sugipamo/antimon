@@ -107,11 +107,14 @@ severity = "error"
 # This ensures critical security patterns are always enforced
 
 # AI-powered detectors (require API key)
+# Note: All AI detectors are disabled by default. To use them:
+# 1. Set your OpenAI API key: export OPENAI_API_KEY="your-key"
+# 2. Enable specific detectors by setting enabled = true
 [ai_detectors]
 
 # Example: SQL injection detection using AI
 [ai_detectors.sql_injection]
-enabled = true  # Enable for testing
+enabled = false  # Disabled by default (opt-in)
 description = "AI-powered SQL injection detection"
 prompt = "Check if this code contains SQL injection vulnerabilities. Focus on string concatenation in SQL queries, lack of parameterization, and user input handling."
 model = "gpt-4o-mini"
@@ -121,7 +124,7 @@ api_key_env = "OPENAI_API_KEY"  # Environment variable for API key
 
 # Try-catch misuse detection (LLM-specific capability)
 [ai_detectors.try_catch_misuse]
-enabled = true
+enabled = false  # Disabled by default (opt-in)
 description = "Detect inappropriate try-catch usage and mixed responsibilities"
 prompt = "Analyze this code for try-catch anti-patterns. Check for: 1) Overly broad try blocks mixing multiple responsibilities, 2) Empty or generic except blocks that hide errors, 3) Business logic mixed with error handling, 4) Try blocks doing too many unrelated things. Focus on separation of concerns and proper error handling practices."
 model = "gpt-4o-mini"
@@ -130,7 +133,7 @@ max_tokens = 200
 
 # Code smell detection - mixing concerns
 [ai_detectors.mixed_responsibilities]
-enabled = true
+enabled = false  # Disabled by default (opt-in)
 description = "Detect methods/functions with mixed responsibilities"
 prompt = "Check if this code violates Single Responsibility Principle. Look for: 1) Functions doing multiple unrelated tasks, 2) Data access mixed with business logic, 3) UI logic mixed with data processing, 4) Error handling mixed with core logic. Only flag serious violations where a function clearly has multiple distinct responsibilities."
 model = "gpt-4o-mini"

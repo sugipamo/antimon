@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 from .color_utils import Colors, apply_color
+from .constants import GITHUB_REPO_URL
 
 
 def safe_input(prompt):
@@ -70,7 +71,7 @@ def show_first_run_guide(no_color: bool = False, is_quickstart: bool = False) ->
     print()
 
     print(apply_color("📚 Learn More:", Colors.OKBLUE, no_color))
-    print("• Documentation: https://github.com/antimon-security/antimon")
+    print(f"• Documentation: {GITHUB_REPO_URL}")
     print("• Run 'antimon --help' for all options")
     print("• Use 'antimon --test' to verify your installation")
     print()
@@ -292,7 +293,7 @@ def run_interactive_setup(no_color: bool = False) -> None:
         )
     else:
         print(apply_color("ℹ️  Claude Code not detected.", Colors.OKBLUE, no_color))
-        print("   You can install it from: https://claude.ai/code")
+        print("   You can install Claude Code from the official website")
         print("   Or use antimon with other tools via JSON input.")
 
     print()
@@ -321,7 +322,7 @@ def run_interactive_setup(no_color: bool = False) -> None:
     print(apply_color("📚 Next steps:", Colors.OKBLUE, no_color))
     print("• Run 'antimon --test' to see example detections")
     print("• Run 'antimon --help' to see all available options")
-    print("• Visit https://github.com/antimon-security/antimon for documentation")
+    print(f"• Visit {GITHUB_REPO_URL} for documentation")
     print()
     print(apply_color("Happy coding with antimon! 🚀", Colors.OKGREEN, no_color))
 

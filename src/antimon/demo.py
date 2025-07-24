@@ -77,7 +77,7 @@ class InteractiveDemo:
                 {
                     "hook_event_name": "PreToolUse",
                     "tool_name": "Read",
-                    "tool_input": {"file_path": "/home/user/.ssh/id_rsa"},
+                    "tool_input": {"file_path": "~/.ssh/id_rsa"},
                 },
                 True,
                 "SSH private keys contain sensitive authentication credentials and should not be accessed.",
@@ -94,7 +94,7 @@ class InteractiveDemo:
                     },
                 },
                 True,
-                "External LLM APIs should be avoided. Consider using local models like llama.cpp or ollama.",
+                "External LLM APIs may pose security risks. Consider using local models or approved internal APIs.",
             ),
             # Case 5: Docker operation
             (

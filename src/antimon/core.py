@@ -12,25 +12,14 @@ import os
 import sys
 import time
 
-from .autofix import display_autofix_suggestions, suggest_fixes_for_content
 from .color_utils import ColorFormatter
-from .detectors import (
-    HookData,
-    detect_api_key,
-    detect_bash_dangerous_commands,
-    detect_claude_antipatterns,
-    detect_dangerous_python_code,
-    detect_docker,
-    detect_filenames,
-    detect_llm_api,
-    detect_localhost,
-    detect_read_sensitive_files,
-)
+from .config import load_config
+from .constants import ISSUE_TRACKER_URL
+from .detectors import HookData
 from .error_context import ErrorContext
 from .last_error import save_last_error
 from .logger import get_logger
 from .runtime_config import get_runtime_config
-from .config import load_config
 from .pattern_detector import PatternDetector
 from .ai_detector import AIDetector
 
@@ -95,38 +84,9 @@ def validate_hook_data(
             logger.debug("No tool name provided")
         return False, [], {}
 
-    # Select appropriate detectors based on tool type
-    if tool_name in code_editing_tools:
-        detectors = [
-            detect_filenames,
-            detect_llm_api,
-            detect_api_key,
-            detect_docker,
-            detect_localhost,
-            detect_claude_antipatterns,
-            detect_dangerous_python_code,
-        ]
-    elif tool_name == "Read":
-        detectors = [detect_read_sensitive_files]
-    elif tool_name == "Bash":
-        detectors = [detect_bash_dangerous_commands]
-    else:
-        # Fallback to all detectors
-        detectors = [
-            detect_filenames,
-            detect_llm_api,
-            detect_api_key,
-            detect_docker,
-            detect_localhost,
-            detect_claude_antipatterns,
-            detect_read_sensitive_files,
-            detect_bash_dangerous_commands,
-            detect_dangerous_python_code,
-        ]
-
     issues = []
     detector_stats = {
-        "total": len(detectors),
+        "total": 0,
         "passed": 0,
         "failed": 0,
         "errors": 0,
@@ -143,66 +103,6 @@ def validate_hook_data(
         content = tool_input.get("content", "")
         if content:
             detector_stats["content_size"] = len(content)
-
-    for detector in detectors:
-        detector_name = (
-            detector.__name__.replace("detect_", "").replace("_", " ").title()
-        )
-
-        # Check if detector is enabled
-        if not config.is_detector_enabled(detector.__name__):
-            logger.debug(f"Skipping disabled detector: {detector.__name__}")
-            continue
-
-        logger.debug(f"Running detector: {detector.__name__}")
-        detector_start = time.time()
-        try:
-            result = detector(json_data)
-            detector_time = time.time() - detector_start
-            detector_stats["detector_times"][detector.__name__] = detector_time
-            detector_stats["patterns_checked"] += 1
-            if result.detected:
-                logger.debug(
-                    f"Detector {detector.__name__} found issue: {result.message}"
-                )
-                issues.append(result.message)
-                detector_stats["failed"] += 1
-                detailed_results.append(
-                    {
-                        "detector": detector_name,
-                        "status": "FAILED",
-                        "message": result.message,
-                        "file_path": json_data.get("tool_input", {}).get(
-                            "file_path", "N/A"
-                        ),
-                    }
-                )
-            else:
-                detector_stats["passed"] += 1
-                detailed_results.append(
-                    {
-                        "detector": detector_name,
-                        "status": "PASSED",
-                        "message": None,
-                        "file_path": json_data.get("tool_input", {}).get(
-                            "file_path", "N/A"
-                        ),
-                    }
-                )
-        except Exception as e:
-            logger.error(f"Error in detector {detector.__name__}: {e}", exc_info=True)
-            issues.append(f"Internal error in {detector.__name__} detector: {e!s}")
-            detector_stats["errors"] += 1
-            detailed_results.append(
-                {
-                    "detector": detector_name,
-                    "status": "ERROR",
-                    "message": str(e),
-                    "file_path": json_data.get("tool_input", {}).get(
-                        "file_path", "N/A"
-                    ),
-                }
-            )
 
     # Run pattern-based detectors from config file
     try:
@@ -581,31 +481,11 @@ def _display_security_issues(
                 file=sys.stderr,
             )
             logger.print(
-                "      • Report false positives at: https://github.com/antimon-security/antimon/issues\n",
+                f"      • Report false positives at: {ISSUE_TRACKER_URL}\n",
                 file=sys.stderr,
             )
 
-            # Show auto-fix suggestions if available
-            if config.show_autofix:
-                content = json_data.get("tool_input", {}).get("content", "")
-                if content:
-                    # Extract issue types from the detected issues
-                    issue_types = []
-                    for issue in issues:
-                        if "API key" in issue:
-                            issue_types.append("api_key")
-                        elif "LLM API" in issue or "external AI service" in issue:
-                            issue_types.append("llm_api")
-                        elif "Docker" in issue:
-                            issue_types.append("docker")
-                        elif "localhost" in issue or "127.0.0.1" in issue:
-                            issue_types.append("localhost")
 
-                    issue_types = list(set(issue_types))  # Remove duplicates
-                    if issue_types:
-                        suggestions = suggest_fixes_for_content(content, issue_types)
-                        if suggestions:
-                            display_autofix_suggestions(suggestions, no_color)
 
     # Always show error recovery hint for non-brief mode (Exit Code Documentation + Error Recovery Hints)
     if not quiet and not brief and not dry_run:

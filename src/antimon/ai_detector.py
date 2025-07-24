@@ -9,6 +9,7 @@ import json
 import os
 from typing import Dict, Optional
 
+from .constants import AI_API_BASE
 from .detectors import DetectionResult, HookData
 
 
@@ -24,7 +25,7 @@ class AIDetector:
             api_base: API base URL (for OpenAI-compatible services)
         """
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
-        self.api_base = api_base or "https://api.openai.com/v1"
+        self.api_base = api_base or AI_API_BASE
         
         # Check if requests is available
         try:
@@ -79,20 +80,13 @@ class AIDetector:
             # Create the detection prompt based on format
             if response_format == "simple":
                 # Simple format: first line is True/False/Invalid
-                system_prompt = """You are a security analyzer. 
-
-IMPORTANT: Your response MUST follow this exact format:
-- First line: ONLY one of these words: True, False, Invalid
-- Second line: Brief description (if True) or reason (if False/Invalid)
-- No other text allowed
-
-Rules:
-- Use "True" if security issue is found
-- Use "False" if no issue is found  
-- Use "Invalid" if the code/request is malformed
-- Second line should be under 100 characters"""
+                system_prompt = """内容が以下条件に該当するかを確認し、1行目に [True, False, Invalid] のいずれかを記載し、その理由を2行目以降に記述してください。"""
                 
-                user_prompt = f"{prompt}\n\nCode to analyze:\n```\n{content}\n```"
+                user_prompt = f"""## 判定基準
+{prompt}
+
+## 編集内容
+{content}"""
                 
                 data = {
                     "model": model,

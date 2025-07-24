@@ -7,6 +7,7 @@ Error context and helpful suggestions for antimon
 
 
 from .color_utils import Colors, apply_color
+from .constants import GITHUB_REPO_URL
 from .runtime_config import get_runtime_config
 
 
@@ -93,7 +94,7 @@ class ErrorContext:
         elif "LLM API" in message or "external AI" in message:
             suggestions.extend(
                 [
-                    "Consider using local models (llama.cpp, ollama)",
+                    "Consider using local models or approved internal APIs",
                     "Use the AI assistant's built-in capabilities instead",
                     "For demos, use mock responses instead of real API calls",
                 ]
@@ -133,7 +134,7 @@ class ErrorContext:
 
     def _get_faq_link(self, message: str) -> str | None:
         """Get a relevant FAQ link based on the error."""
-        base_url = "https://github.com/antimon-security/antimon/blob/main/docs/faq.md"
+        base_url = f"{GITHUB_REPO_URL}/blob/main/docs/faq.md"
 
         if "API key" in message:
             return f"{base_url}#api-key-false-positives"
@@ -222,5 +223,5 @@ def show_error_help(no_color: bool = False) -> None:
     print("   • Re-enable after: claude-code config set hooks.PreToolUse antimon")
     print()
     print(apply_color("📚 Full documentation:", Colors.OKBLUE, no_color), end=" ")
-    print("https://github.com/antimon-security/antimon/blob/main/README.md")
+    print(f"{GITHUB_REPO_URL}/blob/main/README.md")
     print()
