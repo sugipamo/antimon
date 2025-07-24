@@ -7,8 +7,34 @@ Configuration management for antimon
 
 import os
 import tomllib
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
+
+
+def _find_config_in_parents(start_dir: str = ".") -> Optional[str]:
+    """
+    Search for antimon.toml by walking up the directory tree
+    
+    Args:
+        start_dir: Directory to start search from
+        
+    Returns:
+        Path to config file if found, None otherwise
+    """
+    current_dir = Path(start_dir).resolve()
+    
+    # Walk up the directory tree
+    for parent in [current_dir] + list(current_dir.parents):
+        config_path = parent / "antimon.toml"
+        if config_path.exists():
+            return str(config_path)
+        
+        # Stop at filesystem root or when we can't go higher
+        if parent == parent.parent:
+            break
+    
+    return None
 
 
 @dataclass
