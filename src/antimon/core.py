@@ -405,7 +405,7 @@ def _display_security_issues(
         for issue in issues:
             logger.print(f"  • {issue}", file=sys.stderr)
         logger.print("", file=sys.stderr)
-        logger.print("💡 Run 'antimon --explain-last-error' for details", file=sys.stderr)
+        logger.print("💡 Check the error output above for details", file=sys.stderr)
         # Show exit code documentation
         exit_code = 0 if dry_run else 2
         logger.print(
@@ -459,7 +459,7 @@ def _display_security_issues(
             logger.print("\n💡 How to proceed:", file=sys.stderr)
             logger.print("   1. Review the detected issues above", file=sys.stderr)
             logger.print(
-                "   2. Run 'antimon --explain-last-error' for detailed explanations",
+                "   2. Review the detailed error descriptions above",
                 file=sys.stderr,
             )
             logger.print("   3. If false positive, consider:", file=sys.stderr)
@@ -491,7 +491,7 @@ def _display_security_issues(
     if not quiet and not brief and not dry_run:
         logger.print("Exit code: 2 (Security issues detected)", file=sys.stderr)
         logger.print(
-            "💡 For more information, run: antimon --explain-last-error\n",
+            "💡 For more information, check the error output above\n",
             file=sys.stderr,
         )
 
@@ -624,6 +624,13 @@ def process_stdin(
         if config.dry_run:
             return 0
         else:
+            # Ensure flush before exit for reliable hook termination in venv environments
+            sys.stderr.flush()
+            sys.stdout.flush()
+            # Use os._exit(2) for venv environments to ensure reliable termination
+            import os
+            if os.environ.get('VIRTUAL_ENV') or 'venv' in sys.executable or '.venv' in sys.executable:
+                os._exit(2)
             return 2
 
     logger.info("Security validation passed")
@@ -873,6 +880,13 @@ def check_file_directly(
         if config.dry_run:
             return 0
         else:
+            # Ensure flush before exit for reliable hook termination in venv environments
+            sys.stderr.flush()
+            sys.stdout.flush()
+            # Use os._exit(2) for venv environments to ensure reliable termination
+            import os
+            if os.environ.get('VIRTUAL_ENV') or 'venv' in sys.executable or '.venv' in sys.executable:
+                os._exit(2)
             return 2
 
     if config.show_stats or verbose:
@@ -994,6 +1008,13 @@ def check_content_directly(
         if config.dry_run:
             return 0
         else:
+            # Ensure flush before exit for reliable hook termination in venv environments
+            sys.stderr.flush()
+            sys.stdout.flush()
+            # Use os._exit(2) for venv environments to ensure reliable termination
+            import os
+            if os.environ.get('VIRTUAL_ENV') or 'venv' in sys.executable or '.venv' in sys.executable:
+                os._exit(2)
             return 2
 
     if config.show_stats or verbose:

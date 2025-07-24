@@ -185,9 +185,6 @@ For CI/CD pipelines, consider:
 After antimon blocks an operation:
 
 ```bash
-# Get detailed explanation of the last error
-antimon --explain-last-error
-
 # Use verbose mode for more context
 antimon --check-file problematic.py --verbose
 ```

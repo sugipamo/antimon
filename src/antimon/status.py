@@ -145,6 +145,6 @@ def show_status(no_color: bool = False) -> None:
     print()
     print("  • Use --allow-file to permit specific files")
     print("  • Use --disable-detector to turn off specific checks")
-    print("  • Use --explain-last-error after a block for details")
+    print("  • Check the detailed error output above for context")
     print("  • Run --test to verify antimon is working correctly")
     print()

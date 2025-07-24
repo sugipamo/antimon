@@ -163,7 +163,7 @@ class ErrorContext:
             lines.append("")
             lines.append(
                 apply_color(
-                    "💡 Run 'antimon --explain-last-error' for details",
+                    "💡 Check the error output above for details",
                     Colors.OKBLUE,
                     self.no_color,
                 )
@@ -182,7 +182,7 @@ class ErrorContext:
                     "💡 For more details and solutions:", Colors.OKBLUE, self.no_color
                 )
             )
-            lines.append("   Run: antimon --explain-last-error")
+            lines.append("   Check the detailed error information above")
 
         # Add exit code documentation
         lines.append("")
