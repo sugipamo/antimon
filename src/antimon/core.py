@@ -338,7 +338,7 @@ def _validate_required_fields(
                     logger.print("     }", file=sys.stderr)
                     logger.print("   }\n", file=sys.stderr)
                 return 1
-        elif tool_name in {"Edit", "MultiEdit"}:
+        elif tool_name == "Edit":
             # Edit tools need either 'new_string' or both 'old_string' and 'new_string'
             if "new_string" not in tool_input:
                 logger.error(
@@ -363,6 +363,56 @@ def _validate_required_fields(
                     logger.print("     }", file=sys.stderr)
                     logger.print("   }\n", file=sys.stderr)
                 return 1
+        elif tool_name == "MultiEdit":
+            # MultiEdit tools need 'edits' array with 'old_string' and 'new_string' in each edit
+            if "edits" not in tool_input:
+                logger.error(
+                    f"Missing required field 'edits' for {tool_name} tool"
+                )
+                if not quiet:
+                    logger.error(
+                        f"\n❌ Validation error: Missing required field 'edits' for {tool_name} tool"
+                    )
+                    logger.print("\n💡 How to fix:", file=sys.stderr)
+                    logger.print(
+                        f"   The {tool_name} tool requires 'edits' array with 'old_string' and 'new_string' fields:",
+                        file=sys.stderr,
+                    )
+                    logger.print("   {", file=sys.stderr)
+                    logger.print('     "hook_event_name": "PreToolUse",', file=sys.stderr)
+                    logger.print(f'     "tool_name": "{tool_name}",', file=sys.stderr)
+                    logger.print('     "tool_input": {', file=sys.stderr)
+                    logger.print('       "file_path": "example.py",', file=sys.stderr)
+                    logger.print('       "edits": [', file=sys.stderr)
+                    logger.print('         {', file=sys.stderr)
+                    logger.print('           "old_string": "text to replace",', file=sys.stderr)
+                    logger.print('           "new_string": "replacement text"', file=sys.stderr)
+                    logger.print('         }', file=sys.stderr)
+                    logger.print('       ]', file=sys.stderr)
+                    logger.print("     }", file=sys.stderr)
+                    logger.print("   }\n", file=sys.stderr)
+                return 1
+            
+            # Check each edit in the edits array
+            edits = tool_input.get("edits", [])
+            for i, edit in enumerate(edits):
+                if not isinstance(edit, dict):
+                    logger.error(f"Edit {i} in {tool_name} tool is not a valid object")
+                    return 1
+                if "old_string" not in edit or "new_string" not in edit:
+                    logger.error(
+                        f"Edit {i} in {tool_name} tool missing required 'old_string' or 'new_string' field"
+                    )
+                    if not quiet:
+                        logger.error(
+                            f"\n❌ Validation error: Edit {i} missing required fields"
+                        )
+                        logger.print("\n💡 How to fix:", file=sys.stderr)
+                        logger.print(
+                            "   Each edit must have both 'old_string' and 'new_string' fields",
+                            file=sys.stderr,
+                        )
+                    return 1
 
     # Validate required fields for Read tool
     if tool_name == "Read" and "file_path" not in tool_input:

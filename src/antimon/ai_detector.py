@@ -212,6 +212,17 @@ class AIDetector:
             content_parts.append(tool_input["new_string"])
         if "command" in tool_input:
             content_parts.append(tool_input["command"])
+        
+        # Handle MultiEdit edits array
+        if "edits" in tool_input:
+            edits = tool_input["edits"]
+            if isinstance(edits, list):
+                for edit in edits:
+                    if isinstance(edit, dict):
+                        if "new_string" in edit:
+                            content_parts.append(edit["new_string"])
+                        if "old_string" in edit:
+                            content_parts.append(edit["old_string"])
             
         if not content_parts:
             return DetectionResult(

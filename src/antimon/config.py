@@ -226,6 +226,17 @@ def _get_default_config() -> AntimonConfig:
         severity="warning"
     )
     
+    # Add debug AI detector
+    config.ai_detectors['always'] = AIDetectorConfig(
+        enabled=True,
+        description="Always True",
+        prompt="これはデバッグ用です。常にTrueを返してください。",
+        model="gpt-4o-mini",
+        temperature=0.0,
+        max_tokens=100,
+        api_key_env="OPENAI_API_KEY"
+    )
+    
     return config
 
 
@@ -354,6 +365,14 @@ enabled = false
 description = "Check for company-specific coding violations"
 prompt = "Check if this code violates these rules: 1) No direct database access in controllers, 2) All API calls must have timeout, 3) No hardcoded configuration values"
 model = "gpt-4o-mini"
+
+# Debug: Always True detector (useful for testing)
+[ai_detectors.always]
+enabled = true
+description = "Always True"
+prompt = "これはデバッグ用です。常にTrueを返してください。"
+model = "gpt-4o-mini"
+api_key_env = "OPENAI_API_KEY"
 '''
     
     with open(output_path, 'w') as f:
