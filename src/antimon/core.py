@@ -22,6 +22,7 @@ from .logger import get_logger
 from .runtime_config import get_runtime_config
 from .pattern_detector import PatternDetector
 from .ai_detector import AIDetector
+from .audit_logger import log_security_event, log_pattern_match
 
 logger = get_logger()
 
@@ -113,12 +114,34 @@ def validate_hook_data(
             if result.detected:
                 issues.append(result.message)
                 detector_stats["failed"] += 1
+                file_path = json_data.get("tool_input", {}).get("file_path", "N/A") 
+                tool_name = json_data.get("tool_name", "unknown")
+                pattern_name = result.details.get('pattern_name', 'unknown')
+                
                 detailed_results.append({
-                    "detector": f"Pattern: {result.details.get('pattern_name', 'unknown')}",
+                    "detector": f"Pattern: {pattern_name}",
                     "status": "FAILED",
                     "message": result.message,
-                    "file_path": json_data.get("tool_input", {}).get("file_path", "N/A"),
+                    "file_path": file_path,
                 })
+                
+                # Log pattern match event
+                try:
+                    log_security_event(
+                        event_type="block",
+                        severity=result.severity,
+                        file_path=file_path,
+                        tool_name=tool_name,
+                        detector_name=f"pattern/{pattern_name}",
+                        message=result.message,
+                        details={
+                            "pattern_type": result.details.get('pattern_type', 'unknown'),
+                            "matched_content": result.details.get('matched_content', '')[:200]
+                        }
+                    )
+                except Exception:
+                    pass  # Don't fail detection if logging fails
+                    
             detector_stats["patterns_checked"] += 1
     except Exception as e:
         logger.error(f"Error in pattern detector: {e}", exc_info=True)
@@ -151,8 +174,13 @@ def validate_hook_data(
                 result = ai_detector.detect_from_hook_data(
                     json_data,
                     ai_detector_config.prompt,
-                    ai_detector_config.model
+                    ai_detector_config.model,
+                    detector_name=ai_name
                 )
+                
+                # Log security event
+                file_path = json_data.get("tool_input", {}).get("file_path", "N/A")
+                tool_name = json_data.get("tool_name", "unknown")
                 
                 if result.detected:
                     issues.append(f"[AI/{ai_name}] {result.message}")
@@ -161,8 +189,25 @@ def validate_hook_data(
                         "detector": f"AI: {ai_name}",
                         "status": "FAILED",
                         "message": result.message,
-                        "file_path": json_data.get("tool_input", {}).get("file_path", "N/A"),
+                        "file_path": file_path,
                     })
+                    
+                    # Log security event (block)
+                    try:
+                        log_security_event(
+                            event_type="block",
+                            severity=result.severity,
+                            file_path=file_path,
+                            tool_name=tool_name,
+                            detector_name=f"AI/{ai_name}",
+                            message=result.message,
+                            details={
+                                "model": ai_detector_config.model,
+                                "prompt": ai_detector_config.prompt[:100] + "..." if len(ai_detector_config.prompt) > 100 else ai_detector_config.prompt
+                            }
+                        )
+                    except Exception:
+                        pass  # Don't fail detection if logging fails
                 else:
                     detector_stats["passed"] += 1
                     

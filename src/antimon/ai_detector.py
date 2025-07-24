@@ -7,10 +7,12 @@ AI-powered detection using OpenAI API
 
 import json
 import os
+import time
 from typing import Dict, Optional
 
 from .constants import AI_API_BASE
 from .detectors import DetectionResult, HookData
+from .audit_logger import log_llm_interaction
 
 
 class AIDetector:
@@ -41,7 +43,9 @@ class AIDetector:
         model: str = "gpt-4o-mini",
         temperature: float = 0.0,
         max_tokens: int = 100,
-        response_format: str = "json"  # "json" or "simple"
+        response_format: str = "json",  # "json" or "simple"
+        detector_name: str = "unknown",
+        file_path: str = "unknown"
     ) -> DetectionResult:
         """
         Run AI detection on content
@@ -129,13 +133,15 @@ Rules:
                     "response_format": {"type": "json_object"}  # Force JSON response
                 }
             
-            # Make the API call
+            # Make the API call with timing
+            start_time = time.time()
             response = self.requests.post(
                 f"{self.api_base}/chat/completions",
                 headers=headers,
                 json=data,
                 timeout=30
             )
+            api_duration = time.time() - start_time
             
             if response.status_code != 200:
                 return DetectionResult(
@@ -184,11 +190,27 @@ Rules:
                 # Parse JSON format
                 try:
                     ai_result = json.loads(content)
-                    return DetectionResult(
+                    detection_result = DetectionResult(
                         detected=ai_result.get("detected", False),
                         message=ai_result.get("message", "AI detection completed"),
                         severity=ai_result.get("severity", "warning")
                     )
+                    
+                    # Log LLM interaction
+                    try:
+                        log_llm_interaction(
+                            detector_name=detector_name,
+                            model=model,
+                            prompt=user_prompt,
+                            response=content,
+                            file_path=file_path,
+                            detected=detection_result.detected,
+                            api_call_duration=api_duration
+                        )
+                    except Exception:
+                        pass  # Don't fail detection if logging fails
+                    
+                    return detection_result
                 except json.JSONDecodeError:
                     return DetectionResult(
                         detected=False,
@@ -207,7 +229,8 @@ Rules:
         self,
         json_data: HookData,
         prompt: str,
-        model: str = "gpt-4o-mini"
+        model: str = "gpt-4o-mini",
+        detector_name: str = "unknown"
     ) -> DetectionResult:
         """
         Run AI detection on hook data
@@ -239,4 +262,12 @@ Rules:
             )
         
         content = "\n".join(content_parts)
-        return self.detect(content, prompt, model)
+        file_path = tool_input.get("file_path", "unknown")
+        
+        return self.detect(
+            content=content, 
+            prompt=prompt, 
+            model=model,
+            detector_name=detector_name,
+            file_path=file_path
+        )
