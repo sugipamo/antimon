@@ -22,7 +22,7 @@ from .logger import get_logger
 from .runtime_config import get_runtime_config
 from .pattern_detector import PatternDetector
 from .ai_detector import AIDetector
-from .audit_logger import log_security_event, log_pattern_match
+from .audit_logger import log_security_event, log_pattern_match, log_json_input
 
 logger = get_logger()
 
@@ -251,6 +251,9 @@ def _parse_json_input(
         input_data = sys.stdin.read()
         
         json_data = json.loads(input_data)
+        
+        # Log the raw JSON input for tracing
+        log_json_input(json_data, source="stdin")
         
         logger.debug(
             f"Parsed JSON data with tool: {json_data.get('tool_name', 'unknown')}"
