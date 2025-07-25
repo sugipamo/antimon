@@ -194,6 +194,40 @@ def _append_to_log(log_entry: Dict[str, Any]) -> None:
         print(f"Warning: Failed to write to audit log: {e}", file=sys.stderr)
 
 
+def log_json_input(json_data: Dict[str, Any], source: str = "stdin") -> None:
+    """
+    Log raw JSON input for tracing purposes
+    
+    Args:
+        json_data: The JSON data received
+        source: Source of the JSON (e.g., "stdin", "file")
+    """
+    timestamp = datetime.now(timezone.utc).isoformat()
+    
+    log_entry = {
+        "timestamp": timestamp,
+        "event_type": "json_input_trace",
+        "source": source,
+        "raw_json": json_data,
+        "version": "0.2.13"
+    }
+    
+    try:
+        log_path = get_audit_log_path()
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        
+        # Append to log file (one JSON object per line)
+        with open(log_path, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+            
+    except Exception as e:
+        # Don't fail if logging fails
+        import sys
+        print(f"Warning: Failed to write JSON trace to audit log: {e}", file=sys.stderr)
+
+
 def get_recent_blocks(hours: int = 24) -> List[Dict[str, Any]]:
     """
     Get recent block events from the audit log
