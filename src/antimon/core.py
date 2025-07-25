@@ -150,8 +150,11 @@ def validate_hook_data(
     # Run AI-powered detectors from config file
     try:
         ai_config = load_config()
+        logger.debug(f"AI detectors in config: {list(ai_config.ai_detectors.keys())}")
         for ai_name, ai_detector_config in ai_config.ai_detectors.items():
+            logger.debug(f"Checking AI detector {ai_name}: enabled={ai_detector_config.enabled}")
             if not ai_detector_config.enabled:
+                logger.debug(f"Skipping disabled AI detector: {ai_name}")
                 continue
                 
             detector_stats["total"] += 1

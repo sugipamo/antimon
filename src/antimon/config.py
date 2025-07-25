@@ -81,16 +81,24 @@ def load_config(config_path: Optional[str] = None) -> AntimonConfig:
         AntimonConfig instance
     """
     if config_path:
-        config_paths = [config_path]
-    else:
-        # Check for config files in order of precedence
-        config_paths = [
-            "./antimon.toml",              # Current directory
-            "./.antimon/config.toml",      # Project .antimon directory
-            os.path.expanduser("~/.antimon/config.toml"),  # User config
-        ]
+        # Use specific config file if provided
+        if os.path.exists(config_path):
+            return _load_config_file(config_path)
+        else:
+            raise FileNotFoundError(f"Config file not found: {config_path}")
     
-    # Load the first config file found
+    # First try to find config by walking up directory tree
+    config_path = _find_config_in_parents()
+    if config_path:
+        return _load_config_file(config_path)
+    
+    # Fallback to traditional search paths
+    config_paths = [
+        "./antimon.toml",              # Current directory
+        "./.antimon/config.toml",      # Project .antimon directory
+        os.path.expanduser("~/.antimon/config.toml"),  # User config
+    ]
+    
     for path in config_paths:
         if os.path.exists(path):
             return _load_config_file(path)
@@ -226,10 +234,10 @@ def _get_default_config() -> AntimonConfig:
         severity="warning"
     )
     
-    # Add debug AI detector
+    # Add debug AI detector (disabled by default)
     config.ai_detectors['always'] = AIDetectorConfig(
-        enabled=True,
-        description="Always True",
+        enabled=False,
+        description="Always True - Debug Detector",
         prompt="これはデバッグ用です。常にTrueを返してください。",
         model="gpt-4o-mini",
         temperature=0.0,
